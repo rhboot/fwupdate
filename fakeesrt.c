@@ -19,6 +19,9 @@ typedef struct esre {
 
 #define guid0 { 0x0712233d, 0xfe15, 0x434c, { 0xbf, 0x4d, 0xa3, 0x4a, 0x05, 0x03, 0x14, 0x4a }}
 #define guid1 { 0xeac48586, 0xebf7, 0x4901, { 0xb2, 0x32, 0x0b, 0x29, 0xe9, 0x9a, 0xe6, 0xa9 }}
+#define esrt_guid {  0xb122a263, 0x3661, 0x4f68, { 0x99, 0x29, 0x78, 0xf8, 0xb0, 0xd6, 0x21, 0x80 }}
+
+static EFI_GUID EsrtGuid = esrt_guid;
 
 EFI_STATUS
 efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *systab)
@@ -27,11 +30,33 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *systab)
 		esrt_t esrt;
 		esre_t esre0;
 		esre_t esre1;
-	} esrt = {
+	} __attribute__((packed)) esrt = {
 		.esrt = { 2, 2, 12345 },
 		.esre0 = { guid0, 0, 0, 0, 0x80f1, 0, 0 },
 		.esre1 = { guid1, 1, 9, 7, 0x80f1, 0, 0 },
 	};
+	EFI_STATUS status;
+	EFI_PHYSICAL_ADDRESS mem = 0;
+
+	InitializeLib(image_handle, systab);
+
+	status = systab->BootServices->AllocatePages(AllocateAnyPages,
+						EfiRuntimeServicesData,
+						1, &mem);
+	if (EFI_ERROR(status)) {
+		Print(L"AllocatePages failed: %r\n", status);
+		return status;
+	}
+	VOID *ptr = (VOID *)mem;
+
+	CopyMem(ptr, &esrt, sizeof (esrt));
+
+	status = systab->BootServices->InstallConfigurationTable(&EsrtGuid,
+								ptr);
+	if (EFI_ERROR(status)) {
+		Print(L"InstallConfigurationTable failed: %r\n", status);
+		return status;
+	}
 
 	return 0;
 }
