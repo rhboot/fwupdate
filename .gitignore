@@ -1,0 +1,5 @@
+*.efi
+*.efi.unsigned
+*.so
+*.o
+*.a
