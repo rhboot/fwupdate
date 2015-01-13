@@ -32,7 +32,7 @@ get_file_size(EFI_FILE_HANDLE fh, CHAR16 *fullpath, UINTN *retsize)
 	rc = uefi_call_wrapper(fh->Open, 5, fh, &fh2, fullpath,
 				EFI_FILE_READ_ONLY, 0);
 	if (EFI_ERROR(rc)) {
-		Print(L"Couldn't open \"%s\": %d\n", fullpath, rc);
+		Print(L"Couldn't open \"%s\": %r\n", fullpath, rc);
 		return rc;
 	}
 
@@ -46,7 +46,7 @@ get_file_size(EFI_FILE_HANDLE fh, CHAR16 *fullpath, UINTN *retsize)
 			Print(L"Could not allocate memory\n");
 			return EFI_OUT_OF_RESOURCES;
 		}
-		rc = uefi_call_wrapper(fh->GetInfo, 4, fh, &finfo,
+		rc = uefi_call_wrapper(fh->GetInfo, 4, fh2, &finfo,
 					&bs, buffer);
 	}
 	/* This checks *either* the error from the first GetInfo, if it isn't
@@ -73,7 +73,7 @@ read_file(EFI_FILE_HANDLE fh, CHAR16 *fullpath, UINT8 **buffer, UINT64 *bs)
 	EFI_STATUS rc = uefi_call_wrapper(fh->Open, 5, fh, &fh2, fullpath,
 				EFI_FILE_READ_ONLY, 0);
 	if (EFI_ERROR(rc)) {
-		Print(L"Couldn't open \"%s\": %d\n", fullpath, rc);
+		Print(L"Couldn't open \"%s\": %r\n", fullpath, rc);
 		return rc;
 	}
 
@@ -85,23 +85,23 @@ read_file(EFI_FILE_HANDLE fh, CHAR16 *fullpath, UINT8 **buffer, UINT64 *bs)
 		return rc;
 	}
 
-	b = AllocateZeroPool(len + 2);
-	if (!buffer) {
+	b = AllocateZeroPool(len);
+	if (!b) {
 		Print(L"Could not allocate memory\n");
 		uefi_call_wrapper(fh2->Close, 1, fh2);
 		return EFI_OUT_OF_RESOURCES;
 	}
 
-	rc = uefi_call_wrapper(fh->Read, 3, fh, &len, b);
+	rc = uefi_call_wrapper(fh2->Read, 3, fh2, &len, b);
 	if (EFI_ERROR(rc)) {
-		FreePool(buffer);
+		FreePool(b);
 		uefi_call_wrapper(fh2->Close, 1, fh2);
-		Print(L"Could not read file: %d\n", rc);
+		Print(L"Could not read file: %r\n", rc);
 		return rc;
 	}
+	uefi_call_wrapper(fh2->Close, 1, fh2);
 	*buffer = b;
 	*bs = len;
-	uefi_call_wrapper(fh2->Close, 1, fh2);
 	return EFI_SUCCESS;
 }
 
@@ -146,7 +146,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 
 	rc = uefi_call_wrapper(BS->HandleProtocol, 3, image, &LoadedImageProtocol, (void *)&this_image);
 	if (EFI_ERROR(rc)) {
-		Print(L"Error: could not find loaded image: %d\n", rc);
+		Print(L"Error: could not find loaded image: %r\n", rc);
 		return rc;
 	}
 
@@ -181,7 +181,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 			  attributes, 0, NULL);
 
 	if (size % sizeof (struct fwupdate_entry)) {
-		Print(L"FwUpdates has unreasonable size %d.\n", size);
+		Print(L"FwUpdates has unreasonable size %r.\n", size);
 		return EFI_INVALID_PARAMETER;
 	}
 	UINTN num_updates = size / sizeof (struct fwupdate_entry);
@@ -190,14 +190,22 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	if (EFI_ERROR(rc))
 		return rc;
 
-	EFI_CAPSULE_HEADER *capsules[num_updates];
-	EFI_CAPSULE_BLOCK_DESCRIPTOR cbd[num_updates + 1];
+#if 1
+	EFI_CAPSULE_HEADER *capsules[num_updates + 1];
+	EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd;
 	int i;
+
+	cbd = AllocateZeroPool(sizeof (EFI_CAPSULE_BLOCK_DESCRIPTOR) * (num_updates + 1));
+	if (!cbd) {
+		Print(L"Could not allocate memory for cbd.\n");
+		return EFI_OUT_OF_RESOURCES;
+	}
 
 	for (i = 0; i < num_updates; i++) {
 		UINTN fsize = 0;
+		UINT8 *fbuf = NULL;
+		UINTN bs;
 		EFI_CAPSULE_HEADER *capsule;
-		UINT8 *buffer;
 
 		rc = get_file_size(fh, updates[i].path, &fsize);
 		if (EFI_ERROR(rc)) {
@@ -205,40 +213,59 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 			return rc;
 		}
 
-		capsule = AllocatePool(fsize + sizeof (*capsule));
-		if (!capsule) {
-			Print(L"Could not allocate memory for capsule buffer.\n");
-			return EFI_OUT_OF_RESOURCES;
-		}
-
-		capsule->CapsuleGuid = updates[i].guid;
-		capsule->HeaderSize = sizeof (*capsule);
-		capsule->Flags = updates[i].flags;
-		capsule->CapsuleImageSize = fsize + sizeof (*capsule);
-		buffer = (UINT8 *)capsule + sizeof (*capsule);
-		UINT64 bs = capsule->CapsuleImageSize - sizeof (*capsule);
-
-		rc = read_file(fh, updates[i].path, &buffer, &bs);
+		bs = fsize;
+		rc = read_file(fh, updates[i].path, &fbuf, &fsize);
 		if (EFI_ERROR(rc)) {
 			Print(L"Could not read update file: %r\n", rc);
 			return rc;
 		}
-		cbd[i].Length = capsule->CapsuleImageSize;
-		cbd[i].Union.DataBlock = (EFI_PHYSICAL_ADDRESS)(VOID *)capsule;
+
+		if (CompareMem(&updates[i].guid, fbuf,
+				sizeof (updates[i].guid))) {
+			capsule = (EFI_CAPSULE_HEADER *)fbuf;
+		} else {
+			capsule = AllocatePool(sizeof (*capsule) + fsize);
+			if (!capsule) {
+				Print(L"Could not allocate space for update.\n");
+				return EFI_OUT_OF_RESOURCES;
+			}
+
+			capsule->CapsuleGuid = updates[i].guid;
+			capsule->HeaderSize = sizeof (*capsule);
+			/*
+			 * I don't know why the defined values in the capsule
+			 * API are sixteen bits shifted from the defined values
+			 * in ESRT, but they are.
+			 */
+			capsule->Flags = updates[i].flags << 16;
+			capsule->CapsuleImageSize = fsize + sizeof (*capsule);
+
+			UINT8 *buffer = (UINT8 *)capsule + capsule->HeaderSize;
+			CopyMem(buffer, fbuf, fsize);
+		}
+
+		cbd[i].Length = bs;
+		cbd[i].Union.DataBlock = (EFI_PHYSICAL_ADDRESS)(UINTN)fbuf;
 
 		capsules[i] = capsule;
 	}
+
+	uefi_call_wrapper(fh->Close, 1, fh);
 	cbd[i].Length = 0;
 	cbd[i].Union.ContinuationPointer = 0;
 
+	capsules[i] = NULL;
+
+	uefi_call_wrapper(BS->Stall, 1, 1000000);
 	rc = uefi_call_wrapper(RT->UpdateCapsule, 3, capsules, num_updates,
 			       (EFI_PHYSICAL_ADDRESS)(VOID *)cbd);
 	if (EFI_ERROR(rc)) {
-		Print(L"Could not apply capsule update.\n");
+		Print(L"Could not apply capsule update: %r\n", rc);
 		return rc;
 	}
 
 	Print(L"Reset System\n");
+	uefi_call_wrapper(BS->Stall, 1, 2000000);
 	uefi_call_wrapper(RT->ResetSystem, 4, EfiResetWarm,
 			  EFI_SUCCESS, 0, NULL);
 
