@@ -190,7 +190,6 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	if (EFI_ERROR(rc))
 		return rc;
 
-#if 1
 	EFI_CAPSULE_HEADER *capsules[num_updates + 1];
 	EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd;
 	int i;
