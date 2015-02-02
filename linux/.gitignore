@@ -1,1 +1,3 @@
 fwupdate
+lib*.so.*
+*.po

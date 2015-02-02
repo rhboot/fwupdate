@@ -16,14 +16,18 @@
 #include <popt.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <uchar.h>
+#include <unistd.h>
 
 #include "util.h"
+#include "fwup.h"
 
 #define CAPSULE_FLAGS_PERSIST_ACROSS_RESET    0x00010000
 #define CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE   0x00020000
 #define CAPSULE_FLAGS_INITIATE_RESET          0x00040000
 
+#if 0
 #define INSYDE 1
 
 struct fwupdate_entry {
@@ -66,12 +70,32 @@ int test(void)
 	printf("rc: %d\n", rc);
 	return 0;
 }
+#endif
 
-#define ACTION_APPLY	0x01
-#define ACTION_LIST	0x02
+int
+print_system_resources(void)
+{
+	fwup_resource_iter *iter;
+	int rc;
 
-int main(int argc, char *argv[]) {
-	int actions = 0;
+	rc = fwup_resource_iter_create(&iter);
+	if (rc < 0) {
+		if (fwup_error != ENOENT)
+			fwup_warn("Could not create iterator");
+		return -1;
+	}
+
+	return 0;
+}
+
+#define ACTION_APPLY		0x01
+#define ACTION_LIST		0x02
+#define ACTION_SUPPORTED	0x03
+
+int
+main(int argc, char *argv[]) {
+	int action = 0;
+	int quiet = 0;
 
 	setlocale(LC_ALL, "");
 	bindtextdomain("fwupdate", LOCALEDIR);
@@ -79,10 +103,15 @@ int main(int argc, char *argv[]) {
 
 	struct poptOption options[] = {
 		{NULL, '\0', POPT_ARG_INTL_DOMAIN, "fwupdate" },
-		{"apply", 'a', POPT_ARG_INT|POPT_ARGFLAG_OR, &actions,
-			ACTION_APPLY, _("Apply firmware updates\n"), NULL},
-		{"list", 'l', POPT_ARG_INT|POPT_ARGFLAG_OR, &actions,
-			ACTION_LIST, _("List supported firmware updates\n"),
+		{"apply", 'a', POPT_ARG_VAL|POPT_ARGFLAG_OR, &action,
+			ACTION_APPLY, _("Apply firmware updates"), NULL},
+		{"list", 'l', POPT_ARG_VAL|POPT_ARGFLAG_OR, &action,
+			ACTION_LIST, _("List supported firmware updates"),
+			NULL},
+		{"supported", 's', POPT_ARG_VAL|POPT_ARGFLAG_OR, &action,
+			ACTION_SUPPORTED,
+			_("Query for firmware update support"), NULL},
+		{"quiet", 'q', POPT_ARG_VAL, &quiet, 1, _("Work quietly"),
 			NULL},
 		POPT_AUTOALIAS
 		POPT_AUTOHELP
@@ -95,19 +124,44 @@ int main(int argc, char *argv[]) {
 	int rc;
 	rc = poptReadDefaultConfig(optcon, 0);
 	if (rc < 0 && !(rc == POPT_ERROR_ERRNO && errno == ENOENT))
-		errx(1, "fwupdate: poptReadDefaultConfig failed: %s: %s\n",
+		errx(1, _("poptReadDefaultConfig failed: %s: %s"),
 			poptBadOption(optcon, 0), poptStrerror(rc));
 
 	while ((rc = poptGetNextOpt(optcon)) > 0)
 		;
 
 	if (rc < -1)
-		errx(2, "fwupdate: invalid argument: \"%s\": %s\n",
+		errx(2, _("invalid argument: \"%s\": %s"),
 			poptBadOption(optcon, 0), poptStrerror(rc));
 
 	if (poptPeekArg(optcon))
-		errx(3, "fwupdate: invalid argument: \"%s\"\n",
+		errx(3, _("invalid argument: \"%s\""),
 			poptPeekArg(optcon));
 
+	if (!action) {
+		warnx(_("no action specified"));
+		poptPrintUsage(optcon, stderr, 0);
+		exit(4);
+	}
 	poptFreeContext(optcon);
+
+	if (action & ACTION_SUPPORTED) {
+		rc = fwup_supported();
+		if (rc == 0) {
+			if (!quiet)
+				printf("Firmware updates are not supported on this machine.\n");
+			return 1;
+		} else if (rc == 1) {
+			if (!quiet)
+				printf("Firmware updates are supported on this machine.\n");
+			return 0;
+		}
+	} else if (action & ACTION_LIST) {
+		rc = print_system_resources();
+		if (rc < 0 && fwup_error != ENOENT)
+			errx(5, "Could not list system firmware resources");
+		return 0;
+	}
+
+	return 0;
 }

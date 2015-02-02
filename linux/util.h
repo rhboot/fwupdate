@@ -11,9 +11,9 @@
 #define LIBFW_UTIL_H
 
 #define  _(String) gettext (String)
-#define Q_(String) dpgettext (NULL, String, 0)
+#define Q_(String) dgettext (NULL, String)
 #define N_(String) (String)
-#define C_(Context,String) dpgettext (NULL, Context "\004" String, strlen (Context) + 1)
+#define C_(Context,String) dgettext (Context,String)
 #define NC_(Context, String) (String)
 
 #endif /* LIBFW_UTIL_H */
