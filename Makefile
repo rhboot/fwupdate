@@ -1,6 +1,6 @@
 MAKE = make
 
-SUBDIRS = efi
+SUBDIRS = efi linux
 
 all clean install :
 	@for x in $(SUBDIRS) ; do \
