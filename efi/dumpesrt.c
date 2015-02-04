@@ -74,18 +74,19 @@ format_text(UINT8 *data, UINTN size, CHAR16 *buf)
 	UINTN sz = (UINTN)data % 16;
 	int offset = 0;
 	int i;
+	int j;
 
 	for (i = 0; i < sz; i++)
 		buf[offset++] = L' ';
 	buf[offset++] = L'|';
-	for (; i < 16 && i < size; i++) {
-		if (isprint(data[i]))
-			buf[offset++] = data[i];
+	for (j = sz; j < 16 && j < size; j++) {
+		if (isprint(data[j-sz]))
+			buf[offset++] = data[j-sz];
 		else
 			buf[offset++] = L'.';
 	}
 	buf[offset++] = L'|';
-	for (; i < 16; i++)
+	for (i = j; i < 16; i++)
 		buf[offset++] = L' ';
 	buf[offset] = L'\0';
 }
