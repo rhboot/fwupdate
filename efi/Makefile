@@ -1,16 +1,38 @@
-CC=gcc
-LD=ld
-CFLAGS=-mno-red-zone -mno-mmx -mno-sse -O0 -fpic -Wall -fshort-wchar \
+CC		= $(CROSS_COMPILE)gcc
+LD		= $(CROSS_COMPILE)ld
+OBJCOPY		= $(CROSS_COMPILE)objcopy
+
+ARCH		= $(shell $(CC) -dumpmachine | cut -f1 -d- | sed s,i[3456789]86,ia32,)
+CFLAGS		= -O0 -g3
+BUILDFLAGS	:= $(CFLAGS) -fpic -Wall -fshort-wchar \
 	-fno-strict-aliasing -fno-merge-constants -ffreestanding \
-	-fno-stack-protector -fno-stack-check -DCONFIG_x86_64 \
-	-DGNU_EFI_USE_MS_ABI -maccumulate-outgoing-args --std=c11 \
-	-D__KERNEL__ -I/usr/include/efi/ -I/usr/include/efi/x86_64/
+	-fno-stack-protector -fno-stack-check --std=c11 -DCONFIG_$(ARCH) \
+	-D__KERNEL__ -I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/
+
+ifeq ($(ARCH),x86_64)
+	BUILDFLAGS += -mno-mmx -mno-sse -mno-red-zone -nostdinc \
+		-maccumulate-outgoing-args -DEFI_FUNCTION_WRAPPER \
+		-DGNU_EFI_USE_MS_ABI -I$(shell $(CC) -print-file-name=include)
+endif
+ifeq ($(ARCH),ia32)
+	BUILDFLAGS += -mno-mmx -mno-sse -mno-red-zone -nostdinc \
+		-maccumulate-outgoing-args -m32 -I$(shell $(CC) -print-file-name=include)
+endif
+
+ifeq ($(ARCH),aarch64)
+	BUILDFLAGS += -ffreestanding -I$(shell $(CC) -print-file-name=include)
+endif
+
+ifeq ($(ARCH),arm)
+	BUILDFLAGS += -ffreestanding -I$(shell $(CC) -print-file-name=include)
+endif
+
 LDFLAGS=-nostdlib --warn-common --no-undefined --fatal-warnings -shared \
 	-Bsymbolic -L/usr/lib64 -L/usr/lib64/gnuefi \
-	/usr/lib64/gnuefi/crt0-efi-x86_64.o
+	/usr/lib64/gnuefi/crt0-efi-$(ARCH).o
 MAME=make
 
-TARGETS = fakeesrt.efi dumpesrt.efi fwupdate.efi mkvar.efi
+TARGETS = fakeesrt.efi dumpesrt.efi fwupdate.efi mkvar.efi dumpf.efi
 
 all : $(TARGETS)
 
@@ -23,11 +45,11 @@ all : $(TARGETS)
 
 %.so : %.o
 	$(LD) $(LDFLAGS) -o $@ $^ -lefi -lgnuefi \
-		/usr/lib/gcc/x86_64-redhat-linux/4.9.2/libgcc.a \
-		-T /usr/lib64/gnuefi/elf_x86_64_efi.lds
+		$(shell gcc -print-libgcc-file-name) \
+		-T /usr/lib64/gnuefi/elf_$(ARCH)_efi.lds
 
 %.o : %.c
-	$(CC) $(CFLAGS) -c -o $@ $^
+	$(CC) $(BUILDFLAGS) -c -o $@ $^
 
 clean :
 	@rm -vf $(TARGETS) *.o *.so *.efi.unsigned *.efi
