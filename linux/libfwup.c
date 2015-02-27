@@ -288,3 +288,8 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource *re)
 	return 1;
 }
 
+int
+fwup_set_up_update(efi_guid_t *guid, int fd)
+{
+	return 0;
+}

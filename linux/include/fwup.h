@@ -46,4 +46,6 @@ extern int fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource *re);
 extern int fwup_resource_iter_create(fwup_resource_iter **iter);
 extern int fwup_resource_iter_destroy(fwup_resource_iter **iter);
 
+extern int fwup_set_up_update(efi_guid_t *guid, int fd);
+
 #endif /* LIBFW_H */
