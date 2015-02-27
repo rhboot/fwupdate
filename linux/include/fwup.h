@@ -33,8 +33,9 @@ extern int fwup_supported(void);
 
 typedef struct fwup_resource {
 	efi_guid_t guid;
-	uint32_t type;
-	uint32_t version;
+	uint64_t hardware_instance;
+	uint32_t fw_type;
+	uint32_t fw_version;
 	uint32_t lowest_supported_fw_version;
 	uint32_t last_attempt_version;
 	uint32_t last_attempt_status;

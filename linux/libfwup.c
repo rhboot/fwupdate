@@ -88,13 +88,30 @@ fwup_strerror_r(int error, char *buf, size_t buflen)
 	return buf;
 }
 
+#define ESRT_DIR "/sys/firmware/efi/esrt/"
+#define get_esrt_dir(entries)						\
+	({								\
+		char *_esrt_dir = ESRT_DIR;				\
+		char *_alt_dir = getenv("LIBFWUP_ESRT_DIR");		\
+		char *_ret;						\
+		if (entries) {						\
+			_ret = alloca(strlen(_alt_dir?_alt_dir:_esrt_dir) \
+				      + strlen("entries/") + 1);	\
+			strcpy(_ret, _alt_dir?_alt_dir:_esrt_dir);	\
+			strcat(_ret, "entries/");			\
+		} else {						\
+			_ret = strdupa(_alt_dir?_alt_dir:_esrt_dir);	\
+		}							\
+		_ret;						\
+	})
+
 int
 fwup_supported(void)
 {
 	struct stat buf;
 	int rc;
 
-	rc = stat("/sys/firmware/efi/esrt/entries", &buf);
+	rc = stat(get_esrt_dir(1), &buf);
 	if (rc < 0)
 		return 0;
 	if (buf.st_nlink < 3)
@@ -122,7 +139,7 @@ fwup_resource_iter_create(fwup_resource_iter **iter)
 		return -1;
 	}
 
-	new->dir = opendir("/sys/firmware/efi/esrt/entries");
+	new->dir = opendir(get_esrt_dir(1));
 	if (!new->dir) {
 		fwup_error = errno;
 		return -1;
@@ -155,28 +172,58 @@ fwup_resource_iter_destroy(fwup_resource_iter **iter)
 	return 0;
 }
 
-#define get_value_from_file(dfd, file) ({				\
-		unsigned long int _val;					\
+static int
+get_uint64_from_file(int dfd, char *file, uint64_t *value)
+{
+	uint64_t val = 0;
+	uint8_t *buf = NULL;
+	size_t bufsize = 0;
+	int rc;
+
+	rc = read_file_at(dfd, file, &buf, &bufsize);
+	if (rc < 0) {
+		fwup_error = errno;
+		close(dfd);
+		return -1;
+	}
+
+	val = strtoull((char *)buf, NULL, 0);
+	if (val == ULLONG_MAX) {
+		fwup_error = errno;
+		close(dfd);
+		free(buf);
+		return -1;
+	}
+	free(buf);
+	*value = val;
+	return 0;
+}
+
+#define get_value_from_file(dfd, file)					\
+	({								\
+		uint64_t _val;						\
+		int _rc;						\
+									\
+		_rc = get_uint64_from_file(dfd, file, &_val);		\
+		if (_rc < 0)						\
+			return -1;					\
+		_val;							\
+	})
+
+#define get_string_from_file(dfd, file, str)				\
+	({								\
 		uint8_t *_buf = NULL;					\
 		size_t _bufsize = 0;					\
 		int _rc;						\
 									\
-		_rc = read_file_at(dfd, file, &_buf, &_bufsize);\
-		if (_rc < 0) {						\
-			fwup_error = errno;				\
-			close(dfd);					\
+		_rc = read_file_at(dfd, file, &_buf, &_bufsize);	\
+		if (_rc < 0)						\
 			return -1;					\
-		}							\
 									\
-		_val = strtoul((char *)_buf, NULL, 0);			\
-		if (_val == ULONG_MAX) {				\
-			fwup_error = errno;				\
-			close(dfd);					\
-			free(_buf);					\
-			return -1;					\
-		}							\
+		_buf[_bufsize] = '\0';					\
+		*str = strndupa(_buf, _bufsize);			\
 		free(_buf);						\
-		_val;							\
+		*str;							\
 	})
 
 int
@@ -186,7 +233,6 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource *re)
 		fwup_error = EINVAL;
 		return -1;
 	}
-
 
 	struct dirent *entry;
 	while (1) {
@@ -209,7 +255,11 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource *re)
 		return -1;
 	}
 
-	re->capsule_flags = get_value_from_file(dfd, "capsule_flags");
+	char *class = NULL;
+	get_string_from_file(dfd, "fw_class", &class);
+	int rc = efi_str_to_guid(class, &re->guid);
+	if (rc < 0)
+		return rc;
 	re->fw_type = get_value_from_file(dfd, "fw_type");
 	re->fw_version = get_value_from_file(dfd, "fw_version");
 	re->last_attempt_status =
@@ -218,10 +268,10 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource *re)
 			get_value_from_file(dfd, "last_attempt_version");
 	re->lowest_supported_fw_version =
 			get_value_from_file(dfd, "lowest_supported_fw_version");
+	re->hardware_instance = get_value_from_file(dfd, "hardware_instance");
 
 	uint8_t *buf = NULL;
 	size_t bufsize = 0;
-	int rc;
 
 	rc = read_file_at(dfd, "fw_class", &buf, &bufsize);
 	if (rc < 0) {
