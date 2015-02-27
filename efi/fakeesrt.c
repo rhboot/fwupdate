@@ -15,6 +15,7 @@ typedef struct esre {
 	UINT32		capsule_flags;
 	UINT32		last_attempt_version;
 	UINT32		last_attempt_status;
+	UINT64		hardware_instance;
 } esre_t;
 
 #define guid0 { 0x0712233d, 0xfe15, 0x434c, { 0xbf, 0x4d, 0xa3, 0x4a, 0x05, 0x03, 0x14, 0x4a }}
@@ -31,9 +32,9 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *systab)
 		esre_t esre0;
 		esre_t esre1;
 	} __attribute__((packed)) esrt = {
-		.esrt = { 2, 2, 12345 },
-		.esre0 = { guid0, 0, 0, 0, 0x80f1, 0, 0 },
-		.esre1 = { guid1, 1, 9, 7, 0x80f1, 0, 0 },
+		.esrt = { 2, 2, 3 },
+		.esre0 = { guid0, 0, 0, 0, 0x80f1, 0, 0, 0 },
+		.esre1 = { guid1, 1, 9, 7, 0x80f1, 0, 0, 0 },
 	};
 	EFI_STATUS status;
 	EFI_PHYSICAL_ADDRESS mem = 0;

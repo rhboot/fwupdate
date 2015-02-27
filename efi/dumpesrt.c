@@ -7,7 +7,15 @@ typedef struct esrt {
 	UINT64 version;
 } esrt_t;
 
-typedef struct esre {
+typedef struct esre2 {
+	EFI_GUID	fw_class;
+	UINT32		fw_type;
+	UINT32		fw_version;
+	UINT32		lowest_supported_fw_version;
+	UINT32		capsule_flags;
+} esre2_t;
+
+typedef struct esre3 {
 	EFI_GUID	fw_class;
 	UINT32		fw_type;
 	UINT32		fw_version;
@@ -15,7 +23,8 @@ typedef struct esre {
 	UINT32		capsule_flags;
 	UINT32		last_attempt_version;
 	UINT32		last_attempt_status;
-} esre_t;
+	UINT64		hardware_instance;
+} esre3_t;
 
 #define esrt_guid {  0xb122a263, 0x3661, 0x4f68, { 0x99, 0x29, 0x78, 0xf8, 0xb0, 0xd6, 0x21, 0x80 }}
 
@@ -121,13 +130,33 @@ static void
 dump_esrt(VOID *data)
 {
 	esrt_t *esrt = data;
-	esre_t *esre = data + sizeof (*esrt);
+	esre2_t *esre2 = data + sizeof (*esrt);
+	esre3_t *esre3 = data + sizeof (*esrt);
 
 	hexdump(data, sizeof(*esrt));
 
 	for (int i = 0; i < esrt->fw_resource_count; i++) {
-		hexdump((void *)esre, sizeof (*esre));
-		esre++;
+		if (esrt->version == 3) {
+			hexdump((void *)esre3, sizeof (*esre3));
+			Print(L"{%g}:\n", &esre3->fw_class);
+			Print(L"  type:%d fv:0x%08x lsfv:0x%08x fl:0x%08x ",
+			      esre3->fw_type, esre3->fw_version,
+			      esre3->lowest_supported_fw_version,
+			      esre3->capsule_flags);
+			Print(L"lav: 0x%08x las: %d\n",
+			      esre3->last_attempt_version,
+			      esre3->last_attempt_status);
+			Print(L"hi: %d\n", esre3->hardware_instance);
+			esre3++;
+		} else {
+			hexdump((void *)esre2, sizeof (*esre2));
+			Print(L"{%g}:\n", &esre2->fw_class);
+			Print(L"  type:%d fv:0x%08x lsfv:0x%08x fl:0x%08x ",
+			      esre2->fw_type, esre2->fw_version,
+			      esre2->lowest_supported_fw_version,
+			      esre2->capsule_flags);
+			esre2++;
+		}
 	}
 }
 
