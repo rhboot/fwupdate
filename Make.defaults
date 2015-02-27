@@ -1,0 +1,16 @@
+INSTALL 	?= install
+MAKE		?= make
+CC		= $(CROSS_COMPILE)gcc
+LD		= $(CROSS_COMPILE)ld
+OBJCOPY		= $(CROSS_COMPILE)objcopy
+XGETTEXT	= xgettext
+
+libdir		?= /usr/lib64/
+pcdir		?= $(libdir)/pkgconfig/
+mandir		?= /usr/share/man/
+includedir	?= /usr/include/
+bindir		?= /usr/bin/
+datadir		?= /usr/share/
+localedir	?= $(datadir)/locale/
+
+EFIDIR		?= redhat

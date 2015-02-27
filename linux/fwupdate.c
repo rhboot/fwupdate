@@ -85,12 +85,24 @@ print_system_resources(void)
 		return -1;
 	}
 
+	fwup_resource re = { {0}, 0 };
+	while ((rc = fwup_resource_iter_next(iter, &re)) > 0) {
+		char *id_guid = NULL;
+		rc = efi_guid_to_id_guid(&re.guid, &id_guid);
+		if (rc < 0)
+			return -1;
+		printf("%s version %d can be updated to any version above %d\n",
+			id_guid, re.fw_version, re.lowest_supported_fw_version);
+		free(id_guid);
+	}
+	if (rc < 0)
+		return -1;
 	return 0;
 }
 
 #define ACTION_APPLY		0x01
 #define ACTION_LIST		0x02
-#define ACTION_SUPPORTED	0x03
+#define ACTION_SUPPORTED	0x04
 
 int
 main(int argc, char *argv[]) {

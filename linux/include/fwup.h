@@ -33,17 +33,16 @@ extern int fwup_supported(void);
 
 typedef struct fwup_resource {
 	efi_guid_t guid;
-	uint32_t fw_type;
-	uint32_t fw_version;
+	uint32_t type;
+	uint32_t version;
 	uint32_t lowest_supported_fw_version;
 	uint32_t last_attempt_version;
 	uint32_t last_attempt_status;
-	uint32_t capsule_flags;
 } fwup_resource;
 
-typedef struct fwup_resource_iter fwup_resource_iter;
-extern int fwup_resource_iter_create(fwup_resource_iter **iter);
+typedef struct fwup_resource_iter_s fwup_resource_iter;
 extern int fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource *re);
+extern int fwup_resource_iter_create(fwup_resource_iter **iter);
 extern int fwup_resource_iter_destroy(fwup_resource_iter **iter);
 
 #endif /* LIBFW_H */

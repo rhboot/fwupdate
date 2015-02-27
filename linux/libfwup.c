@@ -8,15 +8,18 @@
  * Author: Peter Jones <pjones@redhat.com>
  */
 
+#include <dirent.h>
 #include <efivar.h>
-#include <libintl.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "fwup.h"
+#include <fwup.h>
+#include "util.h"
 
 static __thread int __fwup_error;
 
@@ -101,8 +104,9 @@ fwup_supported(void)
 
 #define FWUPDATE_GUID EFI_GUID(0x0abba7dc,0xe516,0x4167,0xbbf5,0x4d,0x9d,0x1c,0x73,0x94,0x16)
 
-typedef struct fwup_resource_iter {
-	int a;
+typedef struct fwup_resource_iter_s {
+	DIR *dir;
+	int dirfd;
 } fwup_resource_iter;
 
 int
@@ -118,15 +122,18 @@ fwup_resource_iter_create(fwup_resource_iter **iter)
 		return -1;
 	}
 
-	DIR *dir;
-	int dfd;
-
-	dir = opendir("/sys/firmware/efi/esrt/");
-	if (!dir) {
+	new->dir = opendir("/sys/firmware/efi/esrt/entries");
+	if (!new->dir) {
+		fwup_error = errno;
+		return -1;
+	}
+	new->dirfd = dirfd(new->dir);
+	if (new->dirfd < 0) {
 		fwup_error = errno;
 		return -1;
 	}
 
+	*iter = new;
 	return 0;
 }
 
@@ -140,7 +147,94 @@ fwup_resource_iter_destroy(fwup_resource_iter **iter)
 	if (!*iter)
 		return 0;
 
+	if ((*iter)->dir)
+		closedir((*iter)->dir);
+
 	free(*iter);
 	*iter = NULL;
 	return 0;
 }
+
+#define get_value_from_file(dfd, file) ({				\
+		unsigned long int _val;					\
+		uint8_t *_buf = NULL;					\
+		size_t _bufsize = 0;					\
+		int _rc;						\
+									\
+		_rc = read_file_at(dfd, file, &_buf, &_bufsize);\
+		if (_rc < 0) {						\
+			fwup_error = errno;				\
+			close(dfd);					\
+			return -1;					\
+		}							\
+									\
+		_val = strtoul((char *)_buf, NULL, 0);			\
+		if (_val == ULONG_MAX) {				\
+			fwup_error = errno;				\
+			close(dfd);					\
+			free(_buf);					\
+			return -1;					\
+		}							\
+		free(_buf);						\
+		_val;							\
+	})
+
+int
+fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource *re)
+{
+	if (!iter || !re) {
+		fwup_error = EINVAL;
+		return -1;
+	}
+
+
+	struct dirent *entry;
+	while (1) {
+		errno = 0;
+		entry = readdir(iter->dir);
+		if (!entry) {
+			if (errno != 0) {
+				fwup_error = errno;
+				return -1;
+			}
+			return 0;
+		}
+		if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
+			break;
+	}
+
+	int dfd = openat(iter->dirfd, entry->d_name, O_RDONLY|O_DIRECTORY);
+	if (dfd < 0) {
+		fwup_error = errno;
+		return -1;
+	}
+
+	re->capsule_flags = get_value_from_file(dfd, "capsule_flags");
+	re->fw_type = get_value_from_file(dfd, "fw_type");
+	re->fw_version = get_value_from_file(dfd, "fw_version");
+	re->last_attempt_status =
+			get_value_from_file(dfd, "last_attempt_status");
+	re->last_attempt_version =
+			get_value_from_file(dfd, "last_attempt_version");
+	re->lowest_supported_fw_version =
+			get_value_from_file(dfd, "lowest_supported_fw_version");
+
+	uint8_t *buf = NULL;
+	size_t bufsize = 0;
+	int rc;
+
+	rc = read_file_at(dfd, "fw_class", &buf, &bufsize);
+	if (rc < 0) {
+		fwup_error = errno;
+		close(dfd);
+		return -1;
+	}
+	close(dfd);
+	rc = efi_str_to_guid((char *)buf, &re->guid);
+	fwup_error = errno;
+	free(buf);
+	if (rc < 0)
+		return rc;
+	return 1;
+}
+

@@ -1,6 +1,6 @@
-CC		= $(CROSS_COMPILE)gcc
-LD		= $(CROSS_COMPILE)ld
-OBJCOPY		= $(CROSS_COMPILE)objcopy
+TOPDIR	?= $(shell pwd)/..
+include $(TOPDIR)/Make.defaults
+
 
 ARCH		= $(shell $(CC) -dumpmachine | cut -f1 -d- | sed s,i[3456789]86,ia32,)
 CFLAGS		= -O0 -g3
@@ -53,3 +53,7 @@ all : $(TARGETS)
 
 clean :
 	@rm -vf $(TARGETS) *.o *.so *.efi.unsigned *.efi
+
+install : fwupdate.efi
+	$(INSTALL) -d -m 755 $(DESTDIR)/boot/efi/EFI/$(EFIDIR)/fw/
+	$(INSTALL) -m 755 fwupdate.efi $(DESTDIR)/boot/efi/EFI/$(EFIDIR)/fwupdate.efi
