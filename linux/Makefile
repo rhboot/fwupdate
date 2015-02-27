@@ -21,8 +21,6 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wno-unused-result -Wno-unused-function \
 	-I$(TOPDIR)/linux/include \
 	$(foreach pklib,$(PKLIBS), $(shell pkg-config --cflags $(pklib)))
 
-VERSION	= 0.1
-
 BINTARGETS=fwupdate
 INCTARGETS=include/fwup.h
 LIBTARGETS=libfwup.so.$(VERSION) libfwup.so
