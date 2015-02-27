@@ -56,6 +56,13 @@ fwup.pc : fwup.pc.in
 		-e "s,@@LIBDIR@@,$(libdir),g" \
 		$< > $@
 
+tester : tester.c
+	$(CC) -Wall -Werror -ggdb -L. -I./include -I/usr/include/efivar \
+		-lefivar -lfwup -o $@ $^
+
+test : tester
+	LD_LIBRARY_PATH=$(shell pwd) ./tester
+
 clean :
 	@rm -vf $(BINTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) *.o
 
