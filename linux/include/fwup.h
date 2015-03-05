@@ -16,8 +16,8 @@
 
 extern int *__fwup_error_location(void);
 #define fwup_error (*__fwup_error_location())
-extern char *fwup_strerror(int error);
-extern char *fwup_strerror_r(int error, char *buf, size_t buflen);
+extern const char const *fwup_strerror(int error);
+extern const char const *fwup_strerror_r(int error, char *buf, size_t buflen);
 #define fwup_warn(fmt, args...) \
 	warnx(fmt ": %s", ## args, fwup_strerror(fwup_error));
 #define fwup_err(val, fmt, args...) \

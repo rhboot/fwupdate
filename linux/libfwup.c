@@ -39,7 +39,7 @@ static const char const *error_table[MAX_ERROR - ERANGE] = {
 
 static __thread char unknown[] = "Unknown error -2147483648";
 
-char *
+const char const *
 fwup_strerror(int error)
 {
 	if (error < 0 || error >= MAX_ERROR) {
@@ -53,7 +53,7 @@ fwup_strerror(int error)
 	return dgettext("libfwup", error_table[error - ERANGE]);
 }
 
-char *
+const char const *
 fwup_strerror_r(int error, char *buf, size_t buflen)
 {
 	if (!buf || !buflen) {
