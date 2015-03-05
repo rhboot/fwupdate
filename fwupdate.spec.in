@@ -59,12 +59,11 @@ git commit -a -q -m "%{version} baseline."
 git am %{patches} </dev/null
 
 %build
-make libdir=%{_libdir} bindir=%{_bindir} efidir=%{efidir} \
-	OPT_FLAGS="$RPM_OPT_FLAGS"
+make OPT_FLAGS="$RPM_OPT_FLAGS" libdir=%{_libdir} bindir=%{_bindir} efidir=%{efidir} \
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%makeinstall efidir=%{efidir}
+%makeinstall efidir=%{efidir} DESTDIR=${RPM_BUILD_ROOT}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -76,8 +75,10 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %{!?_licensedir:%global license %%doc}
 %license COPYING
-%doc README
+# %%doc README
 %{_bindir}/fwupdate
+/boot/efi/EFI/%{efidir}/fwupdate.efi
+%{_datadir}/locale/en/*.po
 #%{_mandir}/man1/*
 
 %files devel
