@@ -55,5 +55,5 @@ clean :
 	@rm -vf $(TARGETS) *.o *.so *.efi.unsigned *.efi
 
 install : fwupdate.efi
-	$(INSTALL) -d -m 755 $(DESTDIR)/boot/efi/EFI/$(EFIDIR)/fw/
-	$(INSTALL) -m 755 fwupdate.efi $(DESTDIR)/boot/efi/EFI/$(EFIDIR)/fwupdate.efi
+	$(INSTALL) -d -m 755 $(DESTDIR)/boot/efi/EFI/$(efidir)/fw/
+	$(INSTALL) -m 755 fwupdate.efi $(DESTDIR)/boot/efi/EFI/$(efidir)/fwupdate.efi

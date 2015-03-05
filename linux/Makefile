@@ -23,10 +23,10 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wno-unused-result -Wno-unused-function \
 
 BINTARGETS=fwupdate
 INCTARGETS=include/fwup.h
-LIBTARGETS=libfwup.so.$(VERSION) libfwup.so
+LIBTARGETS=libfwup.so.$(VERSION)
 PCTARGETS=fwup.pc
 POTARGETS = fwupdate.po libfwup.po
-TARGETS=$(BINTARGETS) $(INCTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS)
+TARGETS=$(BINTARGETS) $(INCTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) libfwup.so
 
 .SUFFIXES:
 
@@ -67,16 +67,17 @@ clean :
 	@rm -vf $(BINTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) *.o
 
 install : all
-	$(INSTALL) -d -m 755 $(DESTDIR)$(libdir)
-	$(foreach x, $(LIBTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)$(libdir);)
-	$(INSTALL) -d -m 755 $(DESTDIR)$(PCDIR)
-	$(foreach x, $(PCTARGETS), $(INSTALL) -m 644 $(x) $(DESTDIR)$(PCDIR) ;)
-	$(INSTALL) -d -m 755 $(DESTDIR)$(includedir)/
-	$(INSTALL) -m 644 $(INCTARGETS) $(DESTDIR)/$(includedir)/
-	$(INSTALL) -d -m 755 $(DESTDIR)$(localedir)/en/
-	$(INSTALL) -m 644 $(POTARGETS) $(DESTDIR)$(localedir)/en/
-	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
-	$(foreach x, $(BINTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)$(bindir);)
-	$(foreach x, $(wildcard *.so.$(SONAME_VERSION)), ln -fs $(x) $(patsubst %.so.$(SONAME_VERSION),%.so,$(DESTDIR)$(libdir)/$(x));)
+	$(INSTALL) -d -m 755 $(libdir)
+	$(foreach x, $(LIBTARGETS), $(INSTALL) -m 755 $(x) $(libdir);)
+	$(INSTALL) -d -m 755 $(pcdir)
+	$(foreach x, $(PCTARGETS), $(INSTALL) -m 644 $(x) $(pcdir) ;)
+	$(INSTALL) -d -m 755 $(includedir)/
+	$(INSTALL) -m 644 $(INCTARGETS) $(includedir)/
+	$(INSTALL) -d -m 755 $(localedir)/en/
+	$(INSTALL) -m 644 $(POTARGETS) $(localedir)/en/
+	$(INSTALL) -d -m 755 $(bindir)
+	$(foreach x, $(BINTARGETS), $(INSTALL) -m 755 $(x) $(bindir);)
+	ln -s libfwup.so.$(VERSION) $(libdir)/libfwup.so
+	$(foreach x, $(wildcard *.so.$(VERSION)), ln -fs $(x) $(patsubst %.so.$(VERSION),%.so,$(libdir)/$(x));)
 
 

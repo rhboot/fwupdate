@@ -5,12 +5,12 @@ LD		= $(CROSS_COMPILE)ld
 OBJCOPY		= $(CROSS_COMPILE)objcopy
 XGETTEXT	= xgettext
 
-libdir		?= /usr/lib64/
+libdir		?= $(DESTDIR)/usr/lib64/
 pcdir		?= $(libdir)/pkgconfig/
-mandir		?= /usr/share/man/
-includedir	?= /usr/include/
-bindir		?= /usr/bin/
-datadir		?= /usr/share/
+mandir		?= $(DESTDIR)/usr/share/man/
+includedir	?= $(DESTDIR)/usr/include/
+bindir		?= $(DESTDIR)/usr/bin/
+datadir		?= $(DESTDIR)/usr/share/
 localedir	?= $(datadir)/locale/
 
 EFIDIR		?= redhat
