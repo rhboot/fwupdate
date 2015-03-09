@@ -10,8 +10,6 @@
 #ifndef _FWUP_EFI_H
 #define _FWUP_EFI_H
 
-#define FWUPDATE_GUID EFI_GUID(0x0abba7dc,0xe516,0x4167,0xbbf5,0x4d,0x9d,0x1c,0x73,0x94,0x16)
-
 #define FWUPDATE_ATTEMPT_UPDATE		0x00000001
 #define FWUPDATE_ATTEMPTED		0x00000002
 
@@ -36,6 +34,7 @@ typedef struct update_info_s {
 
 	/* stuff we need to apply an update */
 	efi_guid_t guid;
+	uint32_t capsule_flags;
 	uint64_t hw_inst;
 
 	efi_time_t time_attempted;
