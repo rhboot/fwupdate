@@ -125,6 +125,7 @@ typedef struct esre_s {
 	uint32_t fw_type;
 	uint32_t fw_version;
 	uint32_t lowest_supported_fw_version;
+	uint32_t capsule_flags;
 	uint32_t last_attempt_version;
 	uint32_t last_attempt_status;
 } esre;
@@ -138,6 +139,8 @@ free_info(update_info *info)
 		free(info);
 	}
 }
+
+#define FWUPDATE_GUID EFI_GUID(0x0abba7dc,0xe516,0x4167,0xbbf5,0x4d,0x9d,0x1c,0x73,0x94,0x16)
 
 static int
 get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
@@ -367,6 +370,7 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 	}
 	res->esre.fw_type = get_value_from_file(dfd, "fw_type");
 	res->esre.fw_version = get_value_from_file(dfd, "fw_version");
+	res->esre.capsule_flags = get_value_from_file(dfd, "capsule_flags");
 	res->esre.last_attempt_status =
 			get_value_from_file(dfd, "last_attempt_status");
 	res->esre.last_attempt_version =
@@ -380,6 +384,7 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 		free(res);
 		return rc;
 	}
+	res->info->capsule_flags = res->esre.capsule_flags;
 
 	return 0;
 }
