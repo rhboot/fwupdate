@@ -19,7 +19,7 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wno-unused-result -Wno-unused-function \
 	-fshort-wchar --std=c11 \
 	-DLOCALEDIR=\"$(localedir)\" -D_GNU_SOURCE \
 	-DFWUP_EFI_DIR_NAME="$(EFIDIR)"  \
-	-I$(TOPDIR)/linux/include \
+	-I$(TOPDIR)/linux/include -iquote$(FWUPINC) \
 	$(foreach pklib,$(PKLIBS), $(shell pkg-config --cflags $(pklib)))
 
 BINTARGETS=fwupdate
