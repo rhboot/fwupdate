@@ -3,10 +3,9 @@ VERSION = 0.1
 SUBDIRS = efi linux
 
 all clean install :
-	@for x in $(SUBDIRS) ; do \
+	@set -e ; for x in $(SUBDIRS) ; do \
 		$(MAKE) DESTDIR=$(DESTDIR) TOPDIR=$(TOPDIR) VERSION=$(VERSION) \
 			bindir=$(bindir) mandir=$(mandir) \
-			FWUPINC=$(TOPDIR)/include \
 			-C $$x $@ ; \
 	done
 

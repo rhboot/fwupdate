@@ -8,7 +8,7 @@ BUILDFLAGS	:= $(CFLAGS) -fpic -Wall -fshort-wchar \
 	-fno-strict-aliasing -fno-merge-constants -ffreestanding \
 	-fno-stack-protector -fno-stack-check --std=c11 -DCONFIG_$(ARCH) \
 	-D__KERNEL__ -I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
-	-iquote$(FWUPINC)
+	-iquote$(TOPDIR)/include
 
 ifeq ($(ARCH),x86_64)
 	BUILDFLAGS += -mno-mmx -mno-sse -mno-red-zone -nostdinc \
