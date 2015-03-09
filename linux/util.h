@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libintl.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -94,6 +95,68 @@ err:
 
 	errno = saved_errno;
 	return -1;
+}
+
+#define onstack(buf, len) ({						\
+		char *__newbuf = alloca(len);				\
+		memcpy(__newbuf, buf, len);				\
+		free(buf);						\
+		(void *)__newbuf;					\
+	})
+
+#define get_value_from_file(dfd, file)					\
+	({								\
+		uint64_t _val;						\
+		int _rc;						\
+									\
+		_rc = get_uint64_from_file(dfd, file, &_val);		\
+		if (_rc < 0)						\
+			return -1;					\
+		_val;							\
+	})
+
+#define get_string_from_file(dfd, file, str)				\
+	({								\
+		uint8_t *_buf = NULL;					\
+		size_t _bufsize = 0;					\
+		int _rc;						\
+									\
+		_rc = read_file_at(dfd, file, &_buf, &_bufsize);	\
+		if (_rc < 0)						\
+			return -1;					\
+									\
+		_buf[_bufsize] = '\0';					\
+		*str = strndupa(_buf, _bufsize);			\
+		free(_buf);						\
+		*str;							\
+	})
+
+static int
+__attribute__((__unused__))
+get_uint64_from_file(int dfd, char *file, uint64_t *value)
+{
+	uint64_t val = 0;
+	uint8_t *buf = NULL;
+	size_t bufsize = 0;
+	int rc;
+
+	rc = read_file_at(dfd, file, &buf, &bufsize);
+	if (rc < 0) {
+		fwup_error = errno;
+		close(dfd);
+		return -1;
+	}
+
+	val = strtoull((char *)buf, NULL, 0);
+	if (val == ULLONG_MAX) {
+		fwup_error = errno;
+		close(dfd);
+		free(buf);
+		return -1;
+	}
+	free(buf);
+	*value = val;
+	return 0;
 }
 
 #endif /* LIBFW_UTIL_H */

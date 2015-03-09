@@ -20,8 +20,8 @@
 #include <uchar.h>
 #include <unistd.h>
 
+#include <fwup.h>
 #include "util.h"
-#include "fwup.h"
 
 #define CAPSULE_FLAGS_PERSIST_ACROSS_RESET    0x00010000
 #define CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE   0x00020000
@@ -85,14 +85,23 @@ print_system_resources(void)
 		return -1;
 	}
 
-	fwup_resource re = { {0}, 0 };
+	fwup_resource *re = NULL;
 	while ((rc = fwup_resource_iter_next(iter, &re)) > 0) {
+		efi_guid_t *guid = NULL;
 		char *id_guid = NULL;
-		rc = efi_guid_to_id_guid(&re.guid, &id_guid);
+		uint32_t vers;
+		uint32_t lowest;
+
+		fwup_get_guid(re, &guid);
+		rc = efi_guid_to_id_guid(guid, &id_guid);
 		if (rc < 0)
 			return -1;
+
+		fwup_get_fw_version(re, &vers);
+		fwup_get_lowest_supported_fw_version(re, &lowest);
+
 		printf("%s version %d can be updated to any version above %d\n",
-			id_guid, re.fw_version, re.lowest_supported_fw_version);
+			id_guid, vers, lowest);
 		free(id_guid);
 	}
 	if (rc < 0)
@@ -109,6 +118,11 @@ main(int argc, char *argv[]) {
 	int action = 0;
 	int quiet = 0;
 
+	const char *guidstr = NULL;
+	const char *filename = NULL;
+
+	efi_guid_t guid;
+
 	setlocale(LC_ALL, "");
 	bindtextdomain("fwupdate", LOCALEDIR);
 	textdomain("fwupdate");
@@ -116,7 +130,8 @@ main(int argc, char *argv[]) {
 	struct poptOption options[] = {
 		{NULL, '\0', POPT_ARG_INTL_DOMAIN, "fwupdate" },
 		{"apply", 'a', POPT_ARG_VAL|POPT_ARGFLAG_OR, &action,
-			ACTION_APPLY, _("Apply firmware updates"), NULL},
+			ACTION_APPLY, _("Apply firmware updates"),
+			"<guid> <firmware.cap>"},
 		{"list", 'l', POPT_ARG_VAL|POPT_ARGFLAG_OR, &action,
 			ACTION_LIST, _("List supported firmware updates"),
 			NULL},
@@ -141,6 +156,28 @@ main(int argc, char *argv[]) {
 
 	while ((rc = poptGetNextOpt(optcon)) > 0)
 		;
+
+	if (action & ACTION_APPLY) {
+		int rc;
+		guidstr = poptGetArg(optcon);
+		if (!guidstr) {
+			warnx(_("missing argument: %s"), "guid");
+			poptPrintUsage(optcon, stderr, 0);
+			exit(1);
+		}
+		rc = efi_str_to_guid(guidstr, &guid);
+		if (rc < 0)
+			errx(1, _("Invalid guid: \"%s\""), guidstr);
+
+		filename = poptGetArg(optcon);
+		if (!filename) {
+				warnx(_("missing argument: %s"),
+				      "filename.cap");
+			poptPrintUsage(optcon, stderr, 0);
+			exit(1);
+		}
+	}
+
 
 	if (rc < -1)
 		errx(2, _("invalid argument: \"%s\": %s"),
@@ -173,6 +210,36 @@ main(int argc, char *argv[]) {
 		if (rc < 0 && fwup_error != ENOENT)
 			errx(5, "Could not list system firmware resources");
 		return 0;
+	} else if (action & ACTION_APPLY) {
+		fwup_resource_iter *iter = NULL;
+		fwup_resource_iter_create(&iter);
+		fwup_resource *re = NULL;
+
+		while (1) {
+			rc = fwup_resource_iter_next(iter, &re);
+			if (rc < 0)
+				err(2, _("Could not iterate resources"));
+			if (rc == 0)
+				break;
+
+			efi_guid_t *tmpguid = NULL;
+
+			fwup_get_guid(re, &tmpguid);
+
+			if (!efi_guid_cmp(tmpguid, &guid)) {
+				int fd = open(filename, O_RDONLY);
+				if (fd < 0)
+					err(2, _("could not open \"%s\""),
+					    filename);
+
+				rc = fwup_set_up_update(re, 0, fd);
+				if (rc < 0)
+					errx(2, _("could not set up firmware update: %s\""), fwup_strerror(fwup_error));
+				printf("Success!\n");
+				exit(0);
+			}
+		}
+		errx(2, _("firmware resource not found"));
 	}
 
 	return 0;
