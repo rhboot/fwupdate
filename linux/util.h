@@ -126,7 +126,7 @@ err:
 			return -1;					\
 									\
 		_buf[_bufsize] = '\0';					\
-		*str = strndupa(_buf, _bufsize);			\
+		*str = strndupa((__typeof__(*str))_buf, _bufsize);	\
 		free(_buf);						\
 		*str;							\
 	})
