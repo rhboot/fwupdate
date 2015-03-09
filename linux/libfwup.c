@@ -19,6 +19,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define EFI_TIME efi_time_t
+
 #include <fwup.h>
 #include "util.h"
 #include "fwup-efi.h"

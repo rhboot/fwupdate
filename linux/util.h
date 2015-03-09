@@ -159,4 +159,18 @@ get_uint64_from_file(int dfd, char *file, uint64_t *value)
 	return 0;
 }
 
+typedef struct {
+	uint16_t year;
+	uint8_t month;
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minute;
+	uint8_t second;
+	uint8_t pad1;
+	uint32_t nanosecond;
+	uint16_t timezone;
+	uint8_t daylight;
+	uint8_t pad2;
+} efi_time_t;
+
 #endif /* LIBFW_UTIL_H */

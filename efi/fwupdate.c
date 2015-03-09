@@ -19,6 +19,13 @@ EFI_GUID fwupdate_guid = {0x0abba7dc,0xe516,0x4167,{0xbb,0xf5,0x4d,0x9d,0x1c,0x7
 
 #include "fwup-efi.h"
 
+typedef struct update_table_s {
+	CHAR16 *name;
+	UINT32 attributes;
+	UINTN size;
+	update_info *info;
+} update_table;
+
 static EFI_STATUS
 allocate(void **addr, UINTN size)
 {
@@ -133,7 +140,7 @@ read_variable(CHAR16 *name, EFI_GUID guid, void **buf_out, UINTN *buf_size_out,
 }
 
 static EFI_STATUS
-get_info(CHAR16 *name, update_info **info_out)
+get_info(CHAR16 *name, update_table *info_out)
 {
 	EFI_STATUS rc;
 	update_info *info = NULL;
@@ -157,23 +164,27 @@ get_info(CHAR16 *name, update_info **info_out)
 		return EFI_INVALID_PARAMETER;
 	}
 
-	info_size -= EFI_FIELD_OFFSET(update_info, dp);
+	UINTN is = info_size - EFI_FIELD_OFFSET(update_info, dp);
 	EFI_DEVICE_PATH *hdr = (EFI_DEVICE_PATH *)&info->dp;
 	UINTN sz = *(UINT16 *)hdr->Length;
-	if (info_size != sz) {
+	if (is != sz) {
 		Print(L"Update \"%s\" has an invalid file path.\n", name);
 		delete_variable(name, fwupdate_guid, attributes);
 		return EFI_INVALID_PARAMETER;
 	}
 
+	info_out->info = info;
+	info_out->size = info_size;
+	info_out->attributes = attributes;
+
 	return EFI_SUCCESS;
 }
 
 static EFI_STATUS
-find_updates(UINTN *n_updates_out, update_info ***updates_out)
+find_updates(UINTN *n_updates_out, update_table ***updates_out)
 {
 	EFI_STATUS rc;
-	update_info **updates = NULL;
+	update_table **updates = NULL;
 	UINTN n_updates = 0;
 	UINTN n_updates_allocated = 128;
 	EFI_STATUS ret = EFI_OUT_OF_RESOURCES;
@@ -184,7 +195,7 @@ find_updates(UINTN *n_updates_out, update_info ***updates_out)
 	CHAR16 *variable_name;
 	EFI_GUID vendor_guid = empty_guid;
 
-	updates = AllocateZeroPool(sizeof (update_info *) *n_updates_allocated);
+	updates = AllocateZeroPool(sizeof (update_table *) *n_updates_allocated);
 	if (!updates) {
 		Print(L"Could not allocate memory\n");
 		return EFI_OUT_OF_RESOURCES;
@@ -233,25 +244,36 @@ find_updates(UINTN *n_updates_out, update_info ***updates_out)
 		Print(L"Found update %s\n", vn);
 
 		if (n_updates == n_updates_allocated) {
-			update_info **new_ups;
+			update_table **new_ups;
 
-			new_ups = AllocateZeroPool(sizeof (update_info *) *
+			new_ups = AllocateZeroPool(sizeof (update_table *) *
 						   n_updates_allocated * 2);
 			if (!new_ups)
 				goto err;
-			CopyMem(new_ups, updates, sizeof (update_info *) *
+			CopyMem(new_ups, updates, sizeof (update_table *) *
 						      n_updates_allocated);
 			n_updates_allocated *= 2;
 			FreePool(updates);
 			updates = new_ups;
 		}
 
-		rc = get_info(vn, &updates[n_updates]);
+		rc = get_info(vn, updates[n_updates]);
 		if (EFI_ERROR(rc)) {
 			ret = rc;
 			goto err;
 		}
-		n_updates++;
+		if (updates[n_updates]->info->status & FWUPDATE_ATTEMPT_UPDATE){
+			EFI_TIME_CAPABILITIES timecaps = { 0, };
+			uefi_call_wrapper(RT->GetTime, 2,
+				&updates[n_updates]->info->time_attempted,
+				&timecaps);
+			updates[n_updates]->info->status = FWUPDATE_ATTEMPTED;
+			n_updates++;
+		} else {
+			FreePool(updates[n_updates]->info);
+			FreePool(updates[n_updates]);
+			updates[n_updates] = NULL;
+		}
 	}
 
 	*n_updates_out = n_updates;
@@ -329,7 +351,7 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 }
 
 static EFI_STATUS
-add_capsule(update_info *update, EFI_CAPSULE_HEADER **capsule_out,
+add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	    EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd_out)
 {
 	EFI_STATUS rc;
@@ -338,7 +360,7 @@ add_capsule(update_info *update, EFI_CAPSULE_HEADER **capsule_out,
 	UINTN fsize = 0;
 	EFI_CAPSULE_HEADER *capsule;
 
-	rc = open_file((EFI_DEVICE_PATH *)update->dp, &fh);
+	rc = open_file((EFI_DEVICE_PATH *)update->info->dp, &fh);
 	if (EFI_ERROR(rc))
 	    return rc;
 
@@ -349,16 +371,16 @@ add_capsule(update_info *update, EFI_CAPSULE_HEADER **capsule_out,
 	uefi_call_wrapper(fh->Close, 1, fh);
 	Print(L"fsize: %ld\n", fsize);
 
-	if (CompareMem(&update->guid, fbuf,
-			sizeof (update->guid)) == 0) {
+	if (CompareMem(&update->info->guid, fbuf,
+			sizeof (update->info->guid)) == 0) {
 		Print(L"Image has capsule image embedded\n");
-		Print(L"updates guid: %g\n", update->guid);
+		Print(L"updates guid: %g\n", update->info->guid);
 		Print(L"File guid: %g\n", fbuf);
 		cbd_out->Length = fsize;
 		cbd_out->Union.DataBlock =
 			(EFI_PHYSICAL_ADDRESS)(UINTN)fbuf;
 		*capsule_out = (EFI_CAPSULE_HEADER *)fbuf;
-		(*capsule_out)->Flags = update->capsule_flags;
+		(*capsule_out)->Flags = update->info->capsule_flags;
 		Print(L"Flags: 0x%08x\n", (*capsule_out)->Flags);
 	} else {
 		Print(L"Image does not have embedded header\n");
@@ -367,9 +389,9 @@ add_capsule(update_info *update, EFI_CAPSULE_HEADER **capsule_out,
 			Print(L"Could not allocate space for update: %r.\n",rc);
 			return EFI_OUT_OF_RESOURCES;
 		}
-		capsule->CapsuleGuid = update->guid;
+		capsule->CapsuleGuid = update->info->guid;
 		capsule->HeaderSize = sizeof (*capsule);
-		capsule->Flags = update->capsule_flags;
+		capsule->Flags = update->info->capsule_flags;
 		Print(L"Flags: 0x%08x\n", capsule->Flags);
 		capsule->CapsuleImageSize = fsize + sizeof (*capsule);
 
@@ -414,11 +436,30 @@ apply_capsules(EFI_CAPSULE_HEADER **capsules,
 
 }
 
+static
+EFI_STATUS
+set_statuses(UINTN n_updates, update_table **updates)
+{
+	EFI_STATUS rc;
+	for (UINTN i = 0; i < n_updates; i++) {
+		rc = uefi_call_wrapper(RT->SetVariable, 5, updates[i]->name,
+				       &fwupdate_guid, updates[i]->attributes,
+				       updates[i]->size, updates[i]->info);
+		if (EFI_ERROR(rc)) {
+			Print(L"Could not update variable status for %s: %r.\n",
+			      rc);
+			return rc;
+		}
+	}
+	return EFI_SUCCESS;
+}
+
+
 EFI_STATUS
 efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 {
 	EFI_STATUS rc;
-	update_info **updates = NULL;
+	update_table **updates = NULL;
 	UINTN n_updates = 0;
 
 	InitializeLib(image, systab);
@@ -459,6 +500,12 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 		cbd->Length = 0;
 		cbd->Union.ContinuationPointer =
 			(EFI_PHYSICAL_ADDRESS)(UINTN)cbd+j+1;
+	}
+
+	rc = set_statuses(n_updates, updates);
+	if (EFI_ERROR(rc)) {
+		Print(L"fwupdate: Could not set update status: %r\n", rc);
+		return rc;
 	}
 
 	rc = apply_capsules(capsules, cbd_data, n_updates);

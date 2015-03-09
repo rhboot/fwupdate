@@ -15,20 +15,6 @@
 
 #define UPDATE_INFO_VERSION	7
 
-typedef struct {
-	uint16_t year;
-	uint8_t month;
-	uint8_t day;
-	uint8_t hour;
-	uint8_t minute;
-	uint8_t second;
-	uint8_t pad1;
-	uint32_t nanosecond;
-	uint16_t timezone;
-	uint8_t daylight;
-	uint8_t pad2;
-} efi_time_t;
-
 typedef struct update_info_s {
 	uint32_t update_info_version;
 
@@ -37,7 +23,7 @@ typedef struct update_info_s {
 	uint32_t capsule_flags;
 	uint64_t hw_inst;
 
-	efi_time_t time_attempted;
+	EFI_TIME time_attempted;
 
 	/* our metadata */
 	uint32_t status;
