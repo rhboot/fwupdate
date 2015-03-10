@@ -101,6 +101,7 @@ read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 static EFI_STATUS
 delete_variable(CHAR16 *name, EFI_GUID guid, UINT32 attributes)
 {
+	return 0;
 	return uefi_call_wrapper(RT->SetVariable, 4, name, &guid, attributes,
 				 0, NULL);
 }
@@ -327,7 +328,7 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 		return EFI_UNSUPPORTED;
 	}
 
-	UINTN sz = *(UINT16 *)dp->Length - 4;
+	UINTN sz = *(UINT16 *)file_dp->Length - 4;
 	if (sz <= 6 || sz % 2 != 0) {
 		Print(L"Invalid file device path.\n");
 		return EFI_INVALID_PARAMETER;
@@ -335,7 +336,7 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 
 	sz /= sizeof (CHAR16);
 	CHAR16 filename[sz+1];
-	CopyMem(filename, (UINT8 *)dp + 4, sz * sizeof (CHAR16));
+	CopyMem(filename, (UINT8 *)file_dp + 4, sz * sizeof (CHAR16));
 	filename[sz] = L'\0';
 
 	rc = uefi_call_wrapper(BS->HandleProtocol, 3, device, &sfsp,
