@@ -5,6 +5,7 @@ LIB_LIBS= pthread
 BIN_LIBS= popt pthread
 PKLIBS	= efivar
 CFLAGS	= -g -O0
+PJONES  =
 BIN_CCLDFLAGS = $(foreach lib,$(BIN_LIBS),-l$(lib)) \
 	$(foreach pklib,$(PKLIBS), \
 		$(shell pkg-config --libs-only-l --libs-only-other $(pklib))) \
@@ -20,7 +21,8 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wno-unused-result -Wno-unused-function \
 	-DLOCALEDIR=\"$(localedir)\" -D_GNU_SOURCE \
 	-DFWUP_EFI_DIR_NAME=\"$(EFIDIR)\"  \
 	-I$(TOPDIR)/linux/include -iquote$(TOPDIR)/include/ \
-	$(foreach pklib,$(PKLIBS), $(shell pkg-config --cflags $(pklib)))
+	$(foreach pklib,$(PKLIBS), $(shell pkg-config --cflags $(pklib))) \
+	$(PJONES)
 
 BINTARGETS=fwupdate
 INCTARGETS=include/fwup.h
