@@ -18,7 +18,7 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wno-unused-result -Wno-unused-function \
 	-Wsign-compare -Werror=sign-compare \
 	-fshort-wchar --std=c11 \
 	-DLOCALEDIR=\"$(localedir)\" -D_GNU_SOURCE \
-	-DFWUP_EFI_DIR_NAME="$(EFIDIR)"  \
+	-DFWUP_EFI_DIR_NAME=\"$(EFIDIR)\"  \
 	-I$(TOPDIR)/linux/include -iquote$(TOPDIR)/include/ \
 	$(foreach pklib,$(PKLIBS), $(shell pkg-config --cflags $(pklib)))
 
@@ -78,7 +78,7 @@ install : all
 	$(INSTALL) -m 644 $(POTARGETS) $(localedir)/en/
 	$(INSTALL) -d -m 755 $(bindir)
 	$(foreach x, $(BINTARGETS), $(INSTALL) -m 755 $(x) $(bindir);)
-	ln -s libfwup.so.$(VERSION) $(libdir)/libfwup.so
+	ln -sf libfwup.so.$(VERSION) $(libdir)/libfwup.so
 	$(foreach x, $(wildcard *.so.$(VERSION)), ln -fs $(x) $(patsubst %.so.$(VERSION),%.so,$(libdir)/$(x));)
 
 
