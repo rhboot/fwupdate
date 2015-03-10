@@ -539,6 +539,7 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 	off_t offset;
 	efidp fn = NULL;
 	efidp dp = NULL;
+	update_info *info = NULL;
 
 	offset = lseek(infd, 0, SEEK_CUR);
 
@@ -556,6 +557,8 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 	rc = open(filename, O_CREAT|O_EXCL|O_CLOEXEC|O_RDWR, 0600);
 	if (rc < 0)
 		goto err;
+	fd = rc;
+	rc = -1;
 
 	while (1) {
 		char buf[4096];
@@ -574,40 +577,42 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 			break;
 	}
 
-	sz = efidp_make_file(NULL, 0, filename);
+	tilt_slashes(filename);
+	sz = efidp_make_file(NULL, 0, filename + 9);
 	if (sz < 0)
 		goto err;
-	fn = alloca(sz);
-	sz = efidp_make_file((uint8_t *)fn, sz, filename);
+	fn = malloc(sz);
+	sz = efidp_make_file((uint8_t *)fn, sz, filename + 9);
 	if (sz < 0)
 		goto err;
 	sz = efidp_append_node(test_dp, fn, &dp);
 	if (sz < 0)
 		goto err;
 
-	update_info *info = NULL;
 	rc = get_info(&re->esre.guid, 0, &info);
-	if (rc < 0)
+	if (rc < 0) {
+		printf("get_info failed.\n");
 		goto err;
+	}
 
 	info->status = FWUPDATE_ATTEMPT_UPDATE;
+	info->dp_ptr = (efidp_header *)dp;
 
 	rc = put_info(info);
-	if (rc < 0)
+	if (rc < 0) {
+		printf("put_info failed.\n");
 		goto err;
+	}
 
 	return 1;
 err:
+	printf("dammit.\n");
 	fwup_error = errno;
 	lseek(infd, offset, SEEK_SET);
 	if (info)
 		free_info(info);
 	if (dp)
 		free(dp);
-	if (fn)
-		free(fn);
-	if (guidstr)
-		free(guidstr);
 	if (filename)
 		free(filename);
 	if (fd > 0)
