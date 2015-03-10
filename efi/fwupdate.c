@@ -33,10 +33,12 @@ allocate(void **addr, UINTN size)
 {
 	UINTN pages = size / 4096 + (size % 4096) ? 1 : 0;
 	EFI_STATUS rc;
+	EFI_PHYSICAL_ADDRESS pageaddr = 0;
 
 	rc = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages,
-			       EfiConventionalMemory, pages,
-			       (EFI_PHYSICAL_ADDRESS *)addr);
+			       EfiLoaderData, pages,
+			       &pageaddr);
+	*addr = (void *)pageaddr;
 	return rc;
 }
 
@@ -64,7 +66,8 @@ read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 		void *newb = NULL;
 		rc = allocate(&newb, bs * n_blocks * 2);
 		if (EFI_ERROR(rc)) {
-			Print(L"Could not allocate memory: %r.\n", rc);
+			Print(L"Could not allocate memory: %r (%d).\n",
+			      rc, __LINE__);
 			return EFI_OUT_OF_RESOURCES;
 		}
 		if (b) {
@@ -117,7 +120,8 @@ read_variable(CHAR16 *name, EFI_GUID guid, void **buf_out, UINTN *buf_size_out,
 		if (rc == EFI_BUFFER_TOO_SMALL) {
 			buf = AllocatePool(size);
 			if (!buf) {
-				Print(L"Could not allocate memory\n");
+				Print(L"Could not allocate memory (%d)\n",
+				      __LINE__);
 				return EFI_OUT_OF_RESOURCES;
 			}
 		} else {
@@ -168,9 +172,9 @@ get_info(CHAR16 *name, update_table *info_out)
 
 	UINTN is = info_size - EFI_FIELD_OFFSET(update_info, dp);
 	EFI_DEVICE_PATH *hdr = (EFI_DEVICE_PATH *)&info->dp;
-	UINTN sz = *(UINT16 *)hdr->Length;
+	UINTN sz = DevicePathSize(hdr);
 	if (is != sz) {
-		Print(L"Update \"%s\" has an invalid file path.\n", name);
+		Print(L"Update \"%s\" has an invalid file path (%d %d %d).\n", name, is, sz, info_size);
 		delete_variable(name, fwupdate_guid, attributes);
 		return EFI_INVALID_PARAMETER;
 	}
@@ -199,7 +203,7 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 
 	updates = AllocateZeroPool(sizeof (update_table *) *n_updates_allocated);
 	if (!updates) {
-		Print(L"Could not allocate memory\n");
+		Print(L"Could not allocate memory (%d)\n", __LINE__);
 		return EFI_OUT_OF_RESOURCES;
 	}
 
@@ -250,8 +254,12 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 
 			new_ups = AllocateZeroPool(sizeof (update_table *) *
 						   n_updates_allocated * 2);
-			if (!new_ups)
+			if (!new_ups) {
+				Print(L"Tried to allocate %d\n",
+				      sizeof (update_table *) * n_updates_allocated * 2);
+				Print(L"Could not allocate memory (%d).\n", __LINE__);
 				goto err;
+			}
 			CopyMem(new_ups, updates, sizeof (update_table *) *
 						      n_updates_allocated);
 			n_updates_allocated *= 2;
@@ -262,6 +270,7 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 		rc = get_info(vn, updates[n_updates]);
 		if (EFI_ERROR(rc)) {
 			ret = rc;
+			Print(L"Could not allocate memory (%d).\n", __LINE__);
 			goto err;
 		}
 		if (updates[n_updates]->info->status & FWUPDATE_ATTEMPT_UPDATE){
@@ -291,7 +300,7 @@ err:
 
 	FreePool(updates);
 
-	Print(L"Could not allocate memory.\n");
+	Print(L"Could not allocate memory (%d).\n", __LINE__);
 	return ret;
 }
 
@@ -456,7 +465,6 @@ set_statuses(UINTN n_updates, update_table **updates)
 	return EFI_SUCCESS;
 }
 
-
 EFI_STATUS
 efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 {
@@ -481,13 +489,14 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	rc = allocate((void **)&capsules,
 		      sizeof (EFI_CAPSULE_HEADER) * n_updates);
 	if (EFI_ERROR(rc)) {
-		Print(L"fwupdate: Could not allocate memory.\n");
+		Print(L"Tried to get %d pages: %r.\n", sizeof (EFI_CAPSULE_HEADER) * n_updates, rc);
+		Print(L"fwupdate: Could not allocate memory (%d)\n", __LINE__);
 		return rc;
 	}
 	rc = allocate((void **)&cbd_data,
 		      sizeof (EFI_CAPSULE_BLOCK_DESCRIPTOR)*n_updates*2);
 	if (EFI_ERROR(rc)) {
-		Print(L"fwupdate: Could not allocate memory.\n");
+		Print(L"fwupdate: Could not allocate memory (%d)\n", __LINE__);
 		return rc;
 	}
 	for (UINTN i = 0, j = 0; i < n_updates; i++, j+=2) {
