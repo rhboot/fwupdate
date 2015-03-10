@@ -229,7 +229,7 @@ put_info(update_info *info)
 {
 	efi_guid_t varguid = FWUPDATE_GUID;
 	ssize_t dps, is;
-	char *guidstr;
+	char *guidstr = NULL;
 	char *varname;
 	int rc;
 
@@ -388,7 +388,9 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 	}
 	res->info->capsule_flags = res->esre.capsule_flags;
 
-	return 0;
+	*re = res;
+
+	return 1;
 }
 
 static uint8_t test_data[] = {
