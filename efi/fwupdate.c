@@ -11,6 +11,8 @@
 #include <efi.h>
 #include <efilib.h>
 
+#include "hexdump.h"
+
 #define efidp_header EFI_DEVICE_PATH
 #define efi_guid_t EFI_GUID
 
