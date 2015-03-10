@@ -548,13 +548,12 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 		goto err;
 
 	rc = asprintf(&filename,
-		      "/boot/efi/EFI/fedora/fw/fwupdate-%s-%"PRIx64".cap",
-		      guidstr, hw_inst);
+		      "/boot/efi/EFI/%s/fw/fwupdate-XXXXXX.cap",
+		      FWUP_EFI_DIR_NAME);
 	if (rc < 0)
 		goto err;
 
-
-	rc = open(filename, O_CREAT|O_EXCL|O_CLOEXEC|O_RDWR, 0600);
+	rc = mkostemps(filename, 4, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
 	if (rc < 0)
 		goto err;
 	fd = rc;
