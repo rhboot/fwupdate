@@ -234,7 +234,7 @@ main(int argc, char *argv[]) {
 
 				rc = fwup_set_up_update(re, 0, fd);
 				if (rc < 0)
-					errx(2, _("could not set up firmware update: %s\""), fwup_strerror(fwup_error));
+					errx(2, _("Could not set up firmware update: %s"), fwup_strerror(fwup_error));
 				printf("Success!\n");
 				exit(0);
 			}
