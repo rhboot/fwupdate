@@ -31,7 +31,7 @@ typedef struct update_table_s {
 static EFI_STATUS
 allocate(void **addr, UINTN size)
 {
-	UINTN pages = size / 4096 + (size % 4096) ? 1 : 0;
+	UINTN pages = size / 4096 + ((size % 4096) ? 1 : 0);
 	EFI_STATUS rc;
 	EFI_PHYSICAL_ADDRESS pageaddr = 0;
 
@@ -386,7 +386,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	if (CompareMem(&update->info->guid, fbuf,
 			sizeof (update->info->guid)) == 0) {
 		Print(L"Image has capsule image embedded\n");
-		Print(L"updates guid: %g\n", update->info->guid);
+		Print(L"updates guid: %g\n", &update->info->guid);
 		Print(L"File guid: %g\n", fbuf);
 		cbd_out->Length = fsize;
 		cbd_out->Union.DataBlock =
