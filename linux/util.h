@@ -125,8 +125,8 @@ err:
 		if (_rc < 0)						\
 			return -1;					\
 									\
-		_buf[_bufsize] = '\0';					\
-		*str = strndupa((__typeof__(*str))_buf, _bufsize);	\
+		*str = strndupa((__typeof__(*str))_buf, _bufsize-1);	\
+		(*str)[_bufsize-1] = '\0';				\
 		free(_buf);						\
 		*str;							\
 	})
@@ -157,6 +157,16 @@ get_uint64_from_file(int dfd, char *file, uint64_t *value)
 	free(buf);
 	*value = val;
 	return 0;
+}
+
+static char *
+tilt_slashes(char *s)
+{
+	char *p;
+	for (p = s; *p; p++)
+		if (*p == '/')
+			*p = '\\';
+	return s;
 }
 
 typedef struct {
