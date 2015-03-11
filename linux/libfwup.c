@@ -8,6 +8,7 @@
  * Author: Peter Jones <pjones@redhat.com>
  */
 
+#include <err.h>
 #include <dirent.h>
 #include <efivar.h>
 #include <errno.h>
@@ -23,6 +24,7 @@
 
 #include <fwup.h>
 #include "util.h"
+#include "ucs2.h"
 #include "fwup-efi.h"
 
 static __thread int __fwup_error;
@@ -107,6 +109,18 @@ fwup_strerror_r(int error, char *buf, size_t buflen)
 		}							\
 		_ret;						\
 	})
+
+static int
+efidp_end_entire(efidp_header *dp)
+{
+	if (!dp)
+		return 0;
+	if (efidp_type((efidp)dp) != EFIDP_END_TYPE)
+		return 0;
+	if (efidp_subtype((efidp)dp) != EFIDP_END_ENTIRE)
+		return 0;
+	return 1;
+}
 
 int
 fwup_supported(void)
@@ -276,6 +290,7 @@ typedef struct fwup_resource_s
 typedef struct fwup_resource_iter_s {
 	DIR *dir;
 	int dirfd;
+	fwup_resource re;
 } fwup_resource_iter;
 
 int
@@ -306,41 +321,47 @@ fwup_resource_iter_create(fwup_resource_iter **iter)
 	return 0;
 }
 
-int
-fwup_resource_iter_destroy(fwup_resource_iter **iter)
+static void
+clear_res(fwup_resource *res)
 {
-	if (!iter) {
+	if (res->info) {
+		if (res->info->dp_ptr)
+			free(res->info->dp_ptr);
+		free(res->info);
+	}
+	memset(res, 0, sizeof (*res));
+}
+
+int
+fwup_resource_iter_destroy(fwup_resource_iter **iterp)
+{
+	if (!iterp) {
 		fwup_error = EINVAL;
 		return -1;
 	}
-	if (!*iter)
+	fwup_resource_iter *iter = *iterp;
+	if (!iter)
 		return 0;
 
-	if ((*iter)->dir)
-		closedir((*iter)->dir);
+	clear_res(&iter->re);
+	if (iter->dir)
+		closedir(iter->dir);
 
-	free(*iter);
-	*iter = NULL;
+	free(iter);
+	*iterp = NULL;
 	return 0;
 }
 
 int
 fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 {
-	fwup_resource *res = NULL;
+	fwup_resource *res;
 	if (!iter || !re) {
 		fwup_error = EINVAL;
 		return -1;
 	}
-
-	res = *re;
-
-	if (res) {
-		free_info(res->info);
-		memset(res, '\0', sizeof (*res));
-	} else {
-		res = calloc(1, sizeof (*res));
-	}
+	res = &iter->re;
+	clear_res(res);
 
 	struct dirent *entry;
 	while (1) {
@@ -532,88 +553,155 @@ int
 fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 {
 	int rc;
-	char *guidstr = NULL;
 	char *filename = NULL;
 	int fd = -1;
 	ssize_t sz;
 	off_t offset;
 	efidp fn = NULL;
-	efidp dp = NULL;
 	update_info *info = NULL;
+	uint16_t *ucs2file = NULL;
+	uint16_t ucs2len = 0;
 
 	offset = lseek(infd, 0, SEEK_CUR);
 
-	rc = efi_guid_to_str(&re->esre.guid, &guidstr);
-	if (rc < 0)
+	rc = get_info(&re->esre.guid, 0, &info);
+	if (rc < 0) {
+		warn("get_info failed.\n");
 		goto err;
+	}
 
-	rc = asprintf(&filename,
-		      "/boot/efi/EFI/%s/fw/fwupdate-XXXXXX.cap",
-		      FWUP_EFI_DIR_NAME);
-	if (rc < 0)
-		goto err;
+	if (info->dp_ptr && !efidp_end_entire(info->dp_ptr)) {
+		const_efidp idp = (const_efidp)info->dp_ptr;
+		while (1) {
+			if (efidp_type(idp) == EFIDP_END_TYPE &&
+					efidp_subtype(idp) == EFIDP_END_ENTIRE)
+				break;
+			if (efidp_type(idp) != EFIDP_MEDIA_TYPE ||
+					efidp_subtype(idp) !=EFIDP_MEDIA_FILE) {
+				rc = efidp_next_node(idp, &idp);
+				if (rc < 0)
+					break;
+				continue;
+			}
+			ucs2file = (uint16_t *)((uint8_t *)idp + 4);
+			ucs2len = efidp_node_size(idp) - 4;
+			break;
+		}
 
-	rc = mkostemps(filename, 4, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
-	if (rc < 0)
-		goto err;
-	fd = rc;
-	rc = -1;
+		if (!ucs2file || ucs2len <= 0)
+			goto new;
+
+		char *filetmp = ucs2_to_utf8(ucs2file, ucs2len
+						       / sizeof (uint16_t));
+		if (!filetmp)
+			goto new;
+		filetmp = onstack(filetmp, ucs2len / sizeof (uint16_t) + 1);
+
+		untilt_slashes(filetmp);
+
+		rc = asprintf(&filename, "/boot/efi/%s", filetmp);
+		if (rc < 0)
+			goto new;
+
+		rc = open(filename, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
+		if (rc < 0)
+			goto new;
+		fd = rc;
+		rc = -1;
+	} else {
+new:
+		rc = asprintf(&filename,
+			      "/boot/efi/EFI/%s/fw/fwupdate-XXXXXX.cap",
+			      FWUP_EFI_DIR_NAME);
+		if (rc < 0) {
+			warn("asprintf failed");
+			goto err;
+		}
+
+		rc = mkostemps(filename, 4, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
+		if (rc < 0) {
+			warn("mkostemps(%s) failed", filename);
+			goto err;
+		}
+		fd = rc;
+		rc = -1;
+	}
 
 	while (1) {
 		char buf[4096];
 
 		sz = read(infd, &buf, 4096);
 		if (sz > 0) {
-			write(fd, buf, sz);
+			ssize_t wsz;
+			off_t off = 0;
+			while (sz-off) {
+				wsz = write(fd, buf+off, sz-off);
+				if (wsz < 0 &&
+				    (errno == EAGAIN || errno == EINTR))
+					continue;
+				if (wsz < 0) {
+					rc = wsz;
+					warn("write failed");
+					goto err;
+				}
+				off += wsz;
+			}
 			continue;
 		}
 		rc = sz;
 		if (sz < 0 && (errno == EAGAIN || errno == EINTR))
 			continue;
-		if (sz < 0)
+		if (sz < 0) {
+			warn("read failed");
 			goto err;
+		}
 		if (sz == 0)
 			break;
 	}
 
-	tilt_slashes(filename);
-	sz = efidp_make_file(NULL, 0, filename + 9);
-	if (sz < 0)
-		goto err;
-	fn = malloc(sz);
-	sz = efidp_make_file((uint8_t *)fn, sz, filename + 9);
-	if (sz < 0)
-		goto err;
-	sz = efidp_append_node(test_dp, fn, &dp);
-	if (sz < 0)
-		goto err;
+	if (!info->dp_ptr || efidp_end_entire(info->dp_ptr)) {
+		tilt_slashes(filename);
+		sz = efidp_make_file(NULL, 0, filename + 9);
+		if (sz < 0) {
+			warn("efidp_make_file(0) failed");
+			goto err;
+		}
+		fn = alloca(sz);
+		sz = efidp_make_file((uint8_t *)fn, sz, filename + 9);
+		if (sz < 0) {
+			warn("efidp_make_file(%zd) failed", sz);
+			goto err;
+		}
+		efidp dp = NULL;
+		sz = efidp_append_node(test_dp, fn, &dp);
+		if (sz < 0) {
+			warn("efidp_append_node failed");
+			goto err;
+		}
 
-	rc = get_info(&re->esre.guid, 0, &info);
-	if (rc < 0) {
-		printf("get_info failed.\n");
-		goto err;
+		if (info->dp_ptr)
+			free(info->dp_ptr);
+		info->dp_ptr = (efidp_header *)dp;
 	}
 
 	info->status = FWUPDATE_ATTEMPT_UPDATE;
-	info->dp_ptr = (efidp_header *)dp;
 
 	rc = put_info(info);
 	if (rc < 0) {
-		printf("put_info failed.\n");
+		warn("put_info failed.\n");
 		goto err;
 	}
 
+	free_info(info);
+	free(filename);
 	return 1;
 err:
-	printf("dammit.\n");
 	fwup_error = errno;
 	lseek(infd, offset, SEEK_SET);
-	if (info)
-		free_info(info);
-	if (dp)
-		free(dp);
 	if (filename)
 		free(filename);
+	if (info)
+		free_info(info);
 	if (fd > 0)
 		close(fd);
 

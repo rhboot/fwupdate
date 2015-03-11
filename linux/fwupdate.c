@@ -104,6 +104,8 @@ print_system_resources(void)
 			id_guid, vers, lowest);
 		free(id_guid);
 	}
+
+	fwup_resource_iter_destroy(&iter);
 	if (rc < 0)
 		return -1;
 	return 0;
@@ -236,6 +238,7 @@ main(int argc, char *argv[]) {
 				if (rc < 0)
 					errx(2, _("Could not set up firmware update: %s"), fwup_strerror(fwup_error));
 				system("efibootmgr -n 1337");
+				fwup_resource_iter_destroy(&iter);
 				exit(0);
 			}
 		}

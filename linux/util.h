@@ -160,12 +160,24 @@ get_uint64_from_file(int dfd, char *file, uint64_t *value)
 }
 
 static char *
+__attribute__((__unused__))
 tilt_slashes(char *s)
 {
 	char *p;
 	for (p = s; *p; p++)
 		if (*p == '/')
 			*p = '\\';
+	return s;
+}
+
+static char *
+__attribute__((__unused__))
+untilt_slashes(char *s)
+{
+	char *p;
+	for (p = s; *p; p++)
+		if (*p == '\\')
+			*p = '/';
 	return s;
 }
 
