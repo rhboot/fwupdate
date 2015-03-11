@@ -393,7 +393,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 		cbd_out->Union.DataBlock =
 			(EFI_PHYSICAL_ADDRESS)(UINTN)fbuf;
 		*capsule_out = (EFI_CAPSULE_HEADER *)fbuf;
-		(*capsule_out)->Flags = update->info->capsule_flags;
+		(*capsule_out)->Flags |= update->info->capsule_flags;
 		Print(L"Flags: 0x%08x\n", (*capsule_out)->Flags);
 	} else {
 		Print(L"Image does not have embedded header\n");
