@@ -492,7 +492,6 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	EFI_CAPSULE_HEADER *capsules[n_updates + 1];
 	EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd_data;
 	UINTN i;
-	Print(L"Allocating %d bytes for cbd_data.\n", sizeof (EFI_CAPSULE_BLOCK_DESCRIPTOR)*(n_updates+1));
 	rc = allocate((void **)&cbd_data,
 		      sizeof (EFI_CAPSULE_BLOCK_DESCRIPTOR)*(n_updates+1));
 	if (EFI_ERROR(rc)) {
