@@ -268,6 +268,7 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 			updates = new_ups;
 		}
 
+		updates[n_updates]->name = StrDuplicate(vn);
 		rc = get_info(vn, updates[n_updates]);
 		if (EFI_ERROR(rc)) {
 			ret = rc;
@@ -490,7 +491,8 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	rc = allocate((void **)&capsules,
 		      sizeof (EFI_CAPSULE_HEADER) * n_updates);
 	if (EFI_ERROR(rc)) {
-		Print(L"Tried to get %d pages: %r.\n", sizeof (EFI_CAPSULE_HEADER) * n_updates, rc);
+		Print(L"Tried to get %d pages: %r.\n",
+		      sizeof (EFI_CAPSULE_HEADER) * n_updates, rc);
 		Print(L"fwupdate: Could not allocate memory (%d)\n", __LINE__);
 		return rc;
 	}
