@@ -7,6 +7,7 @@ Summary:        Tools to manage UEFI firmware updates
 License:        GPLv2+
 URL:            https://github.com/rhinstaller/fwupdate
 Requires:       %{name}-libs = %{version}-%{release}
+Requires:	efibootmgr >= 0.11.0-2
 BuildRequires:	efivar-devel >= %{efivar_version}
 ExclusiveArch:	x86_64 %{ix86} aarch64
 
@@ -70,6 +71,8 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_ROOT
 
 %post libs -p /sbin/ldconfig
+efibootmgr -b 1337 -B || :
+efibootmgr -C -b 1337 -d /dev/sda -p 1 -l /efi/%{efidir}/fwupdate.efi -L "Firmware Update"
 
 %postun libs -p /sbin/ldconfig
 
