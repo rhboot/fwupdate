@@ -386,17 +386,21 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 
 	if (CompareMem(&update->info->guid, fbuf,
 			sizeof (update->info->guid)) == 0) {
+#if 0
 		Print(L"Image has capsule image embedded\n");
 		Print(L"updates guid: %g\n", &update->info->guid);
 		Print(L"File guid: %g\n", fbuf);
+#endif
 		cbd_out->Length = fsize;
 		cbd_out->Union.DataBlock =
 			(EFI_PHYSICAL_ADDRESS)(UINTN)fbuf;
 		*capsule_out = (EFI_CAPSULE_HEADER *)fbuf;
 		(*capsule_out)->Flags |= update->info->capsule_flags;
-		Print(L"Flags: 0x%08x\n", (*capsule_out)->Flags);
 	} else {
+#if 0
 		Print(L"Image does not have embedded header\n");
+		Print(L"Allocating %d for capsule header.\n", sizeof (*capsule)+fsize);
+#endif
 		rc = allocate((void **)&capsule, sizeof (*capsule) + fsize);
 		if (EFI_ERROR(rc)) {
 			Print(L"Could not allocate space for update: %r.\n",rc);
@@ -405,7 +409,6 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 		capsule->CapsuleGuid = update->info->guid;
 		capsule->HeaderSize = sizeof (*capsule);
 		capsule->Flags = update->info->capsule_flags;
-		Print(L"Flags: 0x%08x\n", capsule->Flags);
 		capsule->CapsuleImageSize = fsize + sizeof (*capsule);
 
 		UINT8 *buffer = (UINT8 *)capsule + capsule->HeaderSize;
