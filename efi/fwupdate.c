@@ -489,35 +489,27 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 		return EFI_INVALID_PARAMETER;
 	}
 
-	EFI_CAPSULE_HEADER **capsules = NULL;
+	EFI_CAPSULE_HEADER *capsules[n_updates + 1];
 	EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd_data;
-	rc = allocate((void **)&capsules,
-		      sizeof (EFI_CAPSULE_HEADER) * n_updates);
-	if (EFI_ERROR(rc)) {
-		Print(L"Tried to get %d pages: %r.\n",
-		      sizeof (EFI_CAPSULE_HEADER) * n_updates, rc);
-		Print(L"fwupdate: Could not allocate memory (%d)\n", __LINE__);
-		return rc;
-	}
+	UINTN i;
+	Print(L"Allocating %d bytes for cbd_data.\n", sizeof (EFI_CAPSULE_BLOCK_DESCRIPTOR)*(n_updates+1));
 	rc = allocate((void **)&cbd_data,
-		      sizeof (EFI_CAPSULE_BLOCK_DESCRIPTOR)*n_updates*2);
+		      sizeof (EFI_CAPSULE_BLOCK_DESCRIPTOR)*(n_updates+1));
 	if (EFI_ERROR(rc)) {
 		Print(L"fwupdate: Could not allocate memory (%d)\n", __LINE__);
 		return rc;
 	}
-	for (UINTN i = 0, j = 0; i < n_updates; i++, j+=2) {
-		EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd = cbd_data+j;
-		rc = add_capsule(updates[i], &capsules[i], cbd);
+	for (i = 0; i < n_updates; i++) {
+		rc = add_capsule(updates[i], &capsules[i], &cbd_data[i]);
 		if (EFI_ERROR(rc)) {
 			Print(L"fwupdate: Could not build update list: %r\n",
 			      rc);
 			return rc;
 		}
-		cbd++;
-		cbd->Length = 0;
-		cbd->Union.ContinuationPointer =
-			(EFI_PHYSICAL_ADDRESS)(UINTN)cbd+j+1;
 	}
+
+	cbd_data[i].Length = 0;
+	cbd_data[i].Union.ContinuationPointer = 0;
 
 	rc = set_statuses(n_updates, updates);
 	if (EFI_ERROR(rc)) {
