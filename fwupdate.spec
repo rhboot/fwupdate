@@ -2,7 +2,7 @@
 
 Name:           fwupdate
 Version:        0.1
-Release:        2%{?dist}
+Release:        7%{?dist}
 Summary:        Tools to manage UEFI firmware updates
 License:        GPLv2+
 URL:            https://github.com/rhinstaller/fwupdate
@@ -70,9 +70,11 @@ rm -rf $RPM_BUILD_ROOT
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%post libs -p /sbin/ldconfig
+%post
 efibootmgr -b 1337 -B || :
-efibootmgr -C -b 1337 -d /dev/sda -p 1 -l /efi/%{efidir}/fwupdate.efi -L "Firmware Update"
+efibootmgr -C -b 1337 -d /dev/sda -p 1 -l /EFI/%{efidir}/fwupdate.efi -L "Firmware Update"
+
+%post libs -p /sbin/ldconfig
 
 %postun libs -p /sbin/ldconfig
 
