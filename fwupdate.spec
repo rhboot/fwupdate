@@ -71,8 +71,8 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_ROOT
 
 %post
-efibootmgr -b 1337 -B || :
-efibootmgr -C -b 1337 -d /dev/sda -p 1 -l /EFI/%{efidir}/fwupdate.efi -L "Firmware Update"
+efibootmgr -b 1337 -B >/dev/null || :
+efibootmgr -C -b 1337 -d /dev/sda -p 1 -l /EFI/%{efidir}/fwupdate.efi -L "Firmware Update" >/dev/null || :
 
 %post libs -p /sbin/ldconfig
 
