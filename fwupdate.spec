@@ -2,7 +2,7 @@
 
 Name:           fwupdate
 Version:        0.1
-Release:        8%{?dist}
+Release:        9%{?dist}
 Summary:        Tools to manage UEFI firmware updates
 License:        GPLv2+
 URL:            https://github.com/rhinstaller/fwupdate
