@@ -40,6 +40,7 @@ fwupdate : libfwup.so
 % : %.o
 	$(CC) $(BUILDFLAGS) $(BIN_CCLDFLAGS) -o $@ $(patsubst lib%.so,-l%,$^)
 
+libfwup.so.$(VERSION) : disk.o gpt.o crc32.o
 %.so.$(VERSION) : %.o
 	$(CC) $(BUILDFLAGS) $(LIB_CCLDFLAGS) \
 		-Wl,-soname,$@ \
