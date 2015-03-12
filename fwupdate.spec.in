@@ -7,6 +7,7 @@ Summary:        Tools to manage UEFI firmware updates
 License:        GPLv2+
 URL:            https://github.com/rhinstaller/fwupdate
 Requires:       %{name}-libs = %{version}-%{release}
+Requires:	efibootmgr >= 0.11.0-2
 BuildRequires:	efivar-devel >= %{efivar_version}
 ExclusiveArch:	x86_64 %{ix86} aarch64
 
@@ -59,14 +60,19 @@ git commit -a -q -m "%{version} baseline."
 git am %{patches} </dev/null
 
 %build
-make OPT_FLAGS="$RPM_OPT_FLAGS" libdir=%{_libdir} bindir=%{_bindir} efidir=%{efidir} \
+make OPT_FLAGS="$RPM_OPT_FLAGS" libdir=%{_libdir} bindir=%{_bindir} \
+	EFIDIR=%{efidir}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%makeinstall efidir=%{efidir} DESTDIR=${RPM_BUILD_ROOT}
+%makeinstall EFIDIR=%{efidir} DESTDIR=${RPM_BUILD_ROOT}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
+%post
+efibootmgr -b 1337 -B >/dev/null || :
+efibootmgr -C -b 1337 -d /dev/sda -p 1 -l /EFI/%{efidir}/fwupdate.efi -L "Firmware Update" >/dev/null || :
 
 %post libs -p /sbin/ldconfig
 
@@ -78,6 +84,7 @@ rm -rf $RPM_BUILD_ROOT
 # %%doc README
 %{_bindir}/fwupdate
 /boot/efi/EFI/%{efidir}/fwupdate.efi
+%dir /boot/efi/EFI/%{efidir}/fw/
 %{_datadir}/locale/en/*.po
 #%{_mandir}/man1/*
 

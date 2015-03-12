@@ -9,7 +9,7 @@ all clean install :
 			-C $$x $@ ; \
 	done
 
-fwupdate.spec : fwupdate.spec.in
+fwupdate.spec : fwupdate.spec.in Makefile
 	@sed -e "s,@@VERSION@@,$(VERSION),g" $< > $@
 
 GITTAG = $(VERSION)
