@@ -26,6 +26,7 @@
 #include "util.h"
 #include "ucs2.h"
 #include "fwup-efi.h"
+#include "disk.h"
 
 static __thread int __fwup_error;
 
@@ -91,6 +92,46 @@ fwup_strerror_r(int error, char *buf, size_t buflen)
 	}
 	strcpy(buf, dgettext("libfwup", error_table[error - ERANGE]));
 	return buf;
+}
+
+static ssize_t
+fwup_make_hd(uint8_t *buf, ssize_t size, char *disk, uint32_t partition)
+{
+	ssize_t rc;
+	if (size == 0) {
+		rc = efidp_make_hd(NULL, 0, 0, 0, 0, NULL, 0, 0);
+		if (!rc)
+			warn("efidp_make_hd(0) failed");
+		return rc;
+	}
+
+	int fd;
+	fd = open(disk, O_RDONLY);
+	if (fd < 0) {
+		warn("could not open %s", disk);
+		return fd;
+	}
+
+	uint64_t start = 0;
+	uint64_t part_size = 0;
+	char signature[32] = "";
+	uint8_t mbr_type = 0;
+	uint8_t signature_type = -1;
+	rc = disk_get_partition_info(fd, partition, &start, &part_size,
+				     signature, &mbr_type, &signature_type);
+	__typeof__(errno) saved_errno = errno;
+	close(fd);
+	errno = saved_errno;
+	if (rc < 0) {
+		warn("disk_get_partition_info failed");
+		return rc;
+	}
+
+	rc = efidp_make_hd(buf, size, partition, start, part_size,
+			   (uint8_t *)signature, mbr_type, signature_type);
+	if (!rc)
+		warn("efidp_make_hd() failed");
+	return rc;
 }
 
 #define ESRT_DIR "/sys/firmware/efi/esrt/"
@@ -414,6 +455,7 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 	return 1;
 }
 
+#if 0
 #ifdef pjones
 static uint8_t test_data[] = {
   0x02, 0x01, 0x0c, 0x00, 0xd0, 0x41, 0x03, 0x0a, 0x00, 0x00, 0x00, 0x00,
@@ -446,6 +488,7 @@ static uint8_t test_data[] = {
   0x7f, 0xff, 0x04, 0x00
 };
 static const_efidp test_dp = (const_efidp)test_data;
+#endif
 #endif
 
 int
@@ -557,8 +600,8 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 	int fd = -1;
 	ssize_t sz;
 	off_t offset;
-	efidp fn = NULL;
 	update_info *info = NULL;
+	uint8_t *dp_buf = NULL;
 	uint16_t *ucs2file = NULL;
 	uint16_t ucs2len = 0;
 
@@ -658,30 +701,127 @@ new:
 		if (sz == 0)
 			break;
 	}
+	close(infd);
+	infd = -1;
+	close(fd);
+	fd = -1;
 
 	if (!info->dp_ptr || efidp_end_entire(info->dp_ptr)) {
-		tilt_slashes(filename);
-		sz = efidp_make_file(NULL, 0, filename + 9);
-		if (sz < 0) {
+		ssize_t s;
+		ssize_t wsz;
+		sz = 0;
+
+		s = efidp_make_acpi_hid(NULL, 0, EFIDP_ACPI_PCI_ROOT_HID, 0);
+		if (s < 0) {
+			warn("efidp_make_acpi(0) failed");
+			goto err;
+		}
+		sz += s;
+
+		s = efidp_make_pci(NULL, 0, 0x1f, 0x02);
+		if (s < 0) {
+			warn("efidp_make_pci(0) failed");
+			goto err;
+		}
+		sz += s;
+
+		s = efidp_make_sata(NULL, 0, 0, 0, 0);
+		if (s < 0) {
+			warn("efidp_make_sata(0) failed");
+			goto err;
+		}
+		sz += s;
+
+		s = fwup_make_hd(NULL, 0, NULL, 0);
+		if (s < 0) {
+			warn("efidp_make_hd(0) failed");
+			goto err;
+		}
+		sz += s;
+
+		s = efidp_make_file(NULL, 0, filename + 9);
+		if (s < 0) {
 			warn("efidp_make_file(0) failed");
 			goto err;
 		}
-		fn = alloca(sz);
-		sz = efidp_make_file((uint8_t *)fn, sz, filename + 9);
-		if (sz < 0) {
-			warn("efidp_make_file(%zd) failed", sz);
+		sz += s;
+
+		s = efidp_make_end_entire(NULL, 0);
+		if (s < 0) {
+			warn("efidp_make_end_entire(0) failed");
 			goto err;
 		}
-		efidp dp = NULL;
-		sz = efidp_append_node(test_dp, fn, &dp);
-		if (sz < 0) {
-			warn("efidp_append_node failed");
+		sz += s;
+
+		tilt_slashes(filename);
+		dp_buf = calloc(1, sz);
+		if (!dp_buf)
+			goto err;
+		wsz = 0;
+
+		s = efidp_make_acpi_hid(dp_buf, sz, EFIDP_ACPI_PCI_ROOT_HID, 0);
+		if (s < 0) {
+			warn("efidp_make_acpi() failed");
+			goto err;
+		}
+		wsz += s;
+
+		s = efidp_make_pci(dp_buf+wsz, sz-wsz, 0x1f, 0x02);
+		if (s < 0) {
+			warn("efidp_make_pci() failed");
+			goto err;
+		}
+		wsz += s;
+
+		fd = open("/dev/sda", O_RDONLY);
+		if (fd < 0) {
+			warn("could not open /dev/sda");
 			goto err;
 		}
 
+		uint8_t host, channel, id, lun;
+		rc = efi_linux_scsi_idlun(fd, &host, &channel, &id, &lun);
+		if (rc < 0) {
+			warn("failed to detect id and lun");
+			goto err;
+		}
+
+		close(fd);
+		fd = -1;
+
+		s = efidp_make_sata(dp_buf+wsz, sz-wsz, channel, 0, 0);
+		if (s < 0) {
+			warn("efidp_make_sata() failed");
+			goto err;
+		}
+		wsz += s;
+
+		s = fwup_make_hd(dp_buf+wsz, sz-wsz, "/dev/sda", 1);
+		if (s < 0) {
+			warn("efidp_make_hd() failed");
+			goto err;
+		}
+		wsz += s;
+
+		s = efidp_make_file(dp_buf+wsz, sz-wsz, filename + 9);
+		if (s < 0) {
+			warn("efidp_make_file() failed");
+			goto err;
+		}
+		wsz += s;
+
+		s = efidp_make_end_entire(dp_buf+wsz, sz-wsz);
+		if (s < 0) {
+			warn("efidp_make_end_entire() failed");
+			goto err;
+		}
+		wsz += s;
+
+		efidp_header *dp = (efidp_header *)dp_buf;
+
 		if (info->dp_ptr)
 			free(info->dp_ptr);
-		info->dp_ptr = (efidp_header *)dp;
+		info->dp_ptr = dp;
 	}
 
 	info->status = FWUPDATE_ATTEMPT_UPDATE;
@@ -698,6 +838,8 @@ new:
 err:
 	fwup_error = errno;
 	lseek(infd, offset, SEEK_SET);
+	if (dp_buf)
+		free(dp_buf);
 	if (filename)
 		free(filename);
 	if (info)
