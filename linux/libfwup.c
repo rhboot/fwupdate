@@ -789,7 +789,7 @@ new:
 		close(fd);
 		fd = -1;
 
-		s = efidp_make_sata(dp_buf+wsz, sz-wsz, channel, 0, 0);
+		s = efidp_make_sata(dp_buf+wsz, sz-wsz, host, 0, 0);
 		if (s < 0) {
 			warn("efidp_make_sata() failed");
 			goto err;
