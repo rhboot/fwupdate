@@ -33,6 +33,6 @@ typedef struct update_info_s {
 		efidp_header *dp_ptr;
 		uint8_t dp[sizeof(efidp_header)];
 	};
-} update_info;
+} __attribute__((__packed__)) update_info;
 
 #endif /* _FWUP_EFI_H */
