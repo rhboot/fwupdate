@@ -33,7 +33,7 @@ LDFLAGS=-nostdlib --warn-common --no-undefined --fatal-warnings -shared \
 	/usr/lib64/gnuefi/crt0-efi-$(ARCH).o
 MAME=make
 
-TARGETS = fakeesrt.efi dumpesrt.efi fwupdate.efi mkvar.efi dumpf.efi
+TARGETS = fakeesrt2.efi fakeesrt.efi dumpesrt.efi fwupdate.efi mkvar.efi dumpf.efi mkvar2.efi
 
 all : $(TARGETS)
 
