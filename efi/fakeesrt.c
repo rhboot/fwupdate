@@ -15,7 +15,6 @@ typedef struct esre {
 	UINT32		capsule_flags;
 	UINT32		last_attempt_version;
 	UINT32		last_attempt_status;
-	UINT64		hardware_instance;
 } esre_t;
 
 #define guid0 { 0x0712233d, 0xfe15, 0x434c, { 0xbf, 0x4d, 0xa3, 0x4a, 0x05, 0x03, 0x14, 0x4a }}
