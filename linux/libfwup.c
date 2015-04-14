@@ -445,7 +445,6 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 	rc = get_info(&res->esre.guid, 0, &res->info);
 	if (rc < 0) {
 		fwup_error = errno;
-		free(res);
 		return rc;
 	}
 	res->info->capsule_flags = res->esre.capsule_flags;
