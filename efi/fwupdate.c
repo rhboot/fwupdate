@@ -385,7 +385,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	Print(L"fsize: %ld\n", fsize);
 
 	if (CompareMem(&update->info->guid, fbuf,
-			sizeof (update->info->guid)) == 0) {
+			sizeof (update->info->guid)) == 0 && fsize != 40) {
 #if 0
 		Print(L"Image has capsule image embedded\n");
 		Print(L"updates guid: %g\n", &update->info->guid);

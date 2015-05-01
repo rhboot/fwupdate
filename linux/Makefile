@@ -3,7 +3,7 @@ include $(TOPDIR)/Make.defaults
 
 LIB_LIBS= pthread
 BIN_LIBS= popt pthread
-PKLIBS	= efivar
+PKLIBS	= efivar efiboot
 CFLAGS	= -g -O0
 PJONES  =
 BIN_CCLDFLAGS = $(foreach lib,$(BIN_LIBS),-l$(lib)) \
@@ -40,7 +40,6 @@ fwupdate : libfwup.so
 % : %.o
 	$(CC) $(BUILDFLAGS) $(BIN_CCLDFLAGS) -o $@ $(patsubst lib%.so,-l%,$^)
 
-libfwup.so.$(VERSION) : disk.o gpt.o crc32.o
 %.so.$(VERSION) : %.o
 	$(CC) $(BUILDFLAGS) $(LIB_CCLDFLAGS) \
 		-Wl,-soname,$@ \

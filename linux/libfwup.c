@@ -10,6 +10,7 @@
 
 #include <err.h>
 #include <dirent.h>
+#include <efiboot.h>
 #include <efivar.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -26,7 +27,6 @@
 #include "util.h"
 #include "ucs2.h"
 #include "fwup-efi.h"
-#include "disk.h"
 
 static __thread int __fwup_error;
 
@@ -92,46 +92,6 @@ fwup_strerror_r(int error, char *buf, size_t buflen)
 	}
 	strcpy(buf, dgettext("libfwup", error_table[error - ERANGE]));
 	return buf;
-}
-
-static ssize_t
-fwup_make_hd(uint8_t *buf, ssize_t size, char *disk, uint32_t partition)
-{
-	ssize_t rc;
-	if (size == 0) {
-		rc = efidp_make_hd(NULL, 0, 0, 0, 0, NULL, 0, 0);
-		if (!rc)
-			warn("efidp_make_hd(0) failed");
-		return rc;
-	}
-
-	int fd;
-	fd = open(disk, O_RDONLY);
-	if (fd < 0) {
-		warn("could not open %s", disk);
-		return fd;
-	}
-
-	uint64_t start = 0;
-	uint64_t part_size = 0;
-	char signature[32] = "";
-	uint8_t mbr_type = 0;
-	uint8_t signature_type = -1;
-	rc = disk_get_partition_info(fd, partition, &start, &part_size,
-				     signature, &mbr_type, &signature_type);
-	__typeof__(errno) saved_errno = errno;
-	close(fd);
-	errno = saved_errno;
-	if (rc < 0) {
-		warn("disk_get_partition_info failed");
-		return rc;
-	}
-
-	rc = efidp_make_hd(buf, size, partition, start, part_size,
-			   (uint8_t *)signature, mbr_type, signature_type);
-	if (!rc)
-		warn("efidp_make_hd() failed");
-	return rc;
 }
 
 #define ESRT_DIR "/sys/firmware/efi/esrt/"
@@ -595,7 +555,7 @@ int
 fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 {
 	int rc;
-	char *filename = NULL;
+	char *fullpath = NULL;
 	int fd = -1;
 	ssize_t sz;
 	off_t offset;
@@ -633,26 +593,30 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 		if (!ucs2file || ucs2len <= 0)
 			goto new;
 
-		char *filetmp = ucs2_to_utf8(ucs2file, ucs2len
+		char *relpath = ucs2_to_utf8(ucs2file, ucs2len
 						       / sizeof (uint16_t));
-		if (!filetmp)
+		if (!relpath)
 			goto new;
-		filetmp = onstack(filetmp, ucs2len / sizeof (uint16_t) + 1);
+		relpath = onstack(relpath, ucs2len / sizeof (uint16_t) + 1);
 
-		untilt_slashes(filetmp);
+		untilt_slashes(relpath);
 
-		rc = asprintf(&filename, "/boot/efi/%s", filetmp);
-		if (rc < 0)
+		rc = asprintf(&fullpath, "/boot/efi/%s", relpath);
+		if (rc < 0) {
+			free(relpath);
 			goto new;
+		}
 
-		rc = open(filename, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
-		if (rc < 0)
+		rc = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
+		if (rc < 0) {
+			free(relpath);
 			goto new;
+		}
 		fd = rc;
 		rc = -1;
 	} else {
 new:
-		rc = asprintf(&filename,
+		rc = asprintf(&fullpath,
 			      "/boot/efi/EFI/%s/fw/fwupdate-XXXXXX.cap",
 			      FWUP_EFI_DIR_NAME);
 		if (rc < 0) {
@@ -660,14 +624,18 @@ new:
 			goto err;
 		}
 
-		rc = mkostemps(filename, 4, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
+		rc = mkostemps(fullpath, 4, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
 		if (rc < 0) {
-			warn("mkostemps(%s) failed", filename);
+			int saved_errno = errno;
+			warn("mkostemps(%s) failed", fullpath);
+			free(fullpath);
+			errno = saved_errno;
 			goto err;
 		}
 		fd = rc;
 		rc = -1;
 	}
+	fullpath = onstack(fullpath, strlen(fullpath)+1);
 
 	while (1) {
 		char buf[4096];
@@ -706,117 +674,28 @@ new:
 	fd = -1;
 
 	if (!info->dp_ptr || efidp_end_entire(info->dp_ptr)) {
-		ssize_t s;
-		ssize_t wsz;
-		sz = 0;
-
-		s = efidp_make_acpi_hid(NULL, 0, EFIDP_ACPI_PCI_ROOT_HID, 0);
-		if (s < 0) {
-			warn("efidp_make_acpi(0) failed");
+		ssize_t req;
+		req = efi_generate_file_device_path(NULL, 0, fullpath,
+					EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
+					EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
+		if (req < 0)
+			goto err;
+		if (req <= 4) { /* if we just have an end device path,
+				  it's not going to work. */
+			errno = EINVAL;
 			goto err;
 		}
-		sz += s;
 
-		s = efidp_make_pci(NULL, 0, 0x1f, 0x02);
-		if (s < 0) {
-			warn("efidp_make_pci(0) failed");
-			goto err;
-		}
-		sz += s;
-
-		s = efidp_make_sata(NULL, 0, 0, 0, 0);
-		if (s < 0) {
-			warn("efidp_make_sata(0) failed");
-			goto err;
-		}
-		sz += s;
-
-		s = fwup_make_hd(NULL, 0, NULL, 0);
-		if (s < 0) {
-			warn("efidp_make_hd(0) failed");
-			goto err;
-		}
-		sz += s;
-
-		s = efidp_make_file(NULL, 0, filename + 9);
-		if (s < 0) {
-			warn("efidp_make_file(0) failed");
-			goto err;
-		}
-		sz += s;
-
-		s = efidp_make_end_entire(NULL, 0);
-		if (s < 0) {
-			warn("efidp_make_end_entire(0) failed");
-			goto err;
-		}
-		sz += s;
-
-		tilt_slashes(filename);
-		dp_buf = calloc(1, sz);
+		dp_buf = calloc(1, req);
 		if (!dp_buf)
 			goto err;
-		wsz = 0;
-
-		s = efidp_make_acpi_hid(dp_buf, sz, EFIDP_ACPI_PCI_ROOT_HID, 0);
-		if (s < 0) {
-			warn("efidp_make_acpi() failed");
-			goto err;
-		}
-		wsz += s;
-
-		s = efidp_make_pci(dp_buf+wsz, sz-wsz, 0x1f, 0x02);
-		if (s < 0) {
-			warn("efidp_make_pci() failed");
-			goto err;
-		}
-		wsz += s;
-
-		fd = open("/dev/sda", O_RDONLY);
-		if (fd < 0) {
-			warn("could not open /dev/sda");
-			goto err;
-		}
-
-		uint8_t host, channel, id, lun;
-		rc = efi_linux_scsi_idlun(fd, &host, &channel, &id, &lun);
-		if (rc < 0) {
-			warn("failed to detect id and lun");
-			goto err;
-		}
-
-		close(fd);
-		fd = -1;
-
-		s = efidp_make_sata(dp_buf+wsz, sz-wsz, host, 0, 0);
-		if (s < 0) {
-			warn("efidp_make_sata() failed");
-			goto err;
-		}
-		wsz += s;
-
-		s = fwup_make_hd(dp_buf+wsz, sz-wsz, "/dev/sda", 1);
-		if (s < 0) {
-			warn("efidp_make_hd() failed");
-			goto err;
-		}
-		wsz += s;
-
-		s = efidp_make_file(dp_buf+wsz, sz-wsz, filename + 9);
-		if (s < 0) {
-			warn("efidp_make_file() failed");
-			goto err;
-		}
-		wsz += s;
-
-		s = efidp_make_end_entire(dp_buf+wsz, sz-wsz);
-		if (s < 0) {
-			warn("efidp_make_end_entire() failed");
-			goto err;
-		}
-		wsz += s;
 
 		efidp_header *dp = (efidp_header *)dp_buf;
+		sz = efi_generate_file_device_path(dp_buf, req, fullpath,
+					EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
+					EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
+		if (sz < 0)
+			goto err;
 
 		if (info->dp_ptr)
 			free(info->dp_ptr);
@@ -832,15 +711,12 @@ new:
 	}
 
 	free_info(info);
-	free(filename);
 	return 1;
 err:
 	fwup_error = errno;
 	lseek(infd, offset, SEEK_SET);
 	if (dp_buf)
 		free(dp_buf);
-	if (filename)
-		free(filename);
 	if (info)
 		free_info(info);
 	if (fd > 0)
