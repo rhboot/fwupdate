@@ -551,6 +551,202 @@ fwup_get_last_attempt_info(fwup_resource *re, uint32_t *version,
 	return 1;
 }
 
+/* XXX PJFIX: this should be in efiboot-loadopt.h in efivar */
+#define LOAD_OPTION_ACTIVE      0x00000001
+
+static int
+set_up_boot_next(void)
+{
+	ssize_t sz, dp_size = 0;
+	uint8_t *dp_buf = NULL;
+	struct stat statbuf;
+	int rc;
+	int saved_errno;
+
+	char shim_fs_path[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/shim.efi";
+	char fwup_fs_path[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/fwupdate.efi";
+	char fwup_esp_path[] = "\\EFI\\"FWUP_EFI_DIR_NAME"\\fwupdate.efi";
+	int use_fwup_path = 0;
+
+	char *loader_str = NULL;
+	size_t loader_sz = 0;
+
+	rc = stat(shim_fs_path, &statbuf);
+	if (rc < 0 && errno == ENOENT) {
+		use_fwup_path = 1;
+	} else if (rc < 0) {
+		return rc;
+	}
+
+	sz = efi_generate_file_device_path(dp_buf, dp_size, use_fwup_path
+							    ? fwup_fs_path
+							    : shim_fs_path,
+					   EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
+					   EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
+	if (sz < 0)
+		return -1;
+
+	dp_size=sz;
+	dp_buf = calloc(1, dp_size);
+	if (!dp_buf)
+		return -1;
+
+	if (!use_fwup_path) {
+		loader_str = fwup_esp_path;
+		loader_sz = strlen(fwup_esp_path) + 1;
+	}
+
+	sz = efi_generate_file_device_path(dp_buf, dp_size, use_fwup_path
+							    ? fwup_fs_path
+							    : shim_fs_path,
+					   EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
+					   EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
+	if (sz != dp_size)
+		return -1;
+
+	uint8_t *opt=NULL;
+	ssize_t opt_size=0;
+	uint32_t attributes = LOAD_OPTION_ACTIVE;
+	int ret = -1;
+	sz = efi_make_load_option(opt, opt_size, attributes,
+				  (efidp)dp_buf, dp_size,
+				  (uint8_t *)"Linux Firmware Updater",
+				  (uint8_t *)loader_str, loader_sz);
+	if (sz < 0)
+		goto out;
+	opt = calloc(1, sz);
+	if (!opt)
+		goto out;
+	opt_size = sz;
+	sz = efi_make_load_option(opt, opt_size, attributes,
+				  (efidp)dp_buf, dp_size,
+				  (uint8_t *)"Linux Firmware Updater",
+				  (uint8_t *)loader_str, loader_sz);
+	if (sz != opt_size)
+		goto out;
+
+	int set_entries[0x10000 / sizeof(int)] = {0,};
+	efi_guid_t *guid = NULL;
+	char *name = NULL;
+
+	uint32_t boot_next = 0x10000;
+	int found=0;
+
+	uint8_t *var_data = NULL;
+	size_t var_data_size = 0;
+	uint32_t attr;
+	efi_load_option *loadopt = NULL;
+
+	while ((rc = efi_get_next_variable_name(&guid, &name)) > 0) {
+		if (efi_guid_cmp(guid, &efi_guid_global))
+			continue;
+		int scanned=0;
+		uint16_t entry=0;
+		rc = sscanf(name, "Boot%hX%n", &entry, &scanned);
+		if (rc < 0)
+			goto out;
+		if (rc != 1)
+			continue;
+		if (scanned != 8)
+			continue;
+
+		int div = entry / (sizeof(set_entries[0]) * 8);
+		int mod = entry % (sizeof(set_entries[0]) * 8);
+
+		set_entries[div] |= 1 << mod;
+
+		rc = efi_get_variable(*guid, name, &var_data, &var_data_size,
+				      &attr);
+		if (rc < 0)
+			continue;
+
+		loadopt = (efi_load_option *)var_data;
+		if (!efi_loadopt_is_valid(loadopt, var_data_size)) {
+do_next:
+			free(var_data);
+			continue;
+		}
+
+		sz = efi_load_option_pathlen(loadopt);
+		if (sz != efidp_size((efidp)dp_buf))
+			goto do_next;
+
+		efidp found_dp = efi_load_option_path(loadopt);
+		if (memcmp(found_dp, dp_buf, sz))
+			goto do_next;
+
+		uint8_t *found_opt_data = NULL;
+		size_t found_opt_size = 0;
+
+		rc = efi_load_option_optional_data(loadopt, var_data_size,
+						   &found_opt_data,
+						   &found_opt_size);
+		if (rc < 0)
+			goto do_next;
+		if (found_opt_size > SSIZE_MAX)
+			goto do_next;
+		if ((ssize_t)found_opt_size != opt_size)
+			goto do_next;
+		if (memcmp(found_opt_data, opt, opt_size))
+			goto do_next;
+
+		found = 1;
+		boot_next = entry;
+		break;
+	}
+	if (rc < 0)
+		goto out;
+
+	if (found) {
+		efi_load_option_attr_set(loadopt, LOAD_OPTION_ACTIVE);
+		rc = efi_set_variable(*guid, name, var_data,
+				      var_data_size, attr);
+		ret = rc;
+	} else {
+		char boot_next_name[] = "Boot####";
+		for (uint32_t value = 0; value < 0x10000; value++) {
+			int div = value / (sizeof(set_entries[0]) * 8);
+			int mod = value % (sizeof(set_entries[0]) * 8);
+
+			if (!set_entries[div]) {
+				boot_next = div * sizeof(set_entries[0]) * 8;
+			} else if (set_entries[div] & (1<<mod)) {
+				continue;
+			}
+			boot_next = value;
+			break;
+		}
+
+		if (boot_next >= 0x10000)
+			goto out;
+
+		sprintf(boot_next_name, "Boot%04x", boot_next);
+		rc = efi_set_variable(*guid, boot_next_name, opt, opt_size,
+				      EFI_VARIABLE_NON_VOLATILE |
+				      EFI_VARIABLE_BOOTSERVICE_ACCESS |
+				      EFI_VARIABLE_RUNTIME_ACCESS);
+		if (rc < 0)
+			goto out;
+
+		uint16_t real_boot_next = boot_next;
+		rc = efi_set_variable(*guid, "BootNext",
+				      (uint8_t *)&real_boot_next, 2,
+				      EFI_VARIABLE_NON_VOLATILE |
+				      EFI_VARIABLE_BOOTSERVICE_ACCESS |
+				      EFI_VARIABLE_RUNTIME_ACCESS);
+		ret = rc;
+	}
+out:
+	saved_errno = errno;
+	if (dp_buf)
+		free(dp_buf);
+	if (opt)
+		free(opt);
+
+	errno = saved_errno;
+	return ret;
+}
+
 int
 fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 {
@@ -711,6 +907,12 @@ new:
 	}
 
 	free_info(info);
+
+	rc = set_up_boot_next();
+	if (rc < 0) {
+		fwup_error = errno;
+		return rc;
+	}
 	return 1;
 err:
 	fwup_error = errno;
