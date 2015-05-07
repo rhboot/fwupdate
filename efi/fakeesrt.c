@@ -32,8 +32,8 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *systab)
 		esre_t esre1;
 	} __attribute__((packed)) esrt = {
 		.esrt = { 2, 2, 3 },
-		.esre0 = { guid0, 0, 0, 0, 0x80f1, 0, 0, 0 },
-		.esre1 = { guid1, 1, 9, 7, 0x80f1, 0, 0, 0 },
+		.esre0 = { guid0, 0, 0, 0, 0x80f1, 0, 0 },
+		.esre1 = { guid1, 1, 9, 7, 0x80f1, 0, 0 },
 	};
 	EFI_STATUS status;
 	EFI_PHYSICAL_ADDRESS mem = 0;
