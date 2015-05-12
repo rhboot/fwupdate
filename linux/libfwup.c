@@ -608,7 +608,7 @@ set_up_boot_next(void)
 	ssize_t opt_size=0;
 	uint32_t attributes = LOAD_OPTION_ACTIVE;
 	int ret = -1;
-	sz = efi_make_load_option(opt, opt_size, attributes,
+	sz = efi_loadopt_create(opt, opt_size, attributes,
 				  (efidp)dp_buf, dp_size,
 				  (uint8_t *)"Linux Firmware Updater",
 				  (uint8_t *)loader_str, loader_sz);
@@ -618,7 +618,7 @@ set_up_boot_next(void)
 	if (!opt)
 		goto out;
 	opt_size = sz;
-	sz = efi_make_load_option(opt, opt_size, attributes,
+	sz = efi_loadopt_create(opt, opt_size, attributes,
 				  (efidp)dp_buf, dp_size,
 				  (uint8_t *)"Linux Firmware Updater",
 				  (uint8_t *)loader_str, loader_sz);
@@ -667,18 +667,18 @@ do_next:
 			continue;
 		}
 
-		sz = efi_load_option_pathlen(loadopt);
+		sz = efi_loadopt_pathlen(loadopt);
 		if (sz != efidp_size((efidp)dp_buf))
 			goto do_next;
 
-		efidp found_dp = efi_load_option_path(loadopt);
+		efidp found_dp = efi_loadopt_path(loadopt);
 		if (memcmp(found_dp, dp_buf, sz))
 			goto do_next;
 
 		uint8_t *found_opt_data = NULL;
 		size_t found_opt_size = 0;
 
-		rc = efi_load_option_optional_data(loadopt, var_data_size,
+		rc = efi_loadopt_optional_data(loadopt, var_data_size,
 						   &found_opt_data,
 						   &found_opt_size);
 		if (rc < 0)
@@ -698,7 +698,7 @@ do_next:
 		goto out;
 
 	if (found) {
-		efi_load_option_attr_set(loadopt, LOAD_OPTION_ACTIVE);
+		efi_loadopt_attr_set(loadopt, LOAD_OPTION_ACTIVE);
 		rc = efi_set_variable(*guid, name, var_data,
 				      var_data_size, attr);
 		ret = rc;
