@@ -2,7 +2,6 @@ TOPDIR	?= $(shell pwd)/..
 include $(TOPDIR)/Make.defaults
 
 
-ARCH		= $(shell $(CC) -dumpmachine | cut -f1 -d- | sed s,i[3456789]86,ia32,)
 CFLAGS		= -O0 -g3
 BUILDFLAGS	:= $(CFLAGS) -fpic -Wall -fshort-wchar \
 	-fno-strict-aliasing -fno-merge-constants -ffreestanding \
@@ -29,8 +28,8 @@ ifeq ($(ARCH),arm)
 endif
 
 LDFLAGS=-nostdlib --warn-common --no-undefined --fatal-warnings -shared \
-	-Bsymbolic -L/usr/lib64 -L/usr/lib64/gnuefi \
-	/usr/lib64/gnuefi/crt0-efi-$(ARCH).o
+	-Bsymbolic -L$(LIBDIR) -L/usr/lib64/gnuefi \
+	$(LIBDIR)/gnuefi/crt0-efi-$(ARCH).o
 MAME=make
 
 TARGETS = fakeesrt2.efi fakeesrt.efi dumpesrt.efi fwupdate.efi mkvar.efi dumpf.efi mkvar2.efi
@@ -47,7 +46,7 @@ all : $(TARGETS)
 %.so : %.o
 	$(LD) $(LDFLAGS) -o $@ $^ -lefi -lgnuefi \
 		$(shell gcc -print-libgcc-file-name) \
-		-T /usr/lib64/gnuefi/elf_$(ARCH)_efi.lds
+		-T $(LIBDIR)/gnuefi/elf_$(ARCH)_efi.lds
 
 %.o : %.c
 	$(CC) $(BUILDFLAGS) -c -o $@ $^

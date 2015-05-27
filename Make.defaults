@@ -4,8 +4,21 @@ CC		= $(CROSS_COMPILE)gcc
 LD		= $(CROSS_COMPILE)ld
 OBJCOPY		= $(CROSS_COMPILE)objcopy
 XGETTEXT	= xgettext
+ARCH		= $(shell $(CC) -dumpmachine | cut -f1 -d- | sed s,i[3456789]86,ia32,)
+ifeq ($(ARCH),x86_64)
+  LIBDIR	?= /usr/lib64
+endif
+ifeq ($(ARCH),ia32)
+  LIBDIR	?= /usr/lib
+endif
+ifeq ($(ARCH),aarch64)
+  LIBDIR	?= /usr/lib64
+endif
+ifeq ($(ARCH),arm)
+  LIBDIR	?= /usr/lib
+endif
 
-libdir		?= $(DESTDIR)/usr/lib64/
+libdir		?= $(DESTDIR)$(LIBDIR)
 pcdir		?= $(libdir)/pkgconfig/
 mandir		?= $(DESTDIR)/usr/share/man/
 includedir	?= $(DESTDIR)/usr/include/

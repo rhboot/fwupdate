@@ -5,7 +5,7 @@ SUBDIRS = efi linux
 all clean install :
 	@set -e ; for x in $(SUBDIRS) ; do \
 		$(MAKE) DESTDIR=$(DESTDIR) TOPDIR=$(TOPDIR) VERSION=$(VERSION) \
-			bindir=$(bindir) mandir=$(mandir) \
+			LIBDIR=$(LIBDIR) bindir=$(bindir) mandir=$(mandir) \
 			-C $$x $@ ; \
 	done
 
