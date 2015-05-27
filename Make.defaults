@@ -18,6 +18,7 @@ ifeq ($(ARCH),arm)
   LIBDIR	?= /usr/lib
 endif
 
+GNUEFIDIR	?= $(LIBDIR)/gnuefi/
 libdir		?= $(DESTDIR)$(LIBDIR)
 pcdir		?= $(libdir)/pkgconfig/
 mandir		?= $(DESTDIR)/usr/share/man/

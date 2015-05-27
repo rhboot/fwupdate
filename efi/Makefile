@@ -28,8 +28,8 @@ ifeq ($(ARCH),arm)
 endif
 
 LDFLAGS=-nostdlib --warn-common --no-undefined --fatal-warnings -shared \
-	-Bsymbolic -L$(LIBDIR) -L/usr/lib64/gnuefi \
-	$(LIBDIR)/gnuefi/crt0-efi-$(ARCH).o
+	-Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) \
+	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
 MAME=make
 
 TARGETS = fakeesrt2.efi fakeesrt.efi dumpesrt.efi fwupdate.efi mkvar.efi dumpf.efi mkvar2.efi
@@ -46,7 +46,7 @@ all : $(TARGETS)
 %.so : %.o
 	$(LD) $(LDFLAGS) -o $@ $^ -lefi -lgnuefi \
 		$(shell gcc -print-libgcc-file-name) \
-		-T $(LIBDIR)/gnuefi/elf_$(ARCH)_efi.lds
+		-T $(GNUEFIDIR)/elf_$(ARCH)_efi.lds
 
 %.o : %.c
 	$(CC) $(BUILDFLAGS) -c -o $@ $^
