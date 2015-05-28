@@ -1,5 +1,5 @@
 TOPDIR=$(shell pwd)
-VERSION = 0.2
+VERSION = 0.3
 SUBDIRS = efi linux docs
 
 all clean install :
