@@ -1,0 +1,94 @@
+.TH LIBFWUP 3 "Mon 11 May 2015"
+.SH NAME 
+libfwup - library to support management of system firmware updates
+.SH SYNOPSIS
+.nf
+#include <\fBfwup.h\fR>
+.sp
+\fBint \fRfwup_supported\fB(void);\fR\p
+ \- test if firmware updating is supported on the running machine
+
+\fBextern int \fRfwup_error\fB;\fR\p
+\fBconst char const *\fRfwup_strerror\fB(int \fIerror\fB);\fR\p
+\fBconst char const *\fRfwup_strerror_r\fB(int \fIerror\fB, char *\fIbuf\fB, size_t \fIbuflen\fB);\fR\p
+ \- handle libfwup errors
+
+\fBtypedef struct fwup_resource_s \fRfwup_resource\fB;\fR\p
+\fBtypedef struct fwup_resource_iter_s \fRfwup_resource_iter\fB;\fR\p
+
+\fBint \fRfwup_resource_iter_create\fB(fwup_resource_iter **\fIiter\fB);\fR\p
+\fBint \fRfwup_resource_iter_next\fB(\kZfwup_resource_iter *\fIiter\fB,
+.ta \nZu
+	fwup_resource **\fIre\fB);\fR\p
+\fBint \fRfwup_resource_iter_destroy\fB(fwup_resource_iter **\fIiter\fB);\fR\p
+ \- iterate the list of updateable firmware images
+
+\fBint \fRfwup_set_up_update\fB(fwup_resource *\fIre\fB, uint64_t \fIhw_inst\fB, int \fIinfd\fB);\fR\p
+\fBint \fRfwup_clear_status\fB(fwup_resource *\fIre\fB);\fR\p
+\fBint \fRfwup_get_guid\fB(fwup_resource *\fIre\fB, efi_guid_t **\fIguid\fB);\fR\p
+\fBint \fRfwup_get_fw_version\fB(fwup_resource *\fIre\fB, uint32_t *\fIversion\fB);\fR\p
+\fBint \fRfwup_get_lowest_supported_fw_version\fB(\kZfwup_resource *\fIre\fB,
+.ta \nZu
+	uint32_t *\fIversion\fB);\fR\p
+\fBint \fRfwup_get_last_attempt_info\fB(\kZfwup_resource *\fIre\fB, uint32_t *\fIversion\fB,
+.ta \nZu
+	uint32_t *\fIstatus\fB, time_t *\fIwhen\fB);\fR\p
+ \- operate on an individual firmware entry
+.SH DESCRIPTION
+.nf
+.PP
+\fBint \fRfwup_supported\fB(void);\fR
+Tests if the current machine supports firmware updates
+.PP
+\fBint \fRfwup_error\fB;\fR
+The last error encountered by a libfwup API call.  Analogous to errno\fB(3)\fR.
+.PP
+\fBconst char const *\fRfwup_strerror\fB(int \fIerror\fB);\fR\p
+\fBconst char const *\fRfwup_strerror_r\fB(int \fIerror\fB, char *\fIbuf\fB, size_t \fIbuflen\fB);\fR
+The string representation of the libfwup error specified by \fIerror\fR.
+These are analogous to strerror\fB(3)\fR and strerror_r\fB(3)\fR.\p
+
+\fBtypedef struct fwup_resource_s \fRfwup_resource\fB;\fR\p
+\fBtypedef struct fwup_resource_iter_s \fRfwup_resource_iter\fB;\fR\p
+
+\fBint \fRfwup_resource_iter_create\fB(fwup_resource_iter **\fIiter\fB);\fR\p
+Create a new firmware resoure iterator \fIiter\fR.
+
+\fBint \fRfwup_resource_iter_next\fB(\kZfwup_resource_iter *\fIiter\fB,
+.ta \nZu
+	fwup_resource **\fIre\fB);\fR\p
+Get the next firmware resource \fIre\fR from iterator \fIiter\fR.
+
+\fBint \fRfwup_resource_iter_destroy\fB(fwup_resource_iter **\fIiter\fB);\fR\p
+Destroy firmware resource iterator \fIiter\fR.
+
+\fBint \fRfwup_set_up_update\fB(fwup_resource *\fIre\fB, uint64_t \fIhw_inst\fB, int \fIinfd\fB);\fR\p
+Set up an update for resource \fIre\fR, hardware instance number \fIhw_inst\fR,
+with the file referenced by the file descriptor \fIinfd\fR.  \fIinfd\fR must
+support read\fB(3)\fR.
+
+\fBint \fRfwup_clear_status\fB(fwup_resource *\fIre\fB);\fR\p
+Clear the status of the firmware resource \fIre\fR.  This removes any pending
+attempt to update it, as well as clearing any pending error report.
+
+\fBint \fRfwup_get_guid\fB(fwup_resource *\fIre\fB, efi_guid_t **\fIguid\fB);\fR\p
+Set \fIguid\fR to the GUID which uniquely identifies firmware resource \fIre\fR.
+
+\fBint \fRfwup_get_fw_version\fB(fwup_resource *\fIre\fB, uint32_t *\fIversion\fB);\fR\p
+Set \fIversion\fR to the version of the firmware resource \fIre\fR.
+
+\fBint \fRfwup_get_lowest_supported_fw_version\fB(\kZfwup_resource *\fIre\fB,
+.ta \nZu
+	uint32_t *\fIversion\fB);\fR
+Set \fIversion\fR to the lowest firmware version resource \fIre\fR can be
+updated to.
+
+\fBint \fRfwup_get_last_attempt_info\fB(\kZfwup_resource *\fIre\fB, uint32_t *\fIversion\fB,
+.ta \nZu
+	uint32_t *\fIstatus\fB, time_t *\fIwhen\fB);\fR\p
+Get the status for the last attempt to update firmware resource \fIre\fR.
+.SH AUTHORS
+.nf
+Peter Jones <pjones@redhat.com>
+.SH SEE ALSO
+\fBerrno\fR(3), \fBstrerror\fR(3), \fBstrerror_r\fR(3)

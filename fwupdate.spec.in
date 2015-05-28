@@ -76,6 +76,7 @@ rm -rf $RPM_BUILD_ROOT
 %postun libs -p /sbin/ldconfig
 
 %files
+%defattr(-,root,root,-)
 %{!?_licensedir:%global license %%doc}
 %license COPYING
 # %%doc README
@@ -83,15 +84,17 @@ rm -rf $RPM_BUILD_ROOT
 /boot/efi/EFI/%{efidir}/fwupdate.efi
 %dir /boot/efi/EFI/%{efidir}/fw/
 %{_datadir}/locale/en/*.po
-#%{_mandir}/man1/*
+%doc %{_mandir}/man1/*
 
 %files devel
-#%{_mandir}/man3/*
+%defattr(-,root,root,-)
+%doc %{_mandir}/man3/*
 %{_includedir}/*
 %{_libdir}/*.so
 %{_libdir}/pkgconfig/*.pc
 
 %files libs
+%defattr(-,root,root,-)
 %{_libdir}/*.so.*
 
 %changelog

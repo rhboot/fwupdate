@@ -1,6 +1,6 @@
 TOPDIR=$(shell pwd)
 VERSION = 0.2
-SUBDIRS = efi linux
+SUBDIRS = efi linux docs
 
 all clean install :
 	@set -e ; for x in $(SUBDIRS) ; do \
