@@ -565,10 +565,10 @@ set_up_boot_next(void)
 
 	char shim_fs_path[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/shim.efi";
 	char fwup_fs_path[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/fwupdate.efi";
-	char fwup_esp_path[] = "\\EFI\\"FWUP_EFI_DIR_NAME"\\fwupdate.efi";
+	uint8_t fwup_esp_path[] = "\\EFI\\"FWUP_EFI_DIR_NAME"\\fwupdate.efi";
 	int use_fwup_path = 0;
 
-	char *loader_str = NULL;
+	uint16_t *loader_str = NULL;
 	size_t loader_sz = 0;
 
 	rc = stat(shim_fs_path, &statbuf);
@@ -592,8 +592,11 @@ set_up_boot_next(void)
 		return -1;
 
 	if (!use_fwup_path) {
-		loader_str = fwup_esp_path;
-		loader_sz = strlen(fwup_esp_path) + 1;
+		loader_str = utf8_to_ucs2(fwup_esp_path, -1);
+		loader_sz = ucs2len(loader_str, -1) * 2;
+		if (loader_sz)
+			loader_sz += 1;
+		loader_str = onstack(loader_str, loader_sz);
 	}
 
 	sz = efi_generate_file_device_path(dp_buf, dp_size, use_fwup_path
