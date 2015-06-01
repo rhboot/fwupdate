@@ -687,7 +687,7 @@ do_next:
 		if (boot_next >= 0x10000)
 			goto out;
 
-		sprintf(boot_next_name, "Boot%04x", boot_next);
+		sprintf(boot_next_name, "Boot%04X", boot_next);
 		rc = efi_set_variable(*guid, boot_next_name, opt, opt_size,
 				      EFI_VARIABLE_NON_VOLATILE |
 				      EFI_VARIABLE_BOOTSERVICE_ACCESS |
