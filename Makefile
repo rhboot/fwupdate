@@ -1,5 +1,5 @@
 TOPDIR=$(shell pwd)
-VERSION = 0.3
+include $(TOPDIR)/Make.version
 SUBDIRS = efi linux docs
 
 all clean install :

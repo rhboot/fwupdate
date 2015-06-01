@@ -1,4 +1,5 @@
 TOPDIR	?= $(shell pwd)/..
+include $(TOPDIR)/Make.version
 include $(TOPDIR)/Make.defaults
 
 LIB_LIBS= pthread
