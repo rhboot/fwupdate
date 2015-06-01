@@ -560,7 +560,7 @@ set_up_boot_next(void)
 		loader_str = utf8_to_ucs2(fwup_esp_path, -1);
 		loader_sz = ucs2len(loader_str, -1) * 2;
 		if (loader_sz)
-			loader_sz += 1;
+			loader_sz += 2;
 		loader_str = onstack(loader_str, loader_sz);
 	}
 

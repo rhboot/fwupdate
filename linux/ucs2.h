@@ -102,7 +102,7 @@ __attribute__((__unused__))
 ucs2len(uint16_t *s, ssize_t limit)
 {
 	ssize_t i;
-	for (i = 0; i < limit && s[i] != L'\0'; i++)
+	for (i = 0; i < (limit > 0 ? limit : i + 1) && s[i] != L'\0'; i++)
 		;
 	return i;
 }
