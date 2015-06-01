@@ -644,19 +644,11 @@ do_next:
 		if (memcmp(found_dp, dp_buf, sz))
 			goto do_next;
 
-		uint8_t *found_opt_data = NULL;
-		size_t found_opt_size = 0;
-
-		rc = efi_loadopt_optional_data(loadopt, var_data_size,
-						   &found_opt_data,
-						   &found_opt_size);
-		if (rc < 0)
+		if ((ssize_t)var_data_size != opt_size)
 			goto do_next;
-		if (found_opt_size > SSIZE_MAX)
+		if (memcmp(loadopt, opt, opt_size))
 			goto do_next;
-		if ((ssize_t)found_opt_size != opt_size)
-			goto do_next;
-		if (memcmp(found_opt_data, opt, opt_size))
+		if (memcmp(loadopt, opt, opt_size))
 			goto do_next;
 
 		found = 1;
