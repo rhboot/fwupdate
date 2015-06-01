@@ -546,7 +546,8 @@ set_up_boot_next(void)
 							    ? fwup_fs_path
 							    : shim_fs_path,
 					   EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
-					   EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
+					   EFIBOOT_OPTIONS_IGNORE_PMBR_ERR|
+					   EFIBOOT_ABBREV_HD);
 	if (sz < 0)
 		return -1;
 
@@ -567,7 +568,8 @@ set_up_boot_next(void)
 							    ? fwup_fs_path
 							    : shim_fs_path,
 					   EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
-					   EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
+					   EFIBOOT_OPTIONS_IGNORE_PMBR_ERR|
+					   EFIBOOT_ABBREV_HD);
 	if (sz != dp_size)
 		return -1;
 
