@@ -27,6 +27,7 @@ libfwup - library to support management of system firmware updates
 \fBint \fRfwup_clear_status\fB(fwup_resource *\fIre\fB);\fR\p
 \fBint \fRfwup_get_guid\fB(fwup_resource *\fIre\fB, efi_guid_t **\fIguid\fB);\fR\p
 \fBint \fRfwup_get_fw_version\fB(fwup_resource *\fIre\fB, uint32_t *\fIversion\fB);\fR\p
+\fBint \fRfwup_get_fw_type\fB(fwup_resource *\fIre\fB, uint32_t *\fItype\fB);\fR\p
 \fBint \fRfwup_get_lowest_supported_fw_version\fB(\kZfwup_resource *\fIre\fB,
 .ta \nZu
 	uint32_t *\fIversion\fB);\fR\p
@@ -76,6 +77,13 @@ Set \fIguid\fR to the GUID which uniquely identifies firmware resource \fIre\fR.
 
 \fBint \fRfwup_get_fw_version\fB(fwup_resource *\fIre\fB, uint32_t *\fIversion\fB);\fR\p
 Set \fIversion\fR to the version of the firmware resource \fIre\fR.
+
+#define \fBFWUP_RESOURCE_TYPE_UNKNOWN\fR         0
+#define \fBFWUP_RESOURCE_TYPE_SYSTEM_FIRMWARE\fR 1
+#define \fBFWUP_RESOURCE_TYPE_DEVICE_FIRMWARE\fR 2
+#define \fBFWUP_RESOURCE_TYPE_UEFI_DRIVER\fR     3
+\fBint \fRfwup_get_fw_type\fB(fwup_resource *\fIre\fB, uint32_t *\fItype\fB);\fR\p
+Set \fItype\fR to the type of the firmware resource \fIre\fR.
 
 \fBint \fRfwup_get_lowest_supported_fw_version\fB(\kZfwup_resource *\fIre\fB,
 .ta \nZu

@@ -52,6 +52,7 @@ extern int fwup_resource_iter_destroy(fwup_resource_iter **iter);
 extern int fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd);
 extern int fwup_clear_status(fwup_resource *re);
 extern int fwup_get_guid(fwup_resource *re, efi_guid_t **guid);
+extern int fwup_get_fw_type(fwup_resource *re, uint32_t *type);
 extern int fwup_get_fw_version(fwup_resource *re, uint32_t *version);
 extern int fwup_get_lowest_supported_fw_version(fwup_resource *re,
 						uint32_t *version);

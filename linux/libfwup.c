@@ -456,6 +456,18 @@ fwup_get_fw_version(fwup_resource *re, uint32_t *version)
 }
 
 int
+fwup_get_fw_type(fwup_resource *re, uint32_t *type)
+{
+	if (!re || !type) {
+		fwup_error = EINVAL;
+		return -1;
+	}
+
+	*type = re->esre.fw_type;
+	return 0;
+}
+
+int
 fwup_get_lowest_supported_fw_version(fwup_resource *re, uint32_t *version)
 {
 	if (!re || !version) {
