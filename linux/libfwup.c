@@ -689,14 +689,16 @@ do_next:
 		if (rc < 0)
 			goto out;
 
-		uint16_t real_boot_next = boot_next;
-		rc = efi_set_variable(*guid, "BootNext",
-				      (uint8_t *)&real_boot_next, 2,
-				      EFI_VARIABLE_NON_VOLATILE |
-				      EFI_VARIABLE_BOOTSERVICE_ACCESS |
-				      EFI_VARIABLE_RUNTIME_ACCESS);
-		ret = rc;
 	}
+
+	uint16_t real_boot_next = boot_next;
+	rc = efi_set_variable(*guid, "BootNext",
+			      (uint8_t *)&real_boot_next, 2,
+			      EFI_VARIABLE_NON_VOLATILE |
+			      EFI_VARIABLE_BOOTSERVICE_ACCESS |
+			      EFI_VARIABLE_RUNTIME_ACCESS);
+	ret = rc;
+
 out:
 	saved_errno = errno;
 	if (dp_buf)
