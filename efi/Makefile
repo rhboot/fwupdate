@@ -9,28 +9,35 @@ BUILDFLAGS	:= $(CFLAGS) -fpic -Wall -fshort-wchar \
 	-fno-stack-protector -fno-stack-check --std=c11 -DCONFIG_$(ARCH) \
 	-D__KERNEL__ -I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
 	-iquote$(TOPDIR)/include
+LDFLAGS		= -nostdlib --warn-common --no-undefined --fatal-warnings \
+	-shared -Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) \
+	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
 
 ifeq ($(ARCH),x86_64)
+	FORMAT = --target efi-app-$(ARCH)
 	BUILDFLAGS += -mno-mmx -mno-sse -mno-red-zone -nostdinc \
 		-maccumulate-outgoing-args -DEFI_FUNCTION_WRAPPER \
 		-DGNU_EFI_USE_MS_ABI -I$(shell $(CC) -print-file-name=include)
 endif
 ifeq ($(ARCH),ia32)
+	FORMAT = --target efi-app-$(ARCH)
 	BUILDFLAGS += -mno-mmx -mno-sse -mno-red-zone -nostdinc \
-		-maccumulate-outgoing-args -m32 -I$(shell $(CC) -print-file-name=include)
+		-maccumulate-outgoing-args -m32 \
+		-I$(shell $(CC) -print-file-name=include)
 endif
 
 ifeq ($(ARCH),aarch64)
+	FORMAT = -O binary
+	LDFLAGS += --defsym=EFI_SUBSYSTEM=0xa
 	BUILDFLAGS += -ffreestanding -I$(shell $(CC) -print-file-name=include)
 endif
 
 ifeq ($(ARCH),arm)
+	FORMAT = -O binary
+	LDFLAGS += --defsym=EFI_SUBSYSTEM=0xa
 	BUILDFLAGS += -ffreestanding -I$(shell $(CC) -print-file-name=include)
 endif
 
-LDFLAGS=-nostdlib --warn-common --no-undefined --fatal-warnings -shared \
-	-Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) \
-	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
 MAME=make
 
 TARGETS = fakeesrt2.efi fakeesrt.efi dumpesrt.efi fwupdate.efi mkvar.efi dumpf.efi mkvar2.efi
@@ -41,8 +48,9 @@ all : $(TARGETS)
 	pesign -s -i $< -o $@ --force -c 'Red Hat Test Certificate'
 
 %.efi.unsigned : %.so
-	objcopy -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel* \
-		-j .rela* -j .reloc --target efi-app-x86_64 $^ $@
+	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
+		-j .rel* -j .rela* -j .reloc \
+		$(FORMAT) $^ $@
 
 %.so : %.o
 	$(LD) $(LDFLAGS) -o $@ $^ -lefi -lgnuefi \
