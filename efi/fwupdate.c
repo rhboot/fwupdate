@@ -382,7 +382,6 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 		return rc;
 
 	uefi_call_wrapper(fh->Close, 1, fh);
-	Print(L"fsize: %ld\n", fsize);
 
 	if (CompareMem(&update->info->guid, fbuf,
 			sizeof (update->info->guid)) == 0 && fsize != 40) {
@@ -436,9 +435,11 @@ apply_capsules(EFI_CAPSULE_HEADER **capsules,
 
 	rc = uefi_call_wrapper(RT->QueryCapsuleCapabilities, 4, capsules,
 				num_updates, &max_capsule_size, &reset);
+#if 0
 	Print(L"QueryCapsuleCapabilities: %r max: %ld reset:%d\n",
 		rc, max_capsule_size, reset);
 	Print(L"Capsules: %d\n", num_updates);
+#endif
 
 	uefi_call_wrapper(BS->Stall, 1, 1000000);
 	rc = uefi_call_wrapper(RT->UpdateCapsule, 3, capsules, num_updates,
