@@ -19,12 +19,12 @@ ifeq ($(ARCH),arm)
 endif
 
 GNUEFIDIR	?= $(LIBDIR)/gnuefi/
-libdir		?= $(DESTDIR)$(LIBDIR)
+libdir		?= $(LIBDIR)
 pcdir		?= $(libdir)/pkgconfig/
-mandir		?= $(DESTDIR)/usr/share/man/
-includedir	?= $(DESTDIR)/usr/include/
-bindir		?= $(DESTDIR)/usr/bin/
-datadir		?= $(DESTDIR)/usr/share/
+mandir		?= /usr/share/man/
+includedir	?= /usr/include/
+bindir		?= /usr/bin/
+datadir		?= /usr/share/
 localedir	?= $(datadir)/locale/
 
 EFIDIR		?= redhat
