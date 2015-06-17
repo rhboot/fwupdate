@@ -27,7 +27,7 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wno-unused-result -Wno-unused-function \
 
 BINTARGETS=fwupdate
 INCTARGETS=include/fwup.h
-LIBTARGETS=libfwup.so.$(VERSION)
+LIBTARGETS=libfwup.so.$(VERSION) libfwup.so.$(MAJOR_VERSION)
 PCTARGETS=fwup.pc
 POTARGETS = fwupdate.po libfwup.po
 TARGETS=$(BINTARGETS) $(INCTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) libfwup.so
@@ -43,11 +43,14 @@ fwupdate : libfwup.so
 
 %.so.$(VERSION) : %.o
 	$(CC) $(BUILDFLAGS) $(LIB_CCLDFLAGS) \
-		-Wl,-soname,$@ \
+		-Wl,-soname,$(patsubst %.o,%.so.$(MAJOR_VERSION),$<) \
 		-o $@ $^
 
+%.so.$(MAJOR_VERSION) : %.so.$(VERSION)
+	ln -sf $< $@
+
 %.so : %.so.$(VERSION)
-	ln -sf $^ $@
+	ln -sf $< $@
 
 %.po : %.c
 	$(XGETTEXT) -a --package-name=$(patsubst %.po,%,$@) --package-version=$(VERSION) -o $@ $^
@@ -82,4 +85,5 @@ install : all
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(bindir)
 	$(foreach x, $(BINTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)/$(bindir);)
 	ln -sf libfwup.so.$(VERSION) $(DESTDIR)/$(libdir)/libfwup.so
+	ln -sf libfwup.so.$(VERSION) $(DESTDIR)/$(libdir)/libfwup.so.$(MAJOR_VERSION)
 	$(foreach x, $(wildcard *.so.$(VERSION)), ln -fs $(x) $(patsubst %.so.$(VERSION),%.so,$(DESTDIR)/$(libdir)/$(x));)
