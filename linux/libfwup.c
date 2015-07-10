@@ -694,7 +694,8 @@ do_next:
 			goto out;
 
 		sprintf(boot_next_name, "Boot%04X", boot_next);
-		rc = efi_set_variable(*guid, boot_next_name, opt, opt_size,
+		rc = efi_set_variable(efi_guid_global, boot_next_name, opt,
+				      opt_size,
 				      EFI_VARIABLE_NON_VOLATILE |
 				      EFI_VARIABLE_BOOTSERVICE_ACCESS |
 				      EFI_VARIABLE_RUNTIME_ACCESS);
