@@ -84,6 +84,4 @@ install : all
 	$(INSTALL) -m 644 $(POTARGETS) $(DESTDIR)/$(localedir)/en/
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(bindir)
 	$(foreach x, $(BINTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)/$(bindir);)
-	ln -sf libfwup.so.$(VERSION) $(DESTDIR)/$(libdir)/libfwup.so
-	ln -sf libfwup.so.$(VERSION) $(DESTDIR)/$(libdir)/libfwup.so.$(MAJOR_VERSION)
-	$(foreach x, $(wildcard *.so.$(VERSION)), ln -fs $(x) $(patsubst %.so.$(VERSION),%.so,$(DESTDIR)/$(libdir)/$(x));)
+	$(foreach x, $(wildcard *.so.$(VERSION)), ln -fs $(x) $(patsubst %.so.$(VERSION),%.so,$(DESTDIR)/$(libdir)/$(x)); ln -fs $(x) $(patsubst %.so.$(VERSION),%.so.$(MAJOR_VERSION),$(DESTDIR)/$(libdir)/$(x));)
