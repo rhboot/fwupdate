@@ -39,12 +39,12 @@ all : $(TARGETS)
 fwupdate : libfwup.so
 
 % : %.o
-	$(CC) $(BUILDFLAGS) $(BIN_CCLDFLAGS) -o $@ $(patsubst lib%.so,-l%,$^)
+	$(CC) $(BUILDFLAGS) -o $@ $(patsubst lib%.so,-l%,$^) $(BIN_CCLDFLAGS)
 
 %.so.$(VERSION) : %.o
-	$(CC) $(BUILDFLAGS) $(LIB_CCLDFLAGS) \
+	$(CC) $(BUILDFLAGS) \
 		-Wl,-soname,$(patsubst %.o,%.so.$(MAJOR_VERSION),$<) \
-		-o $@ $^
+		-o $@ $^ $(LIB_CCLDFLAGS)
 
 %.so.$(MAJOR_VERSION) : %.so.$(VERSION)
 	ln -sf $< $@
