@@ -1,6 +1,7 @@
 TOPDIR=$(shell pwd)
 include $(TOPDIR)/Make.version
-SUBDIRS = efi linux docs
+include $(TOPDIR)/Make.defaults
+SUBDIRS = efi linux docs include
 
 all clean install :
 	@set -e ; for x in $(SUBDIRS) ; do \
@@ -37,5 +38,3 @@ archive: tag fwupdate.spec
 	@dir=$$PWD; cd /tmp; tar -c --bzip2 -f $$dir/fwupdate-$(VERSION).tar.bz2 fwupdate-$(VERSION)
 	@rm -rf /tmp/fwupdate-$(VERSION)
 	@echo "The archive is in fwupdate-$(VERSION).tar.bz2"
-
-include $(TOPDIR)/Make.defaults

@@ -1,5 +1,7 @@
 *.efi
 *.efi.unsigned
+*.efi.debug
+*.efi.build-id
 *.so
 *.o
 *.a

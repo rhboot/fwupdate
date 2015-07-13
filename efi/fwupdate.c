@@ -471,6 +471,35 @@ set_statuses(UINTN n_updates, update_table **updates)
 	return EFI_SUCCESS;
 }
 
+EFI_GUID SHIM_LOCK_GUID = { 0x605dab50, 0xe046, 0x4300, {0xab, 0xb6, 0x3d, 0xd8, 0x10, 0xdd, 0x8b, 0x23} };
+
+static void
+__attribute__((__optimize__("0")))
+debug_hook(void)
+{
+	EFI_GUID guid = SHIM_LOCK_GUID;
+	UINT8 *data = NULL;
+	UINTN data_size = 0;
+	EFI_STATUS efi_status;
+	UINT32 attributes;
+	volatile register int x = 0;
+	extern char _text, _data;
+
+	efi_status = read_variable(L"SHIM_DEBUG", guid, (void **)&data,
+				   &data_size, &attributes);
+	if (EFI_ERROR(efi_status)) {
+		return;
+	}
+
+	if (x)
+		return;
+
+	x = 1;
+	Print(L"add-symbol-file "DEBUGDIR
+	      L"fwupdate.debug %p -s .data %p\n", &_text,
+	      &_data);
+}
+
 EFI_STATUS
 efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 {
@@ -479,6 +508,11 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	UINTN n_updates = 0;
 
 	InitializeLib(image, systab);
+
+	/*
+	 * if SHIM_DEBUG is set, print info for our attached debugger.
+	 */
+	debug_hook();
 
 	rc = find_updates(&n_updates, &updates);
 	if (EFI_ERROR(rc)) {

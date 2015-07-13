@@ -3,6 +3,7 @@ MAKE		?= make
 CC		= $(CROSS_COMPILE)gcc
 LD		= $(CROSS_COMPILE)ld
 OBJCOPY		= $(CROSS_COMPILE)objcopy
+READELF		= eu-readelf
 XGETTEXT	= xgettext
 ARCH		= $(shell $(CC) -dumpmachine | cut -f1 -d- | sed s,i[3456789]86,ia32,)
 ifeq ($(ARCH),x86_64)
@@ -28,3 +29,6 @@ datadir		?= /usr/share/
 localedir	?= $(datadir)/locale/
 
 EFIDIR		?= redhat
+DEBUGINFO	?= /usr/lib/debug/
+DEBUGSOURCE	?= /usr/src/debug/
+TARGETDIR	?= /boot/efi/EFI/$(EFIDIR)/

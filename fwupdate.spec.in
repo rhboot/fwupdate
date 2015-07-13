@@ -11,8 +11,9 @@ Requires:       %{name}-libs%{?_isa} = %{version}-%{release}
 BuildRequires:  efivar-devel >= %{efivar_version}
 BuildRequires:  gnu-efi gnu-efi-devel
 BuildRequires:  pesign
-BuildRequires:  popt-devel git gettext pkgconfig
+BuildRequires:  elfutils popt-devel git gettext pkgconfig
 ExclusiveArch:  x86_64 %{ix86} aarch64
+Source0:        https://github.com/rhinstaller/fwupdate/releases/download/%{name}-%{version}/%{name}-%{version}.tar.bz2
 
 %ifarch x86_64
 %global efiarch x64
@@ -25,9 +26,7 @@ ExclusiveArch:  x86_64 %{ix86} aarch64
 %endif
 
 # Figure out the right file path to use
-%global efidir %(eval grep ^ID= /etc/os-release | sed -e 's/^ID=//' -e 's/rhel/redhat/')
-
-Source0:        https://github.com/rhinstaller/fwupdate/releases/download/%{name}-%{version}/%{name}-%{version}.tar.bz2
+%global efidir %(eval echo $(grep ^ID= /etc/os-release | sed -e 's/^ID=//' -e 's/rhel/redhat/'))
 
 %description
 fwupdate provides a simple command line interface to the UEFI firmware updates.
