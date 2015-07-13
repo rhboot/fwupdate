@@ -705,7 +705,7 @@ do_next:
 	}
 
 	uint16_t real_boot_next = boot_next;
-	rc = efi_set_variable(*guid, "BootNext",
+	rc = efi_set_variable(efi_guid_global, "BootNext",
 			      (uint8_t *)&real_boot_next, 2,
 			      EFI_VARIABLE_NON_VOLATILE |
 			      EFI_VARIABLE_BOOTSERVICE_ACCESS |
