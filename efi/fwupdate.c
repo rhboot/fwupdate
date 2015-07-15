@@ -101,7 +101,6 @@ read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 static EFI_STATUS
 delete_variable(CHAR16 *name, EFI_GUID guid, UINT32 attributes)
 {
-	return 0;
 	return uefi_call_wrapper(RT->SetVariable, 4, name, &guid, attributes,
 				 0, NULL);
 }
