@@ -18,6 +18,10 @@ endif
 ifeq ($(ARCH),arm)
   LIBDIR	?= /usr/lib
 endif
+LIBDIR		?= unknown
+ifeq ($(LIBDIR),unknown)
+$(error Architecture $(ARCH) is not a supported build target.)
+endif
 
 GNUEFIDIR	?= $(LIBDIR)/gnuefi/
 libdir		?= $(LIBDIR)
