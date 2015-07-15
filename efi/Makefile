@@ -64,7 +64,7 @@ endif
 	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
 		-j .rel* -j .rela* -j .reloc -j .eh_frame \
 		-j .debug* -j .note.gnu.build-id \
-		$(FORMAT) $^ $@
+		$^ $@
 
 %.efi.build-id : %.so
 	$(READELF) -n $^ | grep "Build ID:" | \
