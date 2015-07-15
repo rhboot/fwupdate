@@ -44,6 +44,8 @@ SECTIONS
    *(COMMON)
    *(.rel.local)
   }
+  .note.gnu.build-id : { *(.note.gnu.build-id) }
+
   . = ALIGN(4096);
   .dynamic  : { *(.dynamic) }
   . = ALIGN(4096);
