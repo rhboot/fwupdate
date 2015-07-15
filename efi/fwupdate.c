@@ -28,9 +28,15 @@ typedef struct update_table_s {
 	update_info *info;
 } update_table;
 
+/*
+ * Allocate some raw pages that aren't part of the pool allocator.
+ */
 static EFI_STATUS
 allocate(void **addr, UINTN size)
 {
+	/*
+	 * We're actually guaranteed that page size is 4096 by UEFI.
+	 */
 	UINTN pages = size / 4096 + ((size % 4096) ? 1 : 0);
 	EFI_STATUS rc;
 	EFI_PHYSICAL_ADDRESS pageaddr = 0;
@@ -42,10 +48,13 @@ allocate(void **addr, UINTN size)
 	return rc;
 }
 
+/*
+ * Free our raw page allocations.
+ */
 static EFI_STATUS
 free(void *addr, UINTN size)
 {
-	UINTN pages = size / 4096 + (size % 4096) ? 1 : 0;
+	UINTN pages = size / 4096 + ((size % 4096) ? 1 : 0);
 	EFI_STATUS rc;
 
 	rc = uefi_call_wrapper(BS->FreePages, 2, (EFI_PHYSICAL_ADDRESS)addr,
