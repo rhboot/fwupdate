@@ -17,7 +17,8 @@
 #define efi_guid_t EFI_GUID
 
 EFI_GUID empty_guid = {0x0,0x0,0x0,{0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}};
-EFI_GUID fwupdate_guid = {0x0abba7dc,0xe516,0x4167,{0xbb,0xf5,0x4d,0x9d,0x1c,0x73,0x94,0x16}};
+EFI_GUID fwupdate_guid =
+	{0x0abba7dc,0xe516,0x4167,{0xbb,0xf5,0x4d,0x9d,0x1c,0x73,0x94,0x16}};
 
 #include "fwup-efi.h"
 
@@ -436,7 +437,6 @@ apply_capsules(EFI_CAPSULE_HEADER **capsules,
 	       EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd,
 	       UINTN num_updates)
 {
-
 	EFI_RESET_TYPE reset;
 	UINT64 max_capsule_size;
 	EFI_STATUS rc;
@@ -458,7 +458,6 @@ apply_capsules(EFI_CAPSULE_HEADER **capsules,
 	}
 
 	return EFI_SUCCESS;
-
 }
 
 static
@@ -471,15 +470,18 @@ set_statuses(UINTN n_updates, update_table **updates)
 				       &fwupdate_guid, updates[i]->attributes,
 				       updates[i]->size, updates[i]->info);
 		if (EFI_ERROR(rc)) {
-			Print(L"Could not update variable status for %s: %r.\n",
-			      rc);
+			Print(L"%a:%a():%d: Could not update variable "
+			      L"status for \"%s\": %r\n",
+			      __FILE__, __func__, __LINE__,
+			      updates[i]->name, rc);
 			return rc;
 		}
 	}
 	return EFI_SUCCESS;
 }
 
-EFI_GUID SHIM_LOCK_GUID = { 0x605dab50, 0xe046, 0x4300, {0xab, 0xb6, 0x3d, 0xd8, 0x10, 0xdd, 0x8b, 0x23} };
+EFI_GUID SHIM_LOCK_GUID =
+ {0x605dab50,0xe046,0x4300,{0xab,0xb6,0x3d,0xd8,0x10,0xdd,0x8b,0x23}};
 
 static void
 __attribute__((__optimize__("0")))
