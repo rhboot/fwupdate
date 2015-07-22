@@ -188,7 +188,7 @@ get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
 			goto err;
 		local = calloc(1, sizeof (*local));
 		if (!local) {
-			rc = -1;
+			fwup_error = errno;
 			goto err;
 		}
 
@@ -201,7 +201,8 @@ get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
 alloc_err:
 			fwup_error = errno;
 			free_info(local);
-			return rc;
+			errno = fwup_error;
+			return -1;
 		}
 
 		ssize_t sz;
@@ -214,11 +215,16 @@ alloc_err:
 		return 0;
 	}
 
-	if (data_size < sizeof (*local)) {
+	/* If our size is wrong, or our data is otherwise bad, try to delete
+	 * the variable and create a new one. */
+	if (data_size < sizeof (*local) || !data) {
+		if (data)
+			free(data);
 get_err:
-		errno = EINVAL;
-		free(local);
-		return -1;
+		rc = efi_del_variable(varguid, varname);
+		if (rc < 0)
+			goto err;
+		return get_info(guid, hw_inst, info);
 	}
 	local = (update_info *)data;
 
@@ -226,8 +232,11 @@ get_err:
 		goto get_err;
 
 	efidp_header *dp = malloc(efidp_size((efidp)local->dp));
-	if (!dp)
-		goto get_err;
+	if (!dp) {
+		free(data);
+		fwup_error = errno = ENOMEM;
+		return -1;
+	}
 
 	memcpy(dp, local->dp, efidp_size((efidp)local->dp));
 	local->dp_ptr = dp;
