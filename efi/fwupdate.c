@@ -29,6 +29,8 @@ typedef struct update_table_s {
 	update_info *info;
 } update_table;
 
+static int debugging;
+
 /*
  * Allocate some raw pages that aren't part of the pool allocator.
  */
@@ -76,8 +78,10 @@ read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 		void *newb = NULL;
 		rc = allocate(&newb, bs * n_blocks * 2);
 		if (EFI_ERROR(rc)) {
-			Print(L"Could not allocate memory: %r (%d).\n",
-			      rc, __LINE__);
+			Print(L"%a:%a():%d: Tried to allocate %d\n",
+			      __FILE__, __func__, __LINE__,
+			      bs * n_blocks * 2);
+			Print(L"Could not allocate memory.\n");
 			return EFI_OUT_OF_RESOURCES;
 		}
 		if (b) {
@@ -94,7 +98,8 @@ read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 			rc = uefi_call_wrapper(fh->Read, 3, fh, &sz, &b[i *bs]);
 			if (EFI_ERROR(rc)) {
 				free(b, bs * n_blocks);
-				Print(L"Could not read file: %r.\n", rc);
+				Print(L"%a:%a():%d: Could not read file: %r\n",
+				      __FILE__, __func__, __LINE__, rc);
 				return rc;
 			}
 
@@ -130,22 +135,28 @@ read_variable(CHAR16 *name, EFI_GUID guid, void **buf_out, UINTN *buf_size_out,
 		if (rc == EFI_BUFFER_TOO_SMALL) {
 			buf = AllocatePool(size);
 			if (!buf) {
-				Print(L"Could not allocate memory (%d)\n",
-				      __LINE__);
+				Print(L"%a:%a():%d: Tried to allocate %d\n",
+				      __FILE__, __func__, __LINE__, size);
+				Print(L"Could not allocate memory.\n");
 				return EFI_OUT_OF_RESOURCES;
 			}
-		} else {
-			Print(L"Could not get variable \"%s\": %r\n", name, rc);
+		} else if (rc != EFI_NOT_FOUND) {
+			Print(L"%a:%a():%d: "
+			      L"Could not get variable \"%s\": %r\n",
+			      __FILE__, __func__, __LINE__, name, rc);
 			return rc;
 		}
 	} else {
-		Print(L"GetVariable(%s) succeeded with size=0.\n", name);
+		Print(L"%a:%a():%d: "
+		      L"GetVariable(%s) succeeded with size=0.\n",
+		      __FILE__, __func__, __LINE__, name);
 		return EFI_INVALID_PARAMETER;
 	}
 	rc = uefi_call_wrapper(RT->GetVariable, 5, name, &guid, &attributes,
 			       &size, buf);
 	if (EFI_ERROR(rc)) {
-		Print(L"Could not get variable \"%s\": %r\n", name, rc);
+		Print(L"%a:%a():%d: Could not get variable \"%s\": %r\n",
+		      __FILE__, __func__, __LINE__, name, rc);
 		FreePool(buf);
 		return rc;
 	}
@@ -175,16 +186,21 @@ get_info(CHAR16 *name, update_table *info_out)
 	}
 
 	if (info_size - sizeof (EFI_DEVICE_PATH) <= sizeof (*info)) {
-		Print(L"Update \"%s\" is cannot have file path.\n", name);
+		Print(L"Update \"%s\" is malformed, "
+		      L"and cannot hold a file path.\n", name);
 		delete_variable(name, fwupdate_guid, attributes);
 		return EFI_INVALID_PARAMETER;
 	}
 
 	UINTN is = info_size - EFI_FIELD_OFFSET(update_info, dp);
 	EFI_DEVICE_PATH *hdr = (EFI_DEVICE_PATH *)&info->dp;
-	UINTN sz = DevicePathSize(hdr);
-	if (is != sz) {
-		Print(L"Update \"%s\" has an invalid file path (%d %d %d).\n", name, is, sz, info_size);
+	INTN sz = sizeof (EFI_DEVICE_PATH) - is;
+	if (is >= sizeof (EFI_DEVICE_PATH))
+		sz = DevicePathSize(hdr);
+	if (is != sz || sz < 4) {
+		Print(L"Update \"%s\" has an invalid file path.\n"
+		      L"update info size: %d dp size: %d size for dp: %d\n",
+		      name, info_size, sz, is);
 		delete_variable(name, fwupdate_guid, attributes);
 		return EFI_INVALID_PARAMETER;
 	}
@@ -211,15 +227,26 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 	CHAR16 *variable_name;
 	EFI_GUID vendor_guid = empty_guid;
 
-	updates = AllocateZeroPool(sizeof (update_table *) *n_updates_allocated);
+	updates = AllocateZeroPool(sizeof (update_table *)
+				   * n_updates_allocated);
 	if (!updates) {
-		Print(L"Could not allocate memory (%d)\n", __LINE__);
+		Print(L"%a:%a():%d: Tried to allocate %d\n",
+		      __FILE__, __func__, __LINE__,
+		      sizeof (update_table *) * n_updates_allocated);
+		Print(L"Could not allocate memory.\n");
 		return EFI_OUT_OF_RESOURCES;
 	}
 
 	/* How much do we trust "size of the VariableName buffer" to mean
 	 * sizeof(vn) and not sizeof(vn)/sizeof(vn[0]) ? */
 	variable_name = AllocateZeroPool(GNVN_BUF_SIZE * 2);
+	if (!variable_name) {
+		Print(L"%a:%a():%d: Tried to allocate %d\n",
+		      __FILE__, __func__, __LINE__,
+		      GNVN_BUF_SIZE * 2);
+		Print(L"Could not allocate memory.\n");
+		return EFI_OUT_OF_RESOURCES;
+	}
 
 	while (1) {
 		variable_name_size = variable_name_allocation;
@@ -227,13 +254,21 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 				       &variable_name_size, variable_name,
 				       &vendor_guid);
 		if (rc == EFI_BUFFER_TOO_SMALL) {
+			/* If we don't have a big enough buffer to hold the
+			 * name, allocate a bigger one and try again */
 			UINTN new_allocation;
 			CHAR16 *new_name;
 
 			new_allocation = variable_name_size;
 			new_name = AllocatePool(new_allocation * 2);
-			if (!new_name)
+			if (!new_name) {
+				Print(L"%a:%a():%d: Tried to allocate %d\n",
+				      __FILE__, __func__, __LINE__,
+				      new_allocation * 2);
+				Print(L"Could not allocate memory.\n");
+				ret = EFI_OUT_OF_RESOURCES;
 				goto err;
+			}
 			CopyMem(new_name, variable_name,
 				variable_name_allocation);
 			variable_name_allocation = new_allocation;
@@ -243,11 +278,16 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 		} else if (rc == EFI_NOT_FOUND) {
 			break;
 		} else if (EFI_ERROR(rc)) {
-			Print(L"Could not get variable name: %r.\n", rc);
+			Print(L"%a:%a():%d: "
+			      L"Could not get variable name: %r\n",
+			      __FILE__, __func__, __LINE__, rc);
 			ret = rc;
 			goto err;
 		}
 
+		/*
+		 * If it's not one of our state variables, keep going.
+		 */
 		if (CompareMem(&vendor_guid, &fwupdate_guid,
 			       sizeof (vendor_guid))) {
 			continue;
@@ -265,9 +305,12 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 			new_ups = AllocateZeroPool(sizeof (update_table *) *
 						   n_updates_allocated * 2);
 			if (!new_ups) {
-				Print(L"Tried to allocate %d\n",
-				      sizeof (update_table *) * n_updates_allocated * 2);
-				Print(L"Could not allocate memory (%d).\n", __LINE__);
+				Print(L"%a:%a():%d: Tried to allocate %d\n",
+				      __FILE__, __func__, __LINE__,
+				      sizeof (update_table *)
+				      * n_updates_allocated * 2);
+				Print(L"Could not allocate memory.\n");
+				ret = EFI_OUT_OF_RESOURCES;
 				goto err;
 			}
 			CopyMem(new_ups, updates, sizeof (update_table *) *
@@ -280,8 +323,9 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 		updates[n_updates]->name = StrDuplicate(vn);
 		rc = get_info(vn, updates[n_updates]);
 		if (EFI_ERROR(rc)) {
+			Print(L"Could not get update info for \"%s\", "
+			      L"aborting.\n", vn);
 			ret = rc;
-			Print(L"Could not allocate memory (%d).\n", __LINE__);
 			goto err;
 		}
 		if (updates[n_updates]->info->status & FWUPDATE_ATTEMPT_UPDATE){
@@ -306,12 +350,13 @@ err:
 	if (variable_name)
 		FreePool(variable_name);
 
-	for (int i = 0; i < n_updates && updates[i]; i++)
+	for (int i = 0; i < n_updates && updates[i]; i++) {
+		if (updates[i]->name)
+			FreePool(updates[i]->name);
 		FreePool(updates[i]);
+	}
 
 	FreePool(updates);
-
-	Print(L"Could not allocate memory (%d).\n", __LINE__);
 	return ret;
 }
 
@@ -328,19 +373,22 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 	rc = uefi_call_wrapper(BS->LocateDevicePath, 3, &sfsp, &file_dp,
 			       &device);
 	if (EFI_ERROR(rc)) {
-		Print(L"Could not locate device handle: %r.\n", rc);
+		Print(L"%a:%a():%d: Could not locate device handle: %r\n",
+			      __FILE__, __func__, __LINE__, rc);
 		return rc;
 	}
 
 	if (DevicePathType(file_dp) != MEDIA_DEVICE_PATH ||
 			DevicePathSubType(file_dp) != MEDIA_FILEPATH_DP) {
-		Print(L"Could not find appropriate device.\n");
+		Print(L"%a:%a():%d: Could not find appropriate device.\n",
+			      __FILE__, __func__, __LINE__);
 		return EFI_UNSUPPORTED;
 	}
 
 	UINTN sz = *(UINT16 *)file_dp->Length - 4;
 	if (sz <= 6 || sz % 2 != 0) {
-		Print(L"Invalid file device path.\n");
+		Print(L"%a:%a():%d: Invalid file device path.\n",
+			      __FILE__, __func__, __LINE__);
 		return EFI_INVALID_PARAMETER;
 	}
 
@@ -352,20 +400,23 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 	rc = uefi_call_wrapper(BS->HandleProtocol, 3, device, &sfsp,
 			       (void **)&drive);
 	if (EFI_ERROR(rc)) {
-		Print(L"Could not open device interface: %r.\n", rc);
+		Print(L"%a:%a():%d: Could not open device interface: %r.\n",
+			      __FILE__, __func__, __LINE__, rc);
 		return rc;
 	}
 
 	rc = uefi_call_wrapper(drive->OpenVolume, 2, drive, &root);
 	if (EFI_ERROR(rc)) {
-		Print(L"Could not open volume: %r.\n", rc);
+		Print(L"%a:%a():%d: Could not open volume: %r.\n",
+			      __FILE__, __func__, __LINE__, rc);
 		return rc;
 	}
 
 	rc = uefi_call_wrapper(root->Open, 5, root, fh, filename,
 			       EFI_FILE_MODE_READ, 0);
 	if (EFI_ERROR(rc)) {
-		Print(L"Could not open \"%s\": %r.\n", filename, rc);
+		Print(L"%a:%a():%d: Could not open file \"%s\": %r.\n",
+			      __FILE__, __func__, __LINE__, filename, rc);
 		return rc;
 	}
 
@@ -392,25 +443,45 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 
 	uefi_call_wrapper(fh->Close, 1, fh);
 
+	/*
+	 * See if it has the capsule header, and if not, add one.
+	 *
+	 * Unfortunately there's not a good way to do this, so we're just
+	 * checking if the capsule has the fw_class guid at the right place.
+	 */
 	if (CompareMem(&update->info->guid, fbuf,
-			sizeof (update->info->guid)) == 0 && fsize != 40) {
-#if 0
-		Print(L"Image has capsule image embedded\n");
-		Print(L"updates guid: %g\n", &update->info->guid);
-		Print(L"File guid: %g\n", fbuf);
-#endif
+			sizeof (update->info->guid)) == 0 &&
+	    /*
+	     * We're ignoring things that are 40 bytes here, because that's
+	     * the size of the variables used in the test code I wrote for
+	     * edk2 - It's basically a capsule header with no payload, so
+	     * there's nothing real it can do anyway.
+	     *
+	     * At some point I'll update that to be slightly different and
+	     * take the exception out, but it's not pressing.
+	     */
+	    fsize != 40) {
+		if (debugging) {
+			Print(L"Image has capsule image embedded\n");
+			Print(L"updates guid: %g\n", &update->info->guid);
+			Print(L"File guid: %g\n", fbuf);
+		}
 		cbd_out->Length = fsize;
 		cbd_out->Union.DataBlock =
 			(EFI_PHYSICAL_ADDRESS)(UINTN)fbuf;
 		*capsule_out = (EFI_CAPSULE_HEADER *)fbuf;
 		(*capsule_out)->Flags |= update->info->capsule_flags;
 	} else {
-#if 0
-		Print(L"Image does not have embedded header\n");
-		Print(L"Allocating %d for capsule header.\n", sizeof (*capsule)+fsize);
-#endif
+		if (debugging) {
+			Print(L"Image does not have embedded header\n");
+			Print(L"Allocating %d for capsule header.\n",
+			      sizeof (*capsule)+fsize);
+		}
 		rc = allocate((void **)&capsule, sizeof (*capsule) + fsize);
 		if (EFI_ERROR(rc)) {
+			Print(L"%a:%a():%d: Tried to allocate %d\n",
+			      __FILE__, __func__, __LINE__,
+			      sizeof (*capsule) + fsize);
 			Print(L"Could not allocate space for update: %r.\n",rc);
 			return EFI_OUT_OF_RESOURCES;
 		}
@@ -443,17 +514,18 @@ apply_capsules(EFI_CAPSULE_HEADER **capsules,
 
 	rc = uefi_call_wrapper(RT->QueryCapsuleCapabilities, 4, capsules,
 				num_updates, &max_capsule_size, &reset);
-#if 0
-	Print(L"QueryCapsuleCapabilities: %r max: %ld reset:%d\n",
-		rc, max_capsule_size, reset);
-	Print(L"Capsules: %d\n", num_updates);
-#endif
+	if (debugging) {
+		Print(L"QueryCapsuleCapabilities: %r max: %ld reset:%d\n",
+		      rc, max_capsule_size, reset);
+		Print(L"Capsules: %d\n", num_updates);
+	}
 
 	uefi_call_wrapper(BS->Stall, 1, 1000000);
 	rc = uefi_call_wrapper(RT->UpdateCapsule, 3, capsules, num_updates,
 			       (EFI_PHYSICAL_ADDRESS)(VOID *)cbd);
 	if (EFI_ERROR(rc)) {
-		Print(L"Could not apply capsule update: %r\n", rc);
+		Print(L"%a:%a():%d: Could not apply capsule update: %r\n",
+			      __FILE__, __func__, __LINE__, rc);
 		return rc;
 	}
 
@@ -495,19 +567,25 @@ debug_hook(void)
 	volatile register int x = 0;
 	extern char _text, _data;
 
+	/*
+	 * If SHIM_DEBUG is set, we're going to assume shim has done whatever
+	 * is needed to get a debugger attached, and we just need to explain
+	 * who and where we are, and also enable our debugging output.
+	 */
 	efi_status = read_variable(L"SHIM_DEBUG", guid, (void **)&data,
 				   &data_size, &attributes);
 	if (EFI_ERROR(efi_status)) {
 		return;
 	}
 
+	debugging = 1;
 	if (x)
 		return;
 
 	x = 1;
 	Print(L"add-symbol-file "DEBUGDIR
-	      L"fwupdate.debug %p -s .data %p\n", &_text,
-	      &_data);
+	      L"fwupdate.efi.debug %p -s .data %p\n",
+	      &_text, &_data);
 }
 
 EFI_STATUS
@@ -524,23 +602,42 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	 */
 	debug_hook();
 
+	/*
+	 * Basically the workflow here is:
+	 * 1) find and validate any update state variables with the right GUID
+	 * 2) allocate our capsule data structures and add the capsules
+	 *    #1 described
+	 * 3) update status variables
+	 * 4) apply the capsule updates
+	 * 5) reboot
+	 */
+
+	/*
+	 * Step 1: find and validate update state variables
+	 */
 	rc = find_updates(&n_updates, &updates);
 	if (EFI_ERROR(rc)) {
 		Print(L"fwupdate: Could not find updates: %r\n", rc);
 		return rc;
 	}
 	if (n_updates == 0) {
-		Print(L"fwupdate: called in error?\n");
+		Print(L"fwupdate: No updates to process.  Called in error?\n");
 		return EFI_INVALID_PARAMETER;
 	}
 
+	/*
+	 * Step 2: Build our data structure and add the capsules to it.
+	 */
 	EFI_CAPSULE_HEADER *capsules[n_updates + 1];
 	EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd_data;
 	UINTN i;
 	rc = allocate((void **)&cbd_data,
 		      sizeof (EFI_CAPSULE_BLOCK_DESCRIPTOR)*(n_updates+1));
 	if (EFI_ERROR(rc)) {
-		Print(L"fwupdate: Could not allocate memory (%d)\n", __LINE__);
+		Print(L"%a:%a():%d: Tried to allocate %d\n",
+		      __FILE__, __func__, __LINE__,
+		      sizeof (EFI_CAPSULE_BLOCK_DESCRIPTOR)*(n_updates+1));
+		Print(L"fwupdate: Could not allocate memory: %r.\n",rc);
 		return rc;
 	}
 	for (i = 0; i < n_updates; i++) {
@@ -555,21 +652,33 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	cbd_data[i].Length = 0;
 	cbd_data[i].Union.ContinuationPointer = 0;
 
+	/*
+	 * Step 3: update the state variables.
+	 */
 	rc = set_statuses(n_updates, updates);
 	if (EFI_ERROR(rc)) {
 		Print(L"fwupdate: Could not set update status: %r\n", rc);
 		return rc;
 	}
 
+	/*
+	 * Step 4: apply the capsules.
+	 */
 	rc = apply_capsules(capsules, cbd_data, n_updates);
 	if (EFI_ERROR(rc)) {
 		Print(L"fwupdate: Could not apply capsules: %r\n", rc);
 		return rc;
 	}
 
-	Print(L"Reset System\n");
-	uefi_call_wrapper(BS->Stall, 1, 2000000);
-	uefi_call_wrapper(RT->ResetSystem, 4, EfiResetWarm, EFI_SUCCESS, 0, NULL);
+	/*
+	 * Step 5: if #4 didn't reboot us, do it manually.
+	 */
+	if (debugging) {
+		Print(L"Reset System\n");
+		uefi_call_wrapper(BS->Stall, 1, 10000000);
+	}
+	uefi_call_wrapper(RT->ResetSystem, 4, EfiResetWarm, EFI_SUCCESS,
+			  0, NULL);
 
 	return EFI_SUCCESS;
 }
