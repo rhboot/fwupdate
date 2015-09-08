@@ -5,16 +5,16 @@ include $(TOPDIR)/Make.defaults
 LIB_LIBS= pthread
 BIN_LIBS= popt pthread
 PKLIBS	= efivar efiboot
-CFLAGS	= -g -O0
+CFLAGS	?= -g -O0
 PJONES  =
 BIN_CCLDFLAGS = $(foreach lib,$(BIN_LIBS),-l$(lib)) \
 	$(foreach pklib,$(PKLIBS), \
 		$(shell pkg-config --libs-only-l --libs-only-other $(pklib))) \
-	-pie -fPIE -Wl,-z,relro,-z,now -L.
+	$(LDFLAGS) -pie -fPIE -Wl,-z,relro,-z,now -L.
 LIB_CCLDFLAGS = $(foreach lib,$(LIB_LIBS),-l$(lib)) \
 	$(foreach pklib,$(PKLIBS), \
 		$(shell pkg-config --libs-only-l --libs-only-other $(pklib))) \
-	-shared -fPIC -Wl,-z,relro,-z,now
+	$(LDFLAGS) -shared -fPIC -Wl,-z,relro,-z,now
 
 BUILDFLAGS := $(CFLAGS) -Wall -Wno-unused-result -Wno-unused-function \
 	-Wsign-compare -Werror=sign-compare \

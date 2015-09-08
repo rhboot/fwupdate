@@ -2,13 +2,13 @@ TOPDIR	?= $(shell pwd)/..
 include $(TOPDIR)/Make.version
 include $(TOPDIR)/Make.defaults
 
-CFLAGS		= -O0 -g3
+CFLAGS		?= -O0 -g3
 BUILDFLAGS	:= $(CFLAGS) -fpic -Wall -fshort-wchar \
 	-fno-strict-aliasing -fno-merge-constants -ffreestanding \
 	-fno-stack-protector -fno-stack-check --std=c11 -DCONFIG_$(ARCH) \
 	-D__KERNEL__ -I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
 	-iquote$(TOPDIR)/include "-DDEBUGDIR=L\"$(DEBUGDIR)/\""
-LDFLAGS		= -nostdlib --warn-common --no-undefined --fatal-warnings \
+LDFLAGS		?= -nostdlib --warn-common --no-undefined --fatal-warnings \
 	-shared -Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) --build-id=sha1 \
 	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
 OBJCOPY_GTE224 = $(shell expr `$(OBJCOPY) --version |grep ^"GNU objcopy" | sed 's/^.* //g' | cut -f1-2 -d.` \>= 2.24)
