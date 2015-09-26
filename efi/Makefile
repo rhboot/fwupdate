@@ -72,7 +72,7 @@ endif
 
 %.so : %.o
 	$(LD) $(LDFLAGS) -o $@ $^ -lefi -lgnuefi \
-		$(shell gcc -print-libgcc-file-name) \
+		$(shell $(CC) -print-libgcc-file-name) \
 		-T elf_$(ARCH)_efi.lds
 
 %.o : %.c
