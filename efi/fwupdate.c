@@ -560,8 +560,8 @@ __attribute__((__optimize__("0")))
 debug_hook(void)
 {
 	EFI_GUID guid = SHIM_LOCK_GUID;
-	UINT8 *data = NULL;
-	UINTN data_size = 0;
+	UINTN data = 0;
+	UINTN data_size = 1;
 	EFI_STATUS efi_status;
 	UINT32 attributes;
 	volatile register int x = 0;
@@ -572,9 +572,9 @@ debug_hook(void)
 	 * is needed to get a debugger attached, and we just need to explain
 	 * who and where we are, and also enable our debugging output.
 	 */
-	efi_status = read_variable(L"SHIM_DEBUG", guid, (void **)&data,
-				   &data_size, &attributes);
-	if (EFI_ERROR(efi_status)) {
+	efi_status = uefi_call_wrapper(RT->GetVariable, 5, L"SHIM_DEBUG",
+				       &guid, &attributes,  &data, &data_size);
+	if (EFI_ERROR(efi_status) || data != 1) {
 		return;
 	}
 
