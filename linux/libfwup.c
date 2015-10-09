@@ -849,8 +849,6 @@ new:
 		if (sz == 0)
 			break;
 	}
-	close(infd);
-	infd = -1;
 	close(fd);
 	fd = -1;
 
