@@ -58,4 +58,6 @@ extern int fwup_get_lowest_supported_fw_version(fwup_resource *re,
 						uint32_t *version);
 extern int fwup_get_last_attempt_info(fwup_resource *re, uint32_t *version,
 			   uint32_t *status, time_t *when);
+static const char *fwup_last_attempt_status_to_string (uint64_t status);
+
 #endif /* LIBFW_H */

@@ -911,3 +911,25 @@ err:
 
 	return rc;
 }
+
+static const char *
+fwup_last_attempt_status_to_string (uint64_t status)
+{
+	if (status == FWUP_LAST_ATTEMPT_STATUS_SUCCESS)
+		return "Success";
+	if (status == FWUP_LAST_ATTEMPT_STATUS_ERROR_UNSUCCESSFUL)
+		return "Unsuccessful";
+	if (status == FWUP_LAST_ATTEMPT_STATUS_ERROR_INSUFFICIENT_RESOURCES)
+		return "Insufficient resources";
+	if (status == FWUP_LAST_ATTEMPT_STATUS_ERROR_INCORRECT_VERSION)
+		return "Incorrect version";
+	if (status == FWUP_LAST_ATTEMPT_STATUS_ERROR_INVALID_FORMAT)
+		return "Invalid firmware format";
+	if (status == FWUP_LAST_ATTEMPT_STATUS_ERROR_AUTH_ERROR)
+		return "Authentication signing error";
+	if (status == FWUP_LAST_ATTEMPT_STATUS_ERROR_PWR_EVT_AC)
+		return "AC power required";
+	if (status == FWUP_LAST_ATTEMPT_STATUS_ERROR_PWR_EVT_BATT)
+		return "Battery level is too low";
+	return NULL;
+}
