@@ -910,7 +910,17 @@ err:
 	return rc;
 }
 
-static const char *
+/**
+ * fwup_last_attempt_status_to_string:
+ * @status: the status enum, e.g. %FWUP_LAST_ATTEMPT_STATUS_SUCCESS.
+ *
+ * Return a string representation of the last attempt status.
+ *
+ * Returns: A const string
+ *
+ * Since: 0.5
+ */
+const char *
 fwup_last_attempt_status_to_string (uint64_t status)
 {
 	if (status == FWUP_LAST_ATTEMPT_STATUS_SUCCESS)
