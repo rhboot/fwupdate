@@ -732,94 +732,226 @@ out:
 	return ret;
 }
 
-int
-fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
+/**
+ * fwup_get_existing_media_path:
+ * @info: the #update_info
+ *
+ * Return a media path to use for the update which has already been used by
+ * this specific GUID.
+ *
+ * Returns: a media path, or %NULL if no such path exists.
+ */
+static char *
+fwup_get_existing_media_path (update_info *info)
 {
 	int rc;
+	char *relpath = NULL;
 	char *fullpath = NULL;
-	int fd = -1;
-	ssize_t sz;
-	off_t offset;
-	update_info *info = NULL;
-	uint8_t *dp_buf = NULL;
 	uint16_t *ucs2file = NULL;
 	uint16_t ucs2len = 0;
 
+	/* never set */
+	if (!info->dp_ptr)
+		goto out;
+	if (efidp_end_entire(info->dp_ptr))
+		goto out;
+
+	/* find UCS2 string */
+	const_efidp idp = (const_efidp)info->dp_ptr;
+	while (1) {
+		if (efidp_type(idp) == EFIDP_END_TYPE &&
+				efidp_subtype(idp) == EFIDP_END_ENTIRE)
+			break;
+		if (efidp_type(idp) != EFIDP_MEDIA_TYPE ||
+				efidp_subtype(idp) !=EFIDP_MEDIA_FILE) {
+			rc = efidp_next_node(idp, &idp);
+			if (rc < 0)
+				break;
+			continue;
+		}
+		ucs2file = (uint16_t *)((uint8_t *)idp + 4);
+		ucs2len = efidp_node_size(idp) - 4;
+		break;
+	}
+
+	/* nothing found */
+	if (!ucs2file || ucs2len <= 0)
+		goto out;
+
+	/* convert to something sane */
+	relpath = ucs2_to_utf8(ucs2file, ucs2len / sizeof (uint16_t));
+	if (!relpath)
+		goto out;
+
+	/* convert '\' to '/' */
+	untilt_slashes(relpath);
+
+	/* build a complete path */
+	rc = asprintf(&fullpath, "/boot/efi/%s", relpath);
+	if (rc < 0)
+		goto out;
+
+out:
+	free(relpath);
+	return fullpath;
+}
+
+/**
+ * fwup_get_existing_media_path:
+ * @info: the #update_info
+ * @path: (out): the path
+ *
+ * Opens a suitable file descriptor and sets a media path to use for the update.
+ *
+ * Returns: a FD, or -1 for error
+ */
+static int
+get_fd_and_media_path (update_info *info, char **path)
+{
+	char *fullpath = NULL;
+	int fd = -1;
+	int rc;
+
+	/* look for an existing variable that we've used before for this
+	 * update GUID, and reuse the filename so we don't wind up
+	 * littering the filesystem with old updates */
+	fullpath = fwup_get_existing_media_path (info);
+	if (fullpath) {
+		fd = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
+		if (fd < 0)
+			warn("open of %s failed", fullpath);
+		goto out;
+	}
+
+	/* fall back to creating a new file from scratch */
+	rc = asprintf(&fullpath,
+		      "/boot/efi/EFI/%s/fw/fwupdate-XXXXXX.cap",
+		      FWUP_EFI_DIR_NAME);
+	if (rc < 0) {
+		warn("asprintf failed");
+		goto out;
+	}
+	fd = mkostemps(fullpath, 4, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
+	if (fd < 0) {
+		warn("mkostemps(%s) failed", fullpath);
+		goto out;
+	}
+
+	/* success, so take ownership of the string */
+	if (path) {
+		*path = fullpath;
+		fullpath = NULL;
+	}
+out:
+	free(fullpath);
+	return fd;
+}
+
+/**
+ * set_efidp_header
+ * @info: the #update_info
+ * @path: the path
+ *
+ * Update the device path.
+ *
+ * Returns: a FD, or -1 for error
+ */
+static int
+set_efidp_header (update_info *info, const char *path)
+{
+	int rc = 0;
+	ssize_t req;
+	ssize_t sz;
+	uint8_t *dp_buf = NULL;
+
+	/* get the size of the path first */
+	req = efi_generate_file_device_path(NULL, 0, path,
+				EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
+				EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
+	if (req < 0) {
+		rc = -1;
+		goto out;
+	}
+	if (req <= 4) { /* if we just have an end device path,
+			  it's not going to work. */
+		rc = EINVAL;
+		goto out;
+	}
+
+	dp_buf = calloc(1, req);
+	if (!dp_buf) {
+		rc = -1;
+		goto out;
+	}
+
+	/* actually get the path this time */
+	efidp_header *dp = (efidp_header *)dp_buf;
+	sz = efi_generate_file_device_path(dp_buf, req, path,
+				EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
+				EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
+	if (sz < 0) {
+		rc = -1;
+		goto out;
+	}
+
+	/* @info owns this now */
+	if (info->dp_ptr)
+		free(info->dp_ptr);
+	info->dp_ptr = dp;
+	dp_buf = NULL;
+out:
+	free(dp_buf);
+	return rc;
+}
+
+/**
+ * fwup_set_up_update
+ * @re: A %fwup_resource.
+ * @hw_inst: A hardware instance -- currently unused.
+ * @infd: file descriptor to the .cap binary
+ *
+ * Sets up a UEFI update using a file descriptor.
+ *
+ * Returns: -1 on error, @fwup_error being set
+ *
+ * Since: 0.3
+ */
+int
+fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
+{
+	char *path = NULL;
+	int fd = -1;
+	int rc;
+	off_t offset;
+	update_info *info = NULL;
+
+	/* check parameters */
+	if (infd < 0) {
+		warn("fd invalid.\n");
+		rc = -1;
+		goto out;
+	}
+
 	offset = lseek(infd, 0, SEEK_CUR);
 
+	/* get device */
 	rc = get_info(&re->esre.guid, 0, &info);
 	if (rc < 0) {
 		warn("get_info failed.\n");
-		goto err;
+		goto out;
 	}
 
-	if (info->dp_ptr && !efidp_end_entire(info->dp_ptr)) {
-		const_efidp idp = (const_efidp)info->dp_ptr;
-		while (1) {
-			if (efidp_type(idp) == EFIDP_END_TYPE &&
-					efidp_subtype(idp) == EFIDP_END_ENTIRE)
-				break;
-			if (efidp_type(idp) != EFIDP_MEDIA_TYPE ||
-					efidp_subtype(idp) !=EFIDP_MEDIA_FILE) {
-				rc = efidp_next_node(idp, &idp);
-				if (rc < 0)
-					break;
-				continue;
-			}
-			ucs2file = (uint16_t *)((uint8_t *)idp + 4);
-			ucs2len = efidp_node_size(idp) - 4;
-			break;
-		}
-
-		if (!ucs2file || ucs2len <= 0)
-			goto new;
-
-		char *relpath = ucs2_to_utf8(ucs2file, ucs2len
-						       / sizeof (uint16_t));
-		if (!relpath)
-			goto new;
-		relpath = onstack(relpath, ucs2len / sizeof (uint16_t) + 1);
-
-		untilt_slashes(relpath);
-
-		rc = asprintf(&fullpath, "/boot/efi/%s", relpath);
-		if (rc < 0) {
-			free(relpath);
-			goto new;
-		}
-
-		rc = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
-		if (rc < 0) {
-			free(relpath);
-			goto new;
-		}
-		fd = rc;
+	/* get destination */
+	fd = get_fd_and_media_path(info, &path);
+	if (fd < 0) {
 		rc = -1;
-	} else {
-new:
-		rc = asprintf(&fullpath,
-			      "/boot/efi/EFI/%s/fw/fwupdate-XXXXXX.cap",
-			      FWUP_EFI_DIR_NAME);
-		if (rc < 0) {
-			warn("asprintf failed");
-			goto err;
-		}
-
-		rc = mkostemps(fullpath, 4, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
-		if (rc < 0) {
-			int saved_errno = errno;
-			warn("mkostemps(%s) failed", fullpath);
-			free(fullpath);
-			errno = saved_errno;
-			goto err;
-		}
-		fd = rc;
-		rc = -1;
+		goto out;
 	}
-	fullpath = onstack(fullpath, strlen(fullpath)+1);
 
+	/* copy the input file to the new home */
 	while (1) {
 		char buf[4096];
+		ssize_t sz;
 
 		sz = read(infd, &buf, 4096);
 		if (sz > 0) {
@@ -833,7 +965,7 @@ new:
 				if (wsz < 0) {
 					rc = wsz;
 					warn("write failed");
-					goto err;
+					goto out;
 				}
 				off += wsz;
 			}
@@ -844,69 +976,36 @@ new:
 			continue;
 		if (sz < 0) {
 			warn("read failed");
-			goto err;
+			rc = -1;
+			goto out;
 		}
 		if (sz == 0)
 			break;
 	}
-	close(fd);
-	fd = -1;
 
-	if (!info->dp_ptr || efidp_end_entire(info->dp_ptr)) {
-		ssize_t req;
-		req = efi_generate_file_device_path(NULL, 0, fullpath,
-					EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
-					EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
-		if (req < 0)
-			goto err;
-		if (req <= 4) { /* if we just have an end device path,
-				  it's not going to work. */
-			errno = EINVAL;
-			goto err;
-		}
+	/* set efidp header */
+	rc = set_efidp_header(info, path);
+	if (rc < 0)
+		goto out;
 
-		dp_buf = calloc(1, req);
-		if (!dp_buf)
-			goto err;
-
-		efidp_header *dp = (efidp_header *)dp_buf;
-		sz = efi_generate_file_device_path(dp_buf, req, fullpath,
-					EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
-					EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
-		if (sz < 0)
-			goto err;
-
-		if (info->dp_ptr)
-			free(info->dp_ptr);
-		info->dp_ptr = dp;
-	}
-
+	/* save this to the hardware */
 	info->status = FWUPDATE_ATTEMPT_UPDATE;
-
 	rc = put_info(info);
 	if (rc < 0) {
 		warn("put_info failed.\n");
-		goto err;
+		goto out;
 	}
 
-	free_info(info);
-
+	/* update the firmware before the bootloader runs */
 	rc = set_up_boot_next();
-	if (rc < 0) {
-		fwup_error = errno;
-		return rc;
-	}
-	return 1;
-err:
+	if (rc < 0)
+		goto out;
+out:
 	fwup_error = errno;
 	lseek(infd, offset, SEEK_SET);
-	if (dp_buf)
-		free(dp_buf);
-	if (info)
-		free_info(info);
+	free_info(info);
 	if (fd > 0)
 		close(fd);
-
 	return rc;
 }
 
