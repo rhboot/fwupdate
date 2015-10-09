@@ -1010,6 +1010,91 @@ out:
 }
 
 /**
+ * fwup_set_up_update_with_buf
+ * @re: A %fwup_resource.
+ * @hw_inst: A hardware instance -- currently unused.
+ * @buf: A memory buffer
+ * @sz: Size of @buf
+ *
+ * Sets up a UEFI update using a pre-allocated buffer.
+ *
+ * Returns: -1 on error, @fwup_error being set
+ *
+ * Since: 0.5
+ */
+int
+fwup_set_up_update_with_buf(fwup_resource *re, uint64_t hw_inst, const void *buf, size_t sz)
+{
+	char *path = NULL;
+	int fd = -1;
+	int rc;
+	update_info *info = NULL;
+
+	/* check parameters */
+	if (buf == NULL || sz == 0) {
+		warn("buf invalid.\n");
+		rc = -1;
+		goto out;
+	}
+
+	/* get device */
+	rc = get_info(&re->esre.guid, 0, &info);
+	if (rc < 0) {
+		warn("get_info failed.\n");
+		goto out;
+	}
+
+	/* get destination */
+	fd = get_fd_and_media_path(info, &path);
+	if (fd < 0) {
+		rc = -1;
+		goto out;
+	}
+
+	/* write the buf to a new file */
+	while (1) {
+		ssize_t wsz;
+		off_t off = 0;
+		while (sz-off) {
+			wsz = write(fd, buf+off, sz-off);
+			if (wsz < 0 &&
+			    (errno == EAGAIN || errno == EINTR))
+				continue;
+			if (wsz < 0) {
+				rc = wsz;
+				warn("write failed");
+				goto out;
+			}
+			off += wsz;
+		}
+	}
+
+	/* set efidp header */
+	rc = set_efidp_header(info, path);
+	if (rc < 0)
+		goto out;
+
+	/* save this to the hardware */
+	info->status = FWUPDATE_ATTEMPT_UPDATE;
+	rc = put_info(info);
+	if (rc < 0) {
+		warn("put_info failed.\n");
+		goto out;
+	}
+
+	/* update the firmware before the bootloader runs */
+	rc = set_up_boot_next();
+	if (rc < 0)
+		goto out;
+out:
+	fwup_error = errno;
+	free_info(info);
+	if (fd > 0)
+		close(fd);
+	return rc;
+}
+
+/**
  * fwup_last_attempt_status_to_string:
  * @status: the status enum, e.g. %FWUP_LAST_ATTEMPT_STATUS_SUCCESS.
  *
