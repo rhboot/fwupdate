@@ -361,6 +361,94 @@ err:
 }
 
 static EFI_STATUS
+search_file(EFI_DEVICE_PATH **file_dp, EFI_FILE_HANDLE *fh)
+{
+	EFI_DEVICE_PATH *dp, *parent_dp;
+	EFI_GUID sfsp = SIMPLE_FILE_SYSTEM_PROTOCOL;
+	EFI_GUID dpp = DEVICE_PATH_PROTOCOL;
+	EFI_HANDLE *devices;
+	UINTN i, n_handles, count;
+	EFI_STATUS rc;
+
+	rc = uefi_call_wrapper(BS->LocateHandleBuffer, 5, ByProtocol, &sfsp, NULL,
+			       &n_handles, &devices);
+	if (EFI_ERROR(rc)) {
+		Print(L"Could not find handles.\n");
+		return rc;
+	}
+
+	dp = *file_dp;
+
+	if (debugging)
+		Print(L"Searching Device Path: %s ...\n", DevicePathToStr(dp));
+
+	parent_dp = DuplicateDevicePath(dp);
+	if (!parent_dp) {
+		rc = EFI_INVALID_PARAMETER;
+		goto out;
+	}
+
+	dp = parent_dp;
+	count = 0;
+	while (1) {
+		if (IsDevicePathEnd(dp)) {
+			rc = EFI_INVALID_PARAMETER;
+			goto out;
+		}
+	
+		if (DevicePathType(dp) == MEDIA_DEVICE_PATH && DevicePathSubType(dp) == MEDIA_FILEPATH_DP)
+			break;
+
+		dp = NextDevicePathNode(dp);
+		++count;
+	}
+
+	SetDevicePathEndNode(dp);
+
+	if (debugging)
+		Print(L"Device Path prepared: %s\n", DevicePathToStr(parent_dp));
+
+	for (i = 0; i < n_handles; i++) {
+		EFI_DEVICE_PATH *path;
+
+		rc = uefi_call_wrapper(BS->HandleProtocol, 3, devices[i], &dpp,
+				       (void **)&path);
+		if (EFI_ERROR(rc))
+			continue;
+
+		if (debugging)
+			Print(L"Device supporting SFSP: %s\n", DevicePathToStr(path));
+
+		rc = EFI_UNSUPPORTED;
+		while (!IsDevicePathEnd(path)) {
+			if (debugging)
+				Print(L"Comparing: %s and %s\n", DevicePathToStr(parent_dp), DevicePathToStr(path));
+
+			if (LibMatchDevicePaths(path, parent_dp) == TRUE) {
+				*fh = devices[i];
+				for (i = 0; i < count; i++)
+					*file_dp = NextDevicePathNode(*file_dp);
+				rc = EFI_SUCCESS;
+
+				if (debugging)
+					Print(L"Match up! Returning %s\n", DevicePathToStr(*file_dp));
+
+				goto out;
+			}
+
+			path = NextDevicePathNode(path);
+		}
+	}
+
+out:
+	if (!EFI_ERROR(rc))
+		Print(L"File %s searched\n", DevicePathToStr(*file_dp));
+
+	uefi_call_wrapper(BS->FreePool, 1, devices);
+	return rc;
+}
+
+static EFI_STATUS
 open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 {
 	EFI_DEVICE_PATH *file_dp = dp;
@@ -373,9 +461,12 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 	rc = uefi_call_wrapper(BS->LocateDevicePath, 3, &sfsp, &file_dp,
 			       &device);
 	if (EFI_ERROR(rc)) {
-		Print(L"%a:%a():%d: Could not locate device handle: %r\n",
-			      __FILE__, __func__, __LINE__, rc);
-		return rc;
+		rc = search_file(&file_dp, &device);
+		if (EFI_ERROR(rc)) {
+			Print(L"%a:%a():%d: Could not locate device handle: %r\n",
+				      __FILE__, __func__, __LINE__, rc);
+			return rc;
+		}
 	}
 
 	if (DevicePathType(file_dp) != MEDIA_DEVICE_PATH ||
@@ -435,7 +526,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 
 	rc = open_file((EFI_DEVICE_PATH *)update->info->dp, &fh);
 	if (EFI_ERROR(rc))
-	    return rc;
+		return rc;
 
 	rc = read_file(fh, &fbuf, &fsize);
 	if (EFI_ERROR(rc))
