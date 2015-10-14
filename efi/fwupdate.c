@@ -573,7 +573,7 @@ debug_hook(void)
 	 * who and where we are, and also enable our debugging output.
 	 */
 	efi_status = uefi_call_wrapper(RT->GetVariable, 5, L"SHIM_DEBUG",
-				       &guid, &attributes,  &data, &data_size);
+				       &guid, &attributes,  &data_size, &data);
 	if (EFI_ERROR(efi_status) || data != 1) {
 		return;
 	}
