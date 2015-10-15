@@ -818,23 +818,24 @@ get_fd_and_media_path (update_info *info, char **path)
 	fullpath = fwup_get_existing_media_path (info);
 	if (fullpath) {
 		fd = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
-		if (fd < 0)
+		if (fd < 0) {
 			warn("open of %s failed", fullpath);
-		goto out;
-	}
-
-	/* fall back to creating a new file from scratch */
-	rc = asprintf(&fullpath,
-		      "/boot/efi/EFI/%s/fw/fwupdate-XXXXXX.cap",
-		      FWUP_EFI_DIR_NAME);
-	if (rc < 0) {
-		warn("asprintf failed");
-		goto out;
-	}
-	fd = mkostemps(fullpath, 4, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
-	if (fd < 0) {
-		warn("mkostemps(%s) failed", fullpath);
-		goto out;
+			goto out;
+		}
+	} else {
+		/* fall back to creating a new file from scratch */
+		rc = asprintf(&fullpath,
+			      "/boot/efi/EFI/%s/fw/fwupdate-XXXXXX.cap",
+			      FWUP_EFI_DIR_NAME);
+		if (rc < 0) {
+			warn("asprintf failed");
+			goto out;
+		}
+		fd = mkostemps(fullpath, 4, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
+		if (fd < 0) {
+			warn("mkostemps(%s) failed", fullpath);
+			goto out;
+		}
 	}
 
 	/* success, so take ownership of the string */
