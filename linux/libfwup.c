@@ -992,6 +992,7 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 	/* save this to the hardware */
 	info->status = FWUPDATE_ATTEMPT_UPDATE;
 	memset(&info->time_attempted, 0, sizeof(info->time_attempted));
+	info->capsule_flags = re->esre.capsule_flags;
 	rc = put_info(info);
 	if (rc < 0) {
 		warn("put_info failed.\n");
@@ -1079,6 +1080,7 @@ fwup_set_up_update_with_buf(fwup_resource *re, uint64_t hw_inst, const void *buf
 	/* save this to the hardware */
 	info->status = FWUPDATE_ATTEMPT_UPDATE;
 	memset(&info->time_attempted, 0, sizeof(info->time_attempted));
+	info->capsule_flags = re->esre.capsule_flags;
 	rc = put_info(info);
 	if (rc < 0) {
 		warn("put_info failed.\n");
