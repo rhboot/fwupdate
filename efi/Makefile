@@ -8,8 +8,8 @@ BUILDFLAGS	:= $(CFLAGS) -fpic -Wall -fshort-wchar \
 	-fno-stack-protector -fno-stack-check --std=c11 -DCONFIG_$(ARCH) \
 	-D__KERNEL__ -I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
 	-iquote$(TOPDIR)/include "-DDEBUGDIR=L\"$(DEBUGDIR)/\""
-LDFLAGS		?= -nostdlib --warn-common --no-undefined --fatal-warnings \
-	-shared -Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) --build-id=sha1 \
+LDFLAGS		?= -nostdlib -Wl,--warn-common -Wl,--no-undefined -Wl,--fatal-warnings \
+	-shared -Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) -Wl,--build-id=sha1 \
 	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
 OBJCOPY_GTE224 = $(shell expr `$(OBJCOPY) --version |grep ^"GNU objcopy" | sed 's/^.* //g' | cut -f1-2 -d.` \>= 2.24)
 
@@ -71,7 +71,7 @@ endif
 		sed -e 's/^.*Build ID: //' -e 's,^\(..\),\1/,' > $@
 
 %.so : %.o
-	$(LD) $(LDFLAGS) -o $@ $^ -lefi -lgnuefi \
+	$(CC) $(LDFLAGS) -o $@ $^ -lefi -lgnuefi \
 		$(shell $(CC) -print-libgcc-file-name) \
 		-T elf_$(ARCH)_efi.lds
 
