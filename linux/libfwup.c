@@ -817,7 +817,7 @@ get_fd_and_media_path (update_info *info, char **path)
 	 * littering the filesystem with old updates */
 	fullpath = fwup_get_existing_media_path (info);
 	if (fullpath) {
-		fd = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
+		fd = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR, 0);
 		if (fd < 0) {
 			warn("open of %s failed", fullpath);
 			goto out;
