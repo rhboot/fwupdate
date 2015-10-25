@@ -785,7 +785,7 @@ fwup_get_existing_media_path (update_info *info)
 	untilt_slashes(relpath);
 
 	/* build a complete path */
-	rc = asprintf(&fullpath, "/boot/efi/%s", relpath);
+	rc = asprintf(&fullpath, "/boot/efi%s", relpath);
 	if (rc < 0)
 		goto out;
 
