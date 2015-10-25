@@ -567,7 +567,6 @@ set_up_boot_next(void)
 							    ? fwup_fs_path
 							    : shim_fs_path,
 					   EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
-					   EFIBOOT_OPTIONS_IGNORE_PMBR_ERR|
 					   EFIBOOT_ABBREV_HD);
 	if (sz < 0)
 		return -1;
@@ -589,7 +588,6 @@ set_up_boot_next(void)
 							    ? fwup_fs_path
 							    : shim_fs_path,
 					   EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
-					   EFIBOOT_OPTIONS_IGNORE_PMBR_ERR|
 					   EFIBOOT_ABBREV_HD);
 	if (sz != dp_size)
 		return -1;
@@ -867,8 +865,7 @@ set_efidp_header (update_info *info, const char *path)
 
 	/* get the size of the path first */
 	req = efi_generate_file_device_path(NULL, 0, path,
-				EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
-				EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
+				EFIBOOT_OPTIONS_IGNORE_FS_ERROR);
 	if (req < 0) {
 		rc = -1;
 		goto out;
@@ -888,8 +885,7 @@ set_efidp_header (update_info *info, const char *path)
 	/* actually get the path this time */
 	efidp_header *dp = (efidp_header *)dp_buf;
 	sz = efi_generate_file_device_path(dp_buf, req, path,
-				EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
-				EFIBOOT_OPTIONS_IGNORE_PMBR_ERR);
+				EFIBOOT_OPTIONS_IGNORE_FS_ERROR);
 	if (sz < 0) {
 		rc = -1;
 		goto out;
