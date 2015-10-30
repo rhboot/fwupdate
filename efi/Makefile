@@ -8,8 +8,10 @@ BUILDFLAGS	:= $(CFLAGS) -fpic -Wall -fshort-wchar \
 	-fno-stack-protector -fno-stack-check --std=c11 -DCONFIG_$(ARCH) \
 	-D__KERNEL__ -I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
 	-iquote$(TOPDIR)/include "-DDEBUGDIR=L\"$(DEBUGDIR)/\""
-LDFLAGS		?= -nostdlib --warn-common --no-undefined --fatal-warnings \
-	-shared -Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) --build-id=sha1 \
+CCLDFLAGS	?= -nostdlib -Wl,--warn-common \
+	-Wl,--no-undefined -Wl,--fatal-warnings \
+	-Wl,-shared -Wl,-Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) \
+	-Wl,--build-id=sha1 -Wl,--hash-style=sysv \
 	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
 OBJCOPY_GTE224 = $(shell expr `$(OBJCOPY) --version |grep ^"GNU objcopy" | sed 's/^.* //g' | cut -f1-2 -d.` \>= 2.24)
 
@@ -28,13 +30,13 @@ endif
 
 ifeq ($(ARCH),aarch64)
 	FORMAT = -O binary
-	LDFLAGS += --defsym=EFI_SUBSYSTEM=0xa
+	CCLDFLAGS += -Wl,--defsym=EFI_SUBSYSTEM=0xa
 	BUILDFLAGS += -ffreestanding -I$(shell $(CC) -print-file-name=include)
 endif
 
 ifeq ($(ARCH),arm)
 	FORMAT = -O binary
-	LDFLAGS += --defsym=EFI_SUBSYSTEM=0xa
+	CCLDFLAGS += -Wl,--defsym=EFI_SUBSYSTEM=0xa
 	BUILDFLAGS += -ffreestanding -I$(shell $(CC) -print-file-name=include)
 endif
 
@@ -71,7 +73,7 @@ endif
 		sed -e 's/^.*Build ID: //' -e 's,^\(..\),\1/,' > $@
 
 %.so : %.o
-	$(LD) $(LDFLAGS) -o $@ $^ -lefi -lgnuefi \
+	$(CC) $(CCLDFLAGS) -o $@ $^ -lefi -lgnuefi \
 		$(shell $(CC) -print-libgcc-file-name) \
 		-T elf_$(ARCH)_efi.lds
 
