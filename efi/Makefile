@@ -6,7 +6,7 @@ CFLAGS		?= -O0 -g3
 BUILDFLAGS	:= $(CFLAGS) -fpic -Wall -fshort-wchar \
 	-fno-strict-aliasing -fno-merge-constants -ffreestanding \
 	-fno-stack-protector -fno-stack-check --std=c11 -DCONFIG_$(ARCH) \
-	-D__KERNEL__ -I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
+	-I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
 	-iquote$(TOPDIR)/include "-DDEBUGDIR=L\"$(DEBUGDIR)/\""
 CCLDFLAGS	?= -nostdlib -Wl,--warn-common \
 	-Wl,--no-undefined -Wl,--fatal-warnings \
