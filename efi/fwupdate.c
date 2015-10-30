@@ -453,13 +453,13 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 {
 	EFI_DEVICE_PATH *file_dp = dp;
 	EFI_GUID sfsp = SIMPLE_FILE_SYSTEM_PROTOCOL;
-	EFI_HANDLE device;
+	EFI_FILE_HANDLE device;
 	EFI_FILE_IO_INTERFACE *drive;
 	EFI_FILE_HANDLE root;
 	EFI_STATUS rc;
 
 	rc = uefi_call_wrapper(BS->LocateDevicePath, 3, &sfsp, &file_dp,
-			       &device);
+			       (void **)&device);
 	if (EFI_ERROR(rc)) {
 		rc = search_file(&file_dp, &device);
 		if (EFI_ERROR(rc)) {
