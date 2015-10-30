@@ -68,7 +68,7 @@ free(void *addr, UINTN size)
 EFI_STATUS
 read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 {
-	UINT8 *b;
+	UINT8 *b = NULL;
 	UINTN bs = 512;
 	UINTN n_blocks = 4096;
 	UINTN i = 0;
@@ -95,7 +95,7 @@ read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 			EFI_STATUS rc;
 			UINTN sz = bs;
 
-			rc = uefi_call_wrapper(fh->Read, 3, fh, &sz, &b[i *bs]);
+			rc = uefi_call_wrapper(fh->Read, 3, fh, &sz, &b[i * bs]);
 			if (EFI_ERROR(rc)) {
 				free(b, bs * n_blocks);
 				Print(L"%a:%a():%d: Could not read file: %r\n",
@@ -127,7 +127,7 @@ read_variable(CHAR16 *name, EFI_GUID guid, void **buf_out, UINTN *buf_size_out,
 	EFI_STATUS rc;
 	UINT32 attributes;
 	UINTN size = 0;
-	void *buf;
+	void *buf = NULL;
 
 	rc = uefi_call_wrapper(RT->GetVariable, 5, name,
 			       &guid, &attributes, &size, NULL);
@@ -361,7 +361,7 @@ err:
 }
 
 static EFI_STATUS
-search_file(EFI_DEVICE_PATH **file_dp, EFI_FILE_HANDLE *fh)
+search_file(EFI_DEVICE_PATH **file_dp, EFI_HANDLE *fh)
 {
 	EFI_DEVICE_PATH *dp, *parent_dp;
 	EFI_GUID sfsp = SIMPLE_FILE_SYSTEM_PROTOCOL;
@@ -461,7 +461,7 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 	rc = uefi_call_wrapper(BS->LocateDevicePath, 3, &sfsp, &file_dp,
 			       (void **)&device);
 	if (EFI_ERROR(rc)) {
-		rc = search_file(&file_dp, &device);
+		rc = search_file(&file_dp, (EFI_HANDLE *)&device);
 		if (EFI_ERROR(rc)) {
 			Print(L"%a:%a():%d: Could not locate device handle: %r\n",
 				      __FILE__, __func__, __LINE__, rc);
