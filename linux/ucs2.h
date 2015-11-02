@@ -4,6 +4,10 @@
 #define ev_bits(val, mask, shift) \
 	(((val) & ((mask) << (shift))) >> (shift))
 
+/*
+ * Translate from ucs2 to utf8.
+ * This is used to read old firmware paths from our stored state variables.
+ */
 static inline char *
 __attribute__((__unused__))
 ucs2_to_utf8(const uint16_t const *chars, size_t max)
@@ -48,6 +52,11 @@ ucs2_to_utf8(const uint16_t const *chars, size_t max)
 	return strdup(ret);
 }
 
+
+/*
+ * Find the length of a utf8 string, not counting nulls.
+ * This is only ever used on string literal utf8 text from libfwup source.
+ */
 static inline size_t
 __attribute__((__unused__))
 utf8len(uint8_t *s, ssize_t limit)
@@ -66,6 +75,10 @@ utf8len(uint8_t *s, ssize_t limit)
 	return j;
 }
 
+/*
+ * Convert a utf8 string to a ucs2 string.
+ * This is only ever used on string literal utf8 text from libfwup source.
+ */
 static inline uint16_t *
 __attribute__((__unused__))
 utf8_to_ucs2(uint8_t *utf8, ssize_t max)
@@ -97,12 +110,16 @@ utf8_to_ucs2(uint8_t *utf8, ssize_t max)
 	return ret;
 };
 
+/*
+ * Find the length of a ucs2 string
+ * This is basically only ever called on the output from utf8_to_ucs2()
+ */
 static inline size_t
 __attribute__((__unused__))
 ucs2len(uint16_t *s, ssize_t limit)
 {
 	ssize_t i;
-	for (i = 0; i < (limit > 0 ? limit : i + 1) && s[i] != L'\0'; i++)
+	for (i = 0; i < (limit >= 0 ? limit : i + 1) && s[i] != L'\0'; i++)
 		;
 	return i;
 }
