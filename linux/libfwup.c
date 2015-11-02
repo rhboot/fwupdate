@@ -186,6 +186,7 @@ put_info(update_info *info)
 	ssize_t dps, is;
 	char *guidstr = NULL;
 	char *varname;
+	int error;
 	int rc;
 
 	rc = efi_guid_to_str(&info->guid, &guidstr);
@@ -201,13 +202,18 @@ err:
 	varname = onstack(varname, strlen(varname)+1);
 
 	dps = efidp_size((efidp)info->dp_ptr);
-	is = (sizeof (*info)) + dps - (sizeof (info->dp_ptr));
-
-	update_info *info2;
-	info2 = alloca(is);
-	if (!info2) {
+	if (dps < 0 || (size_t)dps > SSIZE_MAX - sizeof(*info)) {
+		errno = EOVERFLOW;
 		return -1;
 	}
+
+	is = sizeof(*info) + dps - sizeof(info->dp_ptr);
+
+	update_info *info2;
+	info2 = malloc(is);
+	if (!info2)
+		return -1;
+
 	memcpy(info2, info, sizeof(*info));
 	memcpy(info2->dp, info->dp_ptr, dps);
 
@@ -216,6 +222,9 @@ err:
 			      | EFI_VARIABLE_RUNTIME_ACCESS;
 	rc = efi_set_variable(varguid, varname, (uint8_t *)info2,
 			      is, attributes);
+	error = errno;
+	free(info2);
+	errno = error;
 	return rc;
 }
 
