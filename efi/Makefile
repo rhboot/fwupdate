@@ -48,10 +48,10 @@ all : $(TARGETS)
 
 .SECONDARY: $(foreach target,$(TARGETS),$(target).debug $(target).build-id)
 
-%.efi : %.efi.unsigned %.efi.debug %.efi.build-id
+%.efi.signed : %.efi %.efi.debug %.efi.build-id
 	pesign -s -i $< -o $@ --force -c 'Red Hat Test Certificate'
 
-%.efi.unsigned : %.so
+%.efi : %.so
 ifneq ($(OBJCOPY_GTE224),1)
 	$(error objcopy >= 2.24 is required)
 endif
@@ -81,7 +81,7 @@ endif
 	$(CC) $(BUILDFLAGS) -c -o $@ $^
 
 clean :
-	@rm -vf $(TARGETS) *.o *.so *.efi.unsigned *.efi *.efi.debug \
+	@rm -vf $(TARGETS) *.o *.so *.efi.signed *.efi *.efi.debug \
 		*.efi.build-id
 
 buildiddir = $(dirname $(shell cat $(1).build-id))
