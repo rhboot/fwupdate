@@ -115,6 +115,53 @@ err:
 		_val;							\
 	})
 
+#define get_value_from_file_at_dir(dirname, file)			\
+	({								\
+		DIR *_dir;						\
+		int _dfd;						\
+		uint64_t _val;						\
+		_dir = opendir(dirname);				\
+		if (!_dir)						\
+			return -1;					\
+		_dfd = dirfd(_dir);					\
+		if (_dfd < 0) {						\
+			closedir(_dir);					\
+			return -1;					\
+		}							\
+		_val = get_value_from_file(_dfd, (file));		\
+		closedir(_dir);						\
+		_val;							\
+	})
+
+#define find_matching_file(tmpl, suffix, items, n_items, outpath)	\
+	({								\
+		char *__path;						\
+		int __rc;						\
+		int __i;						\
+		int __found = 0;					\
+		for (__i = 0; __i < (n_items); __i++) {			\
+			struct stat __statbuf;				\
+			__rc = asprintf(&__path, "%s%s%s", tmpl,	\
+					(items)[__i], suffix);		\
+			if (__rc < 0)					\
+				return -1;				\
+			__rc = stat(__path, &__statbuf);		\
+			if (__rc >= 0) {				\
+				__found = 1;				\
+				break;					\
+			}						\
+			free(__path);					\
+			if (__rc < 0 && errno != ENOENT)		\
+				return __rc;				\
+		}							\
+		if (__found) {						\
+			*(outpath) = onstack(__path, strlen(__path)+1);	\
+		} else {						\
+			__i = -1;					\
+		}							\
+		__i;							\
+	})
+
 #define get_string_from_file(dfd, file, str)				\
 	({								\
 		uint8_t *_buf = NULL;					\

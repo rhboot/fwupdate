@@ -29,6 +29,26 @@
 #include "ucs2.h"
 #include "fwup-efi.h"
 
+static char *arch_names_32[] = {
+#if defined(__x86_64__) || defined(__i386__) || defined(__i686__)
+	"ia32",
+#endif
+	""
+	};
+
+static int n_arches_32 = sizeof(arch_names_32) / sizeof(arch_names_32[0]);
+
+static char *arch_names_64[] = {
+#if defined(__x86_64__)
+	"x64",
+#elif defined(__aarch64__)
+	"aa64",
+#endif
+	""
+	};
+
+static int n_arches_64 = sizeof(arch_names_64) / sizeof(arch_names_64[0]);
+
 #define ESRT_DIR "/sys/firmware/efi/esrt/"
 #define get_esrt_dir(entries)						\
 	({								\
@@ -478,23 +498,43 @@ set_up_boot_next(void)
 {
 	ssize_t sz, dp_size = 0;
 	uint8_t *dp_buf = NULL;
-	struct stat statbuf;
 	int rc;
 	int saved_errno;
 
-	char shim_fs_path[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/shim.efi";
-	char fwup_fs_path[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/fwupdate.efi";
-	uint8_t fwup_esp_path[] = " \\fwupdate.efi";
+	char shim_fs_path_tmpl[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/shim";
+	char fwup_fs_path_tmpl[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/fwup";
+	uint8_t fwup_esp_path_tmpl[] = " \\fwup";
 	int use_fwup_path = 0;
 
 	uint16_t *loader_str = NULL;
 	size_t loader_sz = 0;
+	uint64_t firmware_bits = 0;
 
-	rc = stat(shim_fs_path, &statbuf);
-	if (rc < 0 && errno == ENOENT) {
+	firmware_bits = get_value_from_file_at_dir("/sys/firmware/efi/",
+						   "fw_platform_size");
+
+	char **arch_names = firmware_bits == 64 ? arch_names_64
+						 : arch_names_32;
+	int n_arches = firmware_bits == 64 ? n_arches_64 : n_arches_32;
+
+	int found = 0;
+	int i;
+	char *shim_fs_path = NULL, *fwup_fs_path = NULL, *fwup_esp_path = NULL;
+	i = find_matching_file(shim_fs_path_tmpl, ".efi", arch_names,
+			       n_arches, &shim_fs_path);
+	if (i < 0) {
 		use_fwup_path = 1;
-	} else if (rc < 0) {
-		return rc;
+		i = find_matching_file(fwup_fs_path_tmpl, ".efi", arch_names,
+				       n_arches, &fwup_fs_path);
+		if (i < 0) {
+			errno = ENOENT;
+			return i;
+		}
+	} else {
+		rc = asprintf(&fwup_esp_path, "%s%s.efi", fwup_esp_path_tmpl,
+			      arch_names[i]);
+		if (rc < 0)
+			return rc;
 	}
 
 	sz = efi_generate_file_device_path(dp_buf, dp_size, use_fwup_path
@@ -511,7 +551,7 @@ set_up_boot_next(void)
 		return -1;
 
 	if (!use_fwup_path) {
-		loader_str = utf8_to_ucs2(fwup_esp_path, -1);
+		loader_str = utf8_to_ucs2((uint8_t *)fwup_esp_path, -1);
 		loader_sz = ucs2len(loader_str, -1) * 2;
 		if (loader_sz)
 			loader_sz += 2;
@@ -552,7 +592,7 @@ set_up_boot_next(void)
 	char *name = NULL;
 
 	uint32_t boot_next = 0x10000;
-	int found=0;
+	found=0;
 
 	uint8_t *var_data = NULL;
 	size_t var_data_size = 0;
