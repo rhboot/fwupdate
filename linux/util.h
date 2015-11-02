@@ -139,19 +139,22 @@ get_uint64_from_file(int dfd, char *file, uint64_t *value)
 	uint8_t *buf = NULL;
 	size_t bufsize = 0;
 	int rc;
+	int error;
 
 	rc = read_file_at(dfd, file, &buf, &bufsize);
 	if (rc < 0) {
-		fwup_error = errno;
+		error = errno;
 		close(dfd);
+		errno = error;
 		return -1;
 	}
 
 	val = strtoull((char *)buf, NULL, 0);
 	if (val == ULLONG_MAX) {
-		fwup_error = errno;
+		error = errno;
 		close(dfd);
 		free(buf);
+		errno = error;
 		return -1;
 	}
 	free(buf);

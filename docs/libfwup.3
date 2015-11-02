@@ -8,11 +8,6 @@ libfwup - library to support management of system firmware updates
 \fBint \fRfwup_supported\fB(void);\fR\p
  \- test if firmware updating is supported on the running machine
 
-\fBextern int \fRfwup_error\fB;\fR\p
-\fBconst char const *\fRfwup_strerror\fB(int \fIerror\fB);\fR\p
-\fBconst char const *\fRfwup_strerror_r\fB(int \fIerror\fB, char *\fIbuf\fB, size_t \fIbuflen\fB);\fR\p
- \- handle libfwup errors
-
 \fBtypedef struct fwup_resource_s \fRfwup_resource\fB;\fR\p
 \fBtypedef struct fwup_resource_iter_s \fRfwup_resource_iter\fB;\fR\p
 
@@ -41,14 +36,6 @@ libfwup - library to support management of system firmware updates
 \fBint \fRfwup_supported\fB(void);\fR
 Tests if the current machine supports firmware updates
 .PP
-\fBint \fRfwup_error\fB;\fR
-The last error encountered by a libfwup API call.  Analogous to errno\fB(3)\fR.
-.PP
-\fBconst char const *\fRfwup_strerror\fB(int \fIerror\fB);\fR\p
-\fBconst char const *\fRfwup_strerror_r\fB(int \fIerror\fB, char *\fIbuf\fB, size_t \fIbuflen\fB);\fR
-The string representation of the libfwup error specified by \fIerror\fR.
-These are analogous to strerror\fB(3)\fR and strerror_r\fB(3)\fR.\p
-
 \fBtypedef struct fwup_resource_s \fRfwup_resource\fB;\fR\p
 \fBtypedef struct fwup_resource_iter_s \fRfwup_resource_iter\fB;\fR\p
 

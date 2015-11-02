@@ -8,14 +8,15 @@
  * Author: Peter Jones <pjones@redhat.com>
  */
 
-#include <err.h>
 #include <dirent.h>
 #include <efiboot.h>
 #include <efivar.h>
+#include <err.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -27,72 +28,6 @@
 #include "util.h"
 #include "ucs2.h"
 #include "fwup-efi.h"
-
-static __thread int __fwup_error;
-
-int *
-__fwup_error_location(void)
-{
-	return &__fwup_error;
-}
-
-#define EOKAY	0
-#define MAX_ERROR	35
-
-static const char const *error_table[MAX_ERROR - ERANGE] = {
-	[EOKAY] = "Okay",
-};
-
-static __thread char unknown[] = "Unknown error -2147483648";
-
-const char const *
-fwup_strerror(int error)
-{
-	if (error < 0 || error >= MAX_ERROR) {
-		sprintf(unknown, "Unknown error %d\n", error);
-		return unknown;
-	}
-	if (error > 0 && error <= ERANGE)
-		return strerror(error);
-	if (error == 0)
-		return dgettext("libfwup", error_table[error]);
-	return dgettext("libfwup", error_table[error - ERANGE]);
-}
-
-const char const *
-fwup_strerror_r(int error, char *buf, size_t buflen)
-{
-	if (!buf || !buflen) {
-		fwup_error = ERANGE;
-		return NULL;
-	}
-
-	size_t n = 0;
-	if (error < 0 || error >= MAX_ERROR) {
-		return strerror_r(error, buf, buflen);
-		n = snprintf(NULL, 0, "Unknown error %d", error);
-		if (n < buflen) {
-			fwup_error = EINVAL;
-			return NULL;
-		}
-		snprintf(buf, buflen, "Unknown error %d", error);
-		return buf;
-	}
-
-	if (error > 0 && error <= ERANGE)
-		return strerror_r(error, buf, buflen);
-
-	if (error == 0)
-		return dgettext("libfwup", error_table[error]);
-
-	n = strlen(dgettext("libfwup", error_table[error - ERANGE])) + 1;
-	if (n < buflen) {
-		fwup_error = EINVAL;
-		return NULL;
-	}
-	strcpy(buf, dgettext("libfwup", error_table[error - ERANGE]));
-	return buf;
-}
 
 #define ESRT_DIR "/sys/firmware/efi/esrt/"
 #define get_esrt_dir(entries)						\
@@ -167,15 +102,16 @@ get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
 	char *guidstr = NULL;
 	int rc;
 	update_info *local;
+	int error;
 
 	rc = efi_guid_to_str(guid, &guidstr);
 	if (rc < 0)
-		goto err;
+		return -1;
 	guidstr = onstack(guidstr, strlen(guidstr)+1);
 
 	rc = asprintf(&varname, "fwupdate-%s-%"PRIx64, guidstr, hw_inst);
 	if (rc < 0)
-		goto err;
+		return -1;
 	varname = onstack(varname, strlen(varname)+1);
 
 	uint8_t *data = NULL;
@@ -185,12 +121,10 @@ get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
 	rc = efi_get_variable(varguid, varname, &data, &data_size, &attributes);
 	if (rc < 0) {
 		if (errno != ENOENT)
-			goto err;
+			return -1;
 		local = calloc(1, sizeof (*local));
-		if (!local) {
-			fwup_error = errno;
-			goto err;
-		}
+		if (!local)
+			return -1;
 
 		local->update_info_version = UPDATE_INFO_VERSION;
 		local->guid = *guid;
@@ -199,9 +133,9 @@ get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
 		local->dp_ptr = calloc(1, 1024);
 		if (!local->dp_ptr) {
 alloc_err:
-			fwup_error = errno;
+			error = errno;
 			free_info(local);
-			errno = fwup_error;
+			errno = error;
 			return -1;
 		}
 
@@ -223,7 +157,7 @@ alloc_err:
 get_err:
 		rc = efi_del_variable(varguid, varname);
 		if (rc < 0)
-			goto err;
+			return -1;
 		return get_info(guid, hw_inst, info);
 	}
 	local = (update_info *)data;
@@ -234,7 +168,7 @@ get_err:
 	efidp_header *dp = malloc(efidp_size((efidp)local->dp));
 	if (!dp) {
 		free(data);
-		fwup_error = errno = ENOMEM;
+		errno = ENOMEM;
 		return -1;
 	}
 
@@ -243,9 +177,6 @@ get_err:
 
 	*info = local;
 	return 0;
-err:
-	fwup_error = errno;
-	return -1;
 }
 
 static int
@@ -260,7 +191,6 @@ put_info(update_info *info)
 	rc = efi_guid_to_str(&info->guid, &guidstr);
 	if (rc < 0) {
 err:
-		fwup_error = errno;
 		return rc;
 	}
 	guidstr = onstack(guidstr, strlen(guidstr)+1);
@@ -276,7 +206,6 @@ err:
 	update_info *info2;
 	info2 = alloca(is);
 	if (!info2) {
-		fwup_error = errno;
 		return -1;
 	}
 	memcpy(info2, info, sizeof(*info));
@@ -287,7 +216,6 @@ err:
 			      | EFI_VARIABLE_RUNTIME_ACCESS;
 	rc = efi_set_variable(varguid, varname, (uint8_t *)info2,
 			      is, attributes);
-	fwup_error = errno;
 	return rc;
 }
 
@@ -307,25 +235,22 @@ int
 fwup_resource_iter_create(fwup_resource_iter **iter)
 {
 	if (!iter) {
-		fwup_error = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 	fwup_resource_iter *new = calloc(1, sizeof (fwup_resource_iter));
 	if (!new) {
-		fwup_error = ENOMEM;
+		errno = ENOMEM;
 		return -1;
 	}
 
 	new->dir = opendir(get_esrt_dir(1));
-	if (!new->dir) {
-		fwup_error = errno;
+	if (!new->dir)
 		return -1;
-	}
+
 	new->dirfd = dirfd(new->dir);
-	if (new->dirfd < 0) {
-		fwup_error = errno;
+	if (new->dirfd < 0)
 		return -1;
-	}
 
 	*iter = new;
 	return 0;
@@ -346,7 +271,7 @@ int
 fwup_resource_iter_destroy(fwup_resource_iter **iterp)
 {
 	if (!iterp) {
-		fwup_error = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 	fwup_resource_iter *iter = *iterp;
@@ -367,7 +292,7 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 {
 	fwup_resource *res;
 	if (!iter || !re) {
-		fwup_error = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 	res = &iter->re;
@@ -378,10 +303,8 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 		errno = 0;
 		entry = readdir(iter->dir);
 		if (!entry) {
-			if (errno != 0) {
-				fwup_error = errno;
+			if (errno != 0)
 				return -1;
-			}
 			return 0;
 		}
 		if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
@@ -390,7 +313,6 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 
 	int dfd = openat(iter->dirfd, entry->d_name, O_RDONLY|O_DIRECTORY);
 	if (dfd < 0) {
-		fwup_error = errno;
 		return -1;
 	}
 
@@ -398,7 +320,6 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 	get_string_from_file(dfd, "fw_class", &class);
 	int rc = efi_str_to_guid(class, &res->esre.guid);
 	if (rc < 0) {
-		fwup_error = errno;
 		return rc;
 	}
 	res->esre.fw_type = get_value_from_file(dfd, "fw_type");
@@ -412,10 +333,9 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 			get_value_from_file(dfd, "lowest_supported_fw_version");
 
 	rc = get_info(&res->esre.guid, 0, &res->info);
-	if (rc < 0) {
-		fwup_error = errno;
+	if (rc < 0)
 		return rc;
-	}
+
 	res->info->capsule_flags = res->esre.capsule_flags;
 
 	*re = res;
@@ -427,7 +347,7 @@ int
 fwup_clear_status(fwup_resource *re)
 {
 	if (!re) {
-		fwup_error = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 
@@ -436,7 +356,6 @@ fwup_clear_status(fwup_resource *re)
 	re->info->status = 0;
 
 	rc = put_info(re->info);
-	fwup_error = errno;
 	return rc;
 }
 
@@ -444,7 +363,7 @@ int
 fwup_get_guid(fwup_resource *re, efi_guid_t **guid)
 {
 	if (!re || !guid) {
-		fwup_error = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 
@@ -456,7 +375,7 @@ int
 fwup_get_fw_version(fwup_resource *re, uint32_t *version)
 {
 	if (!re || !version) {
-		fwup_error = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 
@@ -468,7 +387,7 @@ int
 fwup_get_fw_type(fwup_resource *re, uint32_t *type)
 {
 	if (!re || !type) {
-		fwup_error = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 
@@ -480,7 +399,7 @@ int
 fwup_get_lowest_supported_fw_version(fwup_resource *re, uint32_t *version)
 {
 	if (!re || !version) {
-		fwup_error = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 
@@ -492,7 +411,7 @@ int
 fwup_get_attempt_status(fwup_resource *re, uint32_t *status)
 {
 	if (!re || !status) {
-		fwup_error = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 
@@ -506,12 +425,12 @@ fwup_get_last_attempt_info(fwup_resource *re, uint32_t *version,
 			   uint32_t *status, time_t *when)
 {
 	if (!re || !version || !status || !when) {
-		fwup_error = EINVAL;
+		errno = EINVAL;
 		return -1;
 	}
 
 	if (!re->info->status) {
-		fwup_error = ENOENT;
+		errno = ENOENT;
 		return -1;
 	}
 
@@ -909,7 +828,7 @@ out:
  *
  * Sets up a UEFI update using a file descriptor.
  *
- * Returns: -1 on error, @fwup_error being set
+ * Returns: -1 on error, @errno being set
  *
  * Since: 0.3
  */
@@ -921,6 +840,7 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 	int rc;
 	off_t offset;
 	update_info *info = NULL;
+	int error;
 
 	/* check parameters */
 	if (infd < 0) {
@@ -1000,11 +920,12 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 	if (rc < 0)
 		goto out;
 out:
-	fwup_error = errno;
+	error = errno;
 	lseek(infd, offset, SEEK_SET);
 	free_info(info);
 	if (fd > 0)
 		close(fd);
+	errno = error;
 	return rc;
 }
 
@@ -1017,7 +938,7 @@ out:
  *
  * Sets up a UEFI update using a pre-allocated buffer.
  *
- * Returns: -1 on error, @fwup_error being set
+ * Returns: -1 on error, @errno being set
  *
  * Since: 0.5
  */
@@ -1028,6 +949,7 @@ fwup_set_up_update_with_buf(fwup_resource *re, uint64_t hw_inst, const void *buf
 	int fd = -1;
 	int rc;
 	update_info *info = NULL;
+	int error;
 
 	/* check parameters */
 	if (buf == NULL || sz == 0) {
@@ -1088,10 +1010,11 @@ fwup_set_up_update_with_buf(fwup_resource *re, uint64_t hw_inst, const void *buf
 	if (rc < 0)
 		goto out;
 out:
-	fwup_error = errno;
+	error = errno;
 	free_info(info);
 	if (fd > 0)
 		close(fd);
+	errno = error;
 	return rc;
 }
 

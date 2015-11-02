@@ -35,8 +35,8 @@ print_system_resources(void)
 
 	rc = fwup_resource_iter_create(&iter);
 	if (rc < 0) {
-		if (fwup_error != ENOENT)
-			fwup_warn("Could not create iterator");
+		if (errno != ENOENT)
+			warn("Could not create iterator");
 		return -1;
 	}
 
@@ -164,7 +164,7 @@ main(int argc, char *argv[]) {
 		}
 	} else if (action & ACTION_LIST) {
 		rc = print_system_resources();
-		if (rc < 0 && fwup_error != ENOENT)
+		if (rc < 0 && errno != ENOENT)
 			errx(5, "Could not list system firmware resources");
 		return 0;
 	} else if (action & ACTION_APPLY) {
@@ -191,7 +191,7 @@ main(int argc, char *argv[]) {
 
 				rc = fwup_set_up_update(re, 0, fd);
 				if (rc < 0)
-					errx(2, _("Could not set up firmware update: %s"), fwup_strerror(fwup_error));
+					err(2, _("Could not set up firmware update"));
 				fwup_resource_iter_destroy(&iter);
 				exit(0);
 			}

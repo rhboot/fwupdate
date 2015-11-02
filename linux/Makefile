@@ -18,7 +18,7 @@ LIB_CCLDFLAGS = $(foreach lib,$(LIB_LIBS),-l$(lib)) \
 
 BUILDFLAGS := $(CFLAGS) -Wall -Wno-unused-result -Wno-unused-function \
 	-Wsign-compare -Werror=sign-compare \
-	-fshort-wchar --std=c11 \
+	-fshort-wchar --std=gnu11 \
 	-DLOCALEDIR=\"$(localedir)\" -D_GNU_SOURCE \
 	-DFWUP_EFI_DIR_NAME=\"$(EFIDIR)\"  \
 	-I$(TOPDIR)/linux/include -iquote$(TOPDIR)/include/ \
