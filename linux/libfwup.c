@@ -243,6 +243,7 @@ typedef struct fwup_resource_iter_s {
 int
 fwup_resource_iter_create(fwup_resource_iter **iter)
 {
+	int error;
 	if (!iter) {
 		errno = EINVAL;
 		return -1;
@@ -254,12 +255,17 @@ fwup_resource_iter_create(fwup_resource_iter **iter)
 	}
 
 	new->dir = opendir(get_esrt_dir(1));
-	if (!new->dir)
+	if (!new->dir) {
+err:
+		error = errno;
+		free(new);
+		errno = error;
 		return -1;
+	}
 
 	new->dirfd = dirfd(new->dir);
 	if (new->dirfd < 0)
-		return -1;
+		goto err;
 
 	*iter = new;
 	return 0;
