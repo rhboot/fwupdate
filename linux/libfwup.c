@@ -757,7 +757,7 @@ get_fd_and_media_path (update_info *info, char **path)
 			warn("asprintf failed");
 			goto out;
 		}
-		fd = mkostemps(fullpath, 4, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR);
+		fd = mkostemps(fullpath, 4, O_CREAT|O_TRUNC|O_CLOEXEC);
 		if (fd < 0) {
 			warn("mkostemps(%s) failed", fullpath);
 			goto out;
