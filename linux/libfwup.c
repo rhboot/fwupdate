@@ -524,7 +524,7 @@ set_up_boot_next(void)
 					   EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
 					   EFIBOOT_ABBREV_HD);
 	if (sz != dp_size)
-		return -1;
+		goto out;
 
 	uint8_t *opt=NULL;
 	ssize_t opt_size=0;
