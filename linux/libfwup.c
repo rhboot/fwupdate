@@ -845,10 +845,11 @@ int
 fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 {
 	char *path = NULL;
-	int fd = -1;
+	int outfd = -1;
 	int rc;
 	off_t offset;
 	update_info *info = NULL;
+	FILE *fin = NULL, *fout = NULL;
 	int error;
 
 	/* check parameters */
@@ -868,45 +869,56 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 	}
 
 	/* get destination */
-	fd = get_fd_and_media_path(info, &path);
-	if (fd < 0) {
+	outfd = get_fd_and_media_path(info, &path);
+	if (outfd < 0) {
 		rc = -1;
 		goto out;
 	}
 
+	fin = fdopen(infd, "r");
+	if (!fin)
+		goto out;
+
+	fout = fdopen(outfd, "w");
+	if (!fout)
+		goto out;
+
 	/* copy the input file to the new home */
 	while (1) {
-		char buf[4096];
-		ssize_t sz;
+		int c;
+		int rc;
 
-		sz = read(infd, &buf, 4096);
-		if (sz > 0) {
-			ssize_t wsz;
-			off_t off = 0;
-			while (sz-off) {
-				wsz = write(fd, buf+off, sz-off);
-				if (wsz < 0 &&
-				    (errno == EAGAIN || errno == EINTR))
-					continue;
-				if (wsz < 0) {
-					rc = wsz;
-					warn("write failed");
-					goto out;
-				}
-				off += wsz;
+		c = fgetc(fin);
+		if (c == EOF) {
+			if (feof(fin)) {
+				break;
+			} else if (ferror(fin)) {
+				warn("read failed");
+				rc = -1;
+				goto out;
+			} else {
+				warnx("fgetc() == EOF but no error is set.");
+				errno = EINVAL;
+				rc = -1;
+				goto out;
 			}
-			continue;
 		}
-		rc = sz;
-		if (sz < 0 && (errno == EAGAIN || errno == EINTR))
-			continue;
-		if (sz < 0) {
-			warn("read failed");
-			rc = -1;
-			goto out;
+
+		rc = fputc(c, fout);
+		if (rc == EOF) {
+			if (feof(fout)) {
+				break;
+			} else if (ferror(fout)) {
+				warn("write failed");
+				rc = -1;
+				goto out;
+			} else {
+				warnx("fputc() == EOF but no error is set.");
+				errno = EINVAL;
+				rc = -1;
+				goto out;
+			}
 		}
-		if (sz == 0)
-			break;
 	}
 
 	/* set efidp header */
@@ -931,9 +943,13 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 out:
 	error = errno;
 	lseek(infd, offset, SEEK_SET);
+	if (fin)
+		fclose(fin);
+	if (fout)
+		fclose(fout);
 	free_info(info);
-	if (fd > 0)
-		close(fd);
+	if (outfd >= 0)
+		close(outfd);
 	errno = error;
 	return rc;
 }
