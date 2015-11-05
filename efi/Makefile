@@ -95,7 +95,7 @@ define inst =
  ln -sf ../..$(TARGETDIR)$(1).debug $(DESTDIR)$(DEBUGINFO).build-id/$(shell cat $(1).build-id).debug
 endef
 
-install : fwupdate.efi
+install : fwupdate.efi | fwupdate.efi.debug fwupdate.efi.build-id
 	$(INSTALL) -d -m 755 $(DESTDIR)$(TARGETDIR)/fw/
 	$(foreach prog,$^,$(call inst,$(prog)) ; )
 	$(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGSOURCE)fwupdate-$(VERSION)/efi
