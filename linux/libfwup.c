@@ -241,7 +241,7 @@ err:
 			      | EFI_VARIABLE_BOOTSERVICE_ACCESS
 			      | EFI_VARIABLE_RUNTIME_ACCESS;
 	rc = efi_set_variable(varguid, varname, (uint8_t *)info2,
-			      is, attributes);
+			      is, attributes, 0644);
 	error = errno;
 	free(info2);
 	errno = error;
