@@ -15,38 +15,47 @@ CCLDFLAGS	?= -nostdlib -Wl,--warn-common \
 	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
 OBJCOPY_GTE224 = $(shell expr `$(OBJCOPY) --version |grep ^"GNU objcopy" | sed 's/^.* //g' | cut -f1-2 -d.` \>= 2.24)
 
+FWUP = fwupdate
+
 ifeq ($(ARCH),x86_64)
 	FORMAT = --target efi-app-$(ARCH)
 	BUILDFLAGS += -mno-mmx -mno-sse -mno-red-zone -nostdinc \
 		-maccumulate-outgoing-args -DEFI_FUNCTION_WRAPPER \
 		-DGNU_EFI_USE_MS_ABI -I$(shell $(CC) -print-file-name=include)
+	FWUP = fwupx64
 endif
 ifeq ($(ARCH),ia32)
 	FORMAT = --target efi-app-$(ARCH)
 	BUILDFLAGS += -mno-mmx -mno-sse -mno-red-zone -nostdinc \
 		-maccumulate-outgoing-args -m32 \
 		-I$(shell $(CC) -print-file-name=include)
+	FWUP = fwupia32
 endif
 
 ifeq ($(ARCH),aarch64)
 	FORMAT = -O binary
 	CCLDFLAGS += -Wl,--defsym=EFI_SUBSYSTEM=0xa
 	BUILDFLAGS += -ffreestanding -I$(shell $(CC) -print-file-name=include)
+	FWUP = fwupaa64
 endif
 
 ifeq ($(ARCH),arm)
 	FORMAT = -O binary
 	CCLDFLAGS += -Wl,--defsym=EFI_SUBSYSTEM=0xa
 	BUILDFLAGS += -ffreestanding -I$(shell $(CC) -print-file-name=include)
+	FWUP = fwuparm
 endif
 
-MAME=make
-
-TARGETS = fakeesrt2.efi fakeesrt.efi dumpesrt.efi fwupdate.efi mkvar.efi dumpf.efi mkvar2.efi
+TARGETS = fakeesrt2.efi fakeesrt.efi dumpesrt.efi $(FWUP).efi mkvar.efi dumpf.efi mkvar2.efi
 
 all : $(TARGETS)
 
 .SECONDARY: $(foreach target,$(TARGETS),$(target).debug $(target).build-id)
+
+$(FWUP).so : fwupdate.so
+	ln -f $< $@
+
+$(FWUP).efi : | $(FWUP).so
 
 %.efi.signed : %.efi %.efi.debug %.efi.build-id
 	pesign -s -i $< -o $@ --force -c 'Red Hat Test Certificate'
@@ -95,7 +104,7 @@ define inst =
  ln -sf ../..$(TARGETDIR)$(1).debug $(DESTDIR)$(DEBUGINFO).build-id/$(shell cat $(1).build-id).debug
 endef
 
-install : fwupdate.efi | fwupdate.efi.debug fwupdate.efi.build-id
+install : $(FWUP).efi | $(FWUP).efi.debug $(FWUP).efi.build-id
 	$(INSTALL) -d -m 755 $(DESTDIR)$(TARGETDIR)/fw/
 	$(foreach prog,$^,$(call inst,$(prog)) ; )
 	$(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGSOURCE)fwupdate-$(VERSION)/efi
