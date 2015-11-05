@@ -666,6 +666,13 @@ debug_hook(void)
 	efi_status = uefi_call_wrapper(RT->GetVariable, 5, L"SHIM_DEBUG",
 				       &guid, &attributes,  &data_size, &data);
 	if (EFI_ERROR(efi_status) || data != 1) {
+		efi_status = uefi_call_wrapper(RT->GetVariable, 5,
+					       L"FWUPDATE_VERBOSE", &guid,
+					       &attributes, &data_size, &data);
+		if (EFI_ERROR(efi_status) || data != 1) {
+			return;
+		}
+		debugging = 1;
 		return;
 	}
 
