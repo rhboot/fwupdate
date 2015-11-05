@@ -503,7 +503,7 @@ set_up_boot_next(void)
 
 	char shim_fs_path_tmpl[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/shim";
 	char fwup_fs_path_tmpl[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/fwup";
-	uint8_t fwup_esp_path_tmpl[] = " \\fwup";
+	uint8_t fwup_esp_path_tmpl[] = "\\fwup";
 	int use_fwup_path = 0;
 
 	uint16_t *loader_str = NULL;
