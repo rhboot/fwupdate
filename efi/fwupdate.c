@@ -95,7 +95,8 @@ read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 			EFI_STATUS rc;
 			UINTN sz = bs;
 
-			rc = uefi_call_wrapper(fh->Read, 3, fh, &sz, &b[i * bs]);
+			rc = uefi_call_wrapper(fh->Read, 3, fh, &sz,
+					       &b[i * bs]);
 			if (EFI_ERROR(rc)) {
 				free(b, bs * n_blocks);
 				Print(L"%a:%a():%d: Could not read file: %r\n",
@@ -328,7 +329,8 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 			ret = rc;
 			goto err;
 		}
-		if (updates[n_updates]->info->status & FWUPDATE_ATTEMPT_UPDATE){
+		if (updates[n_updates]->info->status &
+		    FWUPDATE_ATTEMPT_UPDATE) {
 			EFI_TIME_CAPABILITIES timecaps = { 0, };
 			uefi_call_wrapper(RT->GetTime, 2,
 				&updates[n_updates]->info->time_attempted,
@@ -370,8 +372,8 @@ search_file(EFI_DEVICE_PATH **file_dp, EFI_FILE_HANDLE *fh)
 	UINTN i, n_handles, count;
 	EFI_STATUS rc;
 
-	rc = uefi_call_wrapper(BS->LocateHandleBuffer, 5, ByProtocol, &sfsp, NULL,
-			       &n_handles, (EFI_HANDLE **)&devices);
+	rc = uefi_call_wrapper(BS->LocateHandleBuffer, 5, ByProtocol, &sfsp,
+			       NULL, &n_handles, (EFI_HANDLE **)&devices);
 	if (EFI_ERROR(rc)) {
 		Print(L"Could not find handles.\n");
 		return rc;
@@ -395,8 +397,9 @@ search_file(EFI_DEVICE_PATH **file_dp, EFI_FILE_HANDLE *fh)
 			rc = EFI_INVALID_PARAMETER;
 			goto out;
 		}
-	
-		if (DevicePathType(dp) == MEDIA_DEVICE_PATH && DevicePathSubType(dp) == MEDIA_FILEPATH_DP)
+
+		if (DevicePathType(dp) == MEDIA_DEVICE_PATH &&
+		    DevicePathSubType(dp) == MEDIA_FILEPATH_DP)
 			break;
 
 		dp = NextDevicePathNode(dp);
@@ -406,7 +409,8 @@ search_file(EFI_DEVICE_PATH **file_dp, EFI_FILE_HANDLE *fh)
 	SetDevicePathEndNode(dp);
 
 	if (debugging)
-		Print(L"Device Path prepared: %s\n", DevicePathToStr(parent_dp));
+		Print(L"Device Path prepared: %s\n",
+		      DevicePathToStr(parent_dp));
 
 	for (i = 0; i < n_handles; i++) {
 		EFI_DEVICE_PATH *path;
@@ -417,12 +421,15 @@ search_file(EFI_DEVICE_PATH **file_dp, EFI_FILE_HANDLE *fh)
 			continue;
 
 		if (debugging)
-			Print(L"Device supporting SFSP: %s\n", DevicePathToStr(path));
+			Print(L"Device supporting SFSP: %s\n",
+			      DevicePathToStr(path));
 
 		rc = EFI_UNSUPPORTED;
 		while (!IsDevicePathEnd(path)) {
 			if (debugging)
-				Print(L"Comparing: %s and %s\n", DevicePathToStr(parent_dp), DevicePathToStr(path));
+				Print(L"Comparing: %s and %s\n",
+				      DevicePathToStr(parent_dp),
+				      DevicePathToStr(path));
 
 			if (LibMatchDevicePaths(path, parent_dp) == TRUE) {
 				*fh = devices[i];
@@ -431,7 +438,8 @@ search_file(EFI_DEVICE_PATH **file_dp, EFI_FILE_HANDLE *fh)
 				rc = EFI_SUCCESS;
 
 				if (debugging)
-					Print(L"Match up! Returning %s\n", DevicePathToStr(*file_dp));
+					Print(L"Match up! Returning %s\n",
+					      DevicePathToStr(*file_dp));
 
 				goto out;
 			}
