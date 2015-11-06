@@ -56,7 +56,7 @@ print_system_resources(void)
 		fwup_get_lowest_supported_fw_version(re, &lowest);
 
 		printf("%s version %d can be updated to any version above %d\n",
-			id_guid, vers, lowest);
+			id_guid, vers, lowest-1);
 		free(id_guid);
 	}
 
