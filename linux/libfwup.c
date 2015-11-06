@@ -903,8 +903,7 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 	/* check parameters */
 	if (infd < 0) {
 		warn("fd invalid.\n");
-		rc = -1;
-		goto out;
+		return -1;
 	}
 
 	offset = lseek(infd, 0, SEEK_CUR);
