@@ -12,6 +12,7 @@ BuildRequires:  efivar-devel >= %{efivar_version}
 BuildRequires:  gnu-efi gnu-efi-devel
 BuildRequires:  pesign
 BuildRequires:  elfutils popt-devel git gettext pkgconfig
+BuildRequires:  systemd
 ExclusiveArch:  x86_64 %{ix86} aarch64
 Source0:        https://github.com/rhinstaller/fwupdate/releases/download/%{name}-%{version}/%{name}-%{version}.tar.bz2
 
@@ -68,10 +69,16 @@ rm -rf $RPM_BUILD_ROOT
        includedir=%{_includedir} libexecdir=%{_libexecdir} \
        datadir=%{_datadir}
 
-%post libs -p /sbin/ldconfig
+%post libs
+/sbin/ldconfig
 %systemd_post fwupdate-cleanup.service
 
-%postun libs -p /sbin/ldconfig
+%preun libs
+%systemd_preun fwupdate-cleanup.service
+
+%postun libs
+/sbin/ldconfig
+%systemd_postun_with_restart pesign.service
 
 %files
 %defattr(-,root,root,-)
