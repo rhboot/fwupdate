@@ -705,7 +705,7 @@ out:
 }
 
 /**
- * fwup_get_existing_media_path:
+ * get_existing_media_path:
  * @info: the #update_info
  *
  * Return a media path to use for the update which has already been used by
@@ -714,7 +714,7 @@ out:
  * Returns: a media path, or %NULL if no such path exists.
  */
 static char *
-fwup_get_existing_media_path (update_info *info)
+get_existing_media_path(update_info *info)
 {
 	int rc;
 	char *relpath = NULL;
@@ -769,7 +769,7 @@ out:
 }
 
 /**
- * fwup_get_existing_media_path:
+ * get_fd_and_media_path:
  * @info: the #update_info
  * @path: (out): the path
  *
@@ -778,7 +778,7 @@ out:
  * Returns: a FD, or -1 for error
  */
 static int
-get_fd_and_media_path (update_info *info, char **path)
+get_fd_and_media_path(update_info *info, char **path)
 {
 	char *fullpath = NULL;
 	int fd = -1;
@@ -787,7 +787,7 @@ get_fd_and_media_path (update_info *info, char **path)
 	/* look for an existing variable that we've used before for this
 	 * update GUID, and reuse the filename so we don't wind up
 	 * littering the filesystem with old updates */
-	fullpath = fwup_get_existing_media_path (info);
+	fullpath = get_existing_media_path (info);
 	if (fullpath) {
 		fd = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR, 0600);
 		if (fd < 0) {
@@ -821,7 +821,7 @@ out:
 }
 
 /**
- * set_efidp_header
+ * set_efidp_header:
  * @info: the #update_info
  * @path: the path
  *
@@ -830,7 +830,7 @@ out:
  * Returns: a FD, or -1 for error
  */
 static int
-set_efidp_header (update_info *info, const char *path)
+set_efidp_header(update_info *info, const char *path)
 {
 	int rc = 0;
 	ssize_t req;
