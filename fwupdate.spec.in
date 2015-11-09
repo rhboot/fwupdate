@@ -88,6 +88,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/fwupdate
 %{_datadir}/locale/en/*.po
 %doc %{_mandir}/man1/*
+%dir %{_datadir}/bash-completion/completions
+%{_datadir}/bash-completion/completions/fwupdate
 
 %files devel
 %defattr(-,root,root,-)

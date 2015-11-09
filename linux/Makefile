@@ -95,3 +95,6 @@ install : all
 	$(INSTALL) -d -m 755 $(DESTDIR)$(libdatadir)/systemd/system
 	$(INSTALL) -m 644 cleanup.service \
 		$(DESTDIR)$(libdatadir)/systemd/system/fwupdate-cleanup.service
+	$(INSTALL) -d -m 755 $(DESTDIR)/usr/share/bash-completion/completions/
+	$(INSTALL) -m 755 bash-completion \
+		$(DESTDIR)/usr/share/bash-completion/completions/fwupdate
