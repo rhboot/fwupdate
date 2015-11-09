@@ -30,7 +30,7 @@ INCTARGETS=include/fwup.h
 LIBTARGETS=libfwup.so.$(VERSION) libfwup.so.$(MAJOR_VERSION)
 PCTARGETS=fwup.pc
 POTARGETS = fwupdate.po libfwup.po
-TARGETS=$(BINTARGETS) $(INCTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) libfwup.so
+TARGETS=$(BINTARGETS) $(INCTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) libfwup.so cleanup.service cleanup
 
 .SUFFIXES:
 
@@ -58,9 +58,12 @@ fwupdate : libfwup.so
 %.o : %.c
 	$(CC) $(BUILDFLAGS) -fPIC -c -o $@ $^
 
-fwup.pc : fwup.pc.in
+% : %.in
 	sed -e "s,@@VERSION@@,$(VERSION),g" \
+		-e "s,@@DATADIR@@,$(datadir),g" \
+		-e "s,@@EFIDIR@@,$(EFIDIR),g" \
 		-e "s,@@LIBDIR@@,$(libdir),g" \
+		-e "s,@@LIBEXECDIR@@,$(libexecdir),g" \
 		$< > $@
 
 tester : tester.c
@@ -86,3 +89,9 @@ install : all
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(bindir)
 	$(foreach x, $(BINTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)/$(bindir);)
 	$(foreach x, $(wildcard *.so.$(VERSION)), ln -fs $(x) $(patsubst %.so.$(VERSION),%.so,$(DESTDIR)/$(libdir)/$(x)); ln -fs $(x) $(patsubst %.so.$(VERSION),%.so.$(MAJOR_VERSION),$(DESTDIR)/$(libdir)/$(x));)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/fwupdate/
+	$(INSTALL) -d -m 755 $(DESTDIR)$(libexecdir)/fwupdate/
+	$(INSTALL) -m 755 cleanup $(DESTDIR)$(libexecdir)/fwupdate/cleanup
+	$(INSTALL) -d -m 755 $(DESTDIR)$(libdatadir)/systemd/system
+	$(INSTALL) -m 644 cleanup.service \
+		$(DESTDIR)$(libdatadir)/systemd/system/fwupdate-cleanup.service

@@ -5,18 +5,20 @@ LD		= $(CROSS_COMPILE)ld
 OBJCOPY		= $(CROSS_COMPILE)objcopy
 READELF		= eu-readelf
 XGETTEXT	= xgettext
+prefix		?= /usr/
+prefix		:= $(abspath $(prefix))/
 ARCH		= $(shell $(CC) -dumpmachine | cut -f1 -d- | sed s,i[3456789]86,ia32,)
 ifeq ($(ARCH),x86_64)
-  LIBDIR	?= /usr/lib64
+  LIBDIR	?= $(prefix)lib64
 endif
 ifeq ($(ARCH),ia32)
-  LIBDIR	?= /usr/lib
+  LIBDIR	?= $(prefix)lib
 endif
 ifeq ($(ARCH),aarch64)
-  LIBDIR	?= /usr/lib64
+  LIBDIR	?= $(prefix)lib64
 endif
 ifeq ($(ARCH),arm)
-  LIBDIR	?= /usr/lib
+  LIBDIR	?= $(prefix)lib
 endif
 LIBDIR		?= unknown
 ifeq ($(LIBDIR),unknown)
@@ -26,13 +28,15 @@ endif
 GNUEFIDIR	?= $(LIBDIR)/gnuefi/
 libdir		?= $(LIBDIR)
 pcdir		?= $(libdir)/pkgconfig/
-mandir		?= /usr/share/man/
-includedir	?= /usr/include/
-bindir		?= /usr/bin/
-datadir		?= /usr/share/
+mandir		?= $(prefix)share/man/
+includedir	?= $(prefix)include/
+bindir		?= $(prefix)bin/
+datadir		?= $(prefix)share/
 localedir	?= $(datadir)/locale/
+libexecdir	?= $(prefix)libexec/
+libdatadir	?= $(prefix)lib/
 
 EFIDIR		?= redhat
-DEBUGINFO	?= /usr/lib/debug/
-DEBUGSOURCE	?= /usr/src/debug/
+DEBUGINFO	?= $(prefix)lib/debug/
+DEBUGSOURCE	?= $(prefix)src/debug/
 TARGETDIR	?= /boot/efi/EFI/$(EFIDIR)/

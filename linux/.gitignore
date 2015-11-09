@@ -2,3 +2,5 @@ fwupdate
 lib*.so.*
 tester
 *.po
+cleanup.service
+cleanup

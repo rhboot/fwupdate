@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+if [ -e "@@DATADIR@@fwupdate/done" ]; then
+	exit 0
+fi
+
+for x in /boot/efi/EFI/@@EFIDIR@@/fw/fwupdate-* ; do
+	if [ "${x}" != "/boot/efi/EFI/@@EFIDIR@@/fw/fwupdate-*" ]; then
+		rm -f "${x}"
+	fi
+done
+for x in /sys/firmware/efi/efivars/fwupdate-*-0abba7dc-e516-4167-bbf5-4d9d1c739416 ; do
+	if [ "${x}" != "/sys/firmware/efi/efivars/fwupdate-*-0abba7dc-e516-4167-bbf5-4d9d1c739416" ]; then
+		rm -f "${x}"
+	fi
+done
+
+touch "@@DATADIR@@/fwupdate/done"
