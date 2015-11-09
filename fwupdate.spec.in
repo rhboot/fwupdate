@@ -92,7 +92,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0700,root,root) %dir /boot/efi
 %dir /boot/efi/EFI/%{efidir}/
 %dir /boot/efi/EFI/%{efidir}/fw/
-/boot/efi/EFI/%{efidir}/fwupdate.efi
+/boot/efi/EFI/%{efidir}/fwup%{efiarch}.efi
 %{_libdir}/*.so.*
 
 %changelog
