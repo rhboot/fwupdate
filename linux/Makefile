@@ -76,6 +76,7 @@ test : tester
 clean :
 	@rm -vf $(BINTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) *.o
 	@rm -vf libfwup.so*
+	@rm -vf cleanup.service cleanup
 
 install : all
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)
