@@ -1022,6 +1022,7 @@ fwup_set_up_update_with_buf(fwup_resource *re, uint64_t hw_inst, const void *buf
 	int rc;
 	update_info *info = NULL;
 	int error;
+	off_t off = 0;
 
 	/* check parameters */
 	if (buf == NULL || sz == 0) {
@@ -1045,21 +1046,18 @@ fwup_set_up_update_with_buf(fwup_resource *re, uint64_t hw_inst, const void *buf
 	}
 
 	/* write the buf to a new file */
-	while (1) {
+	while (sz-off) {
 		ssize_t wsz;
-		off_t off = 0;
-		while (sz-off) {
-			wsz = write(fd, buf+off, sz-off);
-			if (wsz < 0 &&
-			    (errno == EAGAIN || errno == EINTR))
-				continue;
-			if (wsz < 0) {
-				rc = wsz;
-				warn("write failed");
-				goto out;
-			}
-			off += wsz;
+		wsz = write(fd, buf+off, sz-off);
+		if (wsz < 0 &&
+		    (errno == EAGAIN || errno == EINTR))
+			continue;
+		if (wsz < 0) {
+			rc = wsz;
+			warn("write failed");
+			goto out;
 		}
+		off += wsz;
 	}
 
 	/* set efidp header */
