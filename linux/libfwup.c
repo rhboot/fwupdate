@@ -709,6 +709,7 @@ do_next:
 		efi_loadopt_attr_set(loadopt, LOAD_OPTION_ACTIVE);
 		rc = efi_set_variable(*guid, name, var_data,
 				      var_data_size, attr);
+		free(var_data);
 		ret = rc;
 	} else {
 		char boot_next_name[] = "Boot####";
