@@ -995,6 +995,8 @@ fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
 out:
 	error = errno;
 	lseek(infd, offset, SEEK_SET);
+	if (path)
+		free(path);
 	if (fin)
 		fclose(fin);
 	if (fout)
