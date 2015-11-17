@@ -523,14 +523,13 @@ get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 
 	i = find_matching_file(shim_fs_path_tmpl, ".efi", arch_names,
 			       n_arches, &shim_fs_path_tmp);
-	if (i < 0) {
-		i = find_matching_file(fwup_fs_path_tmpl, ".efi", arch_names,
+
+	i = find_matching_file(fwup_fs_path_tmpl, ".efi", arch_names,
 				       n_arches, &fwup_fs_path_tmp);
-		if (i < 0) {
-			errno = ENOENT;
-			ret = i;
-			goto out;
-		}
+	if (i < 0) {
+		errno = ENOENT;
+		ret = i;
+		goto out;
 	}
 	rc = asprintf(&fwup_esp_path_tmp, "%s%s.efi", fwup_esp_path_tmpl,
 		      arch_names[i]);
