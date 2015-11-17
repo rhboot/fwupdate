@@ -709,7 +709,8 @@ do_next:
 		rc = efi_set_variable(*guid, name, var_data,
 				      var_data_size, attr);
 		free(var_data);
-		ret = rc;
+		if (rc < 0)
+			goto out;
 	} else {
 		char boot_next_name[] = "Boot####";
 		for (uint32_t value = 0; value < 0x10000; value++) {
