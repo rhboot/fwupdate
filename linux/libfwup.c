@@ -185,14 +185,21 @@ get_err:
 	if (local->update_info_version != UPDATE_INFO_VERSION)
 		goto get_err;
 
-	efidp_header *dp = malloc(efidp_size((efidp)local->dp));
+	ssize_t sz = efidp_size((efidp)local->dp);
+	if (sz < 0) {
+		free(data);
+		errno = EINVAL;
+		return -1;
+	}
+
+	efidp_header *dp = malloc((size_t)sz);
 	if (!dp) {
 		free(data);
 		errno = ENOMEM;
 		return -1;
 	}
 
-	memcpy(dp, local->dp, efidp_size((efidp)local->dp));
+	memcpy(dp, local->dp, (size_t)sz);
 	local->dp_ptr = dp;
 
 	*info = local;
