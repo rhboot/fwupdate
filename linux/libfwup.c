@@ -716,9 +716,7 @@ do_next:
 			int div = value / (sizeof(set_entries[0]) * 8);
 			int mod = value % (sizeof(set_entries[0]) * 8);
 
-			if (!set_entries[div]) {
-				boot_next = div * sizeof(set_entries[0]) * 8;
-			} else if (set_entries[div] & (1<<mod)) {
+			if (set_entries[div] & (1<<mod)) {
 				continue;
 			}
 			boot_next = value;
