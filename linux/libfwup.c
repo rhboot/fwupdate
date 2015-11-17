@@ -1146,7 +1146,7 @@ fwup_set_up_update_with_buf(fwup_resource *re, uint64_t hw_inst, const void *buf
 out:
 	error = errno;
 	free_info(info);
-	if (fd > 0)
+	if (fd >= 0)
 		close(fd);
 	errno = error;
 	return rc;
