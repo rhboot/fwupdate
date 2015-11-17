@@ -28,6 +28,11 @@ ucs2_to_utf8(const uint16_t const *chars, size_t max)
 			ret[j++] = 0xe0 | ev_bits(chars[i], 0xf, 12);
 			ret[j++] = 0x80 | ev_bits(chars[i], 0x3f, 6);
 			ret[j]   = 0x80| ev_bits(chars[i], 0x3f, 0);
+#if 0 /*
+       * and since this is UCS-2, which has no surrogates, we don't actually
+       * need to check for the rest of the unicode codepoints.  They don't
+       * exist in this representation.
+       */
 		} else if (chars[i] > 0xffff && chars[i] < 0x200000) {
 			ret[j++] = 0xf0 | ev_bits(chars[i], 0x7, 18);
 			ret[j++] = 0x80 | ev_bits(chars[i], 0x3f, 12);
@@ -46,6 +51,7 @@ ucs2_to_utf8(const uint16_t const *chars, size_t max)
 			ret[j++] = 0x80 | ev_bits(chars[i], 0x3f, 12);
 			ret[j++] = 0x80 | ev_bits(chars[i], 0x3f, 6);
 			ret[j]   = 0x80 | ev_bits(chars[i], 0x3f, 0);
+#endif
 		}
 	}
 	ret[j] = '\0';
