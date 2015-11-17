@@ -503,7 +503,11 @@ set_up_boot_next(void)
 
 	char shim_fs_path_tmpl[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/shim";
 	char fwup_fs_path_tmpl[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/fwup";
-	uint8_t fwup_esp_path_tmpl[] = "\\fwup";
+	/* shim always ignores the LoadOptions string before the first L' ',
+	 * i.e. the name of shim program, and deems the remaining string as
+	 * its parameter. We have to trick shim with a prefixal space here.
+	 */
+	uint8_t fwup_esp_path_tmpl[] = " \\fwup";
 	int use_fwup_path = 0;
 
 	uint16_t *loader_str = NULL;
