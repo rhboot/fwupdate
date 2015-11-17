@@ -530,12 +530,11 @@ set_up_boot_next(void)
 			errno = ENOENT;
 			return i;
 		}
-	} else {
-		rc = asprintf(&fwup_esp_path, "%s%s.efi", fwup_esp_path_tmpl,
-			      arch_names[i]);
-		if (rc < 0)
-			return rc;
 	}
+	rc = asprintf(&fwup_esp_path, "%s%s.efi", fwup_esp_path_tmpl,
+		      arch_names[i]);
+	if (rc < 0)
+		return rc;
 
 	sz = efi_generate_file_device_path(dp_buf, dp_size, use_fwup_path
 							    ? fwup_fs_path
@@ -570,9 +569,15 @@ set_up_boot_next(void)
 	ssize_t opt_size=0;
 	uint32_t attributes = LOAD_OPTION_ACTIVE;
 	int ret = -1;
+	char *label = NULL;
+
+	rc = asprintf(&label, "Linux-Firmware-Updater %s", fwup_esp_path);
+	if (rc < 0)
+		return -1;
+
 	sz = efi_loadopt_create(opt, opt_size, attributes,
 				  (efidp)dp_buf, dp_size,
-				  (uint8_t *)"Linux Firmware Updater",
+				  (uint8_t *)label,
 				  (uint8_t *)loader_str, loader_sz);
 	if (sz < 0)
 		goto out;
@@ -582,7 +587,7 @@ set_up_boot_next(void)
 	opt_size = sz;
 	sz = efi_loadopt_create(opt, opt_size, attributes,
 				  (efidp)dp_buf, dp_size,
-				  (uint8_t *)"Linux Firmware Updater",
+				  (uint8_t *)label,
 				  (uint8_t *)loader_str, loader_sz);
 	if (sz != opt_size)
 		goto out;
