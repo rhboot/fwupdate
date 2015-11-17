@@ -494,47 +494,98 @@ fwup_get_last_attempt_info(fwup_resource *re, uint32_t *version,
 #define LOAD_OPTION_ACTIVE      0x00000001
 
 static int
+get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
+{
+	int ret = -1;
+
+	char shim_fs_path_tmpl[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/shim";
+	char fwup_fs_path_tmpl[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/fwup";
+	uint8_t fwup_esp_path_tmpl[] = "\\fwup";
+
+	char *shim_fs_path_tmp = NULL;
+	char *fwup_fs_path_tmp = NULL;
+	char *fwup_esp_path_tmp = NULL;
+
+	uint64_t firmware_bits = 0;
+
+	firmware_bits = get_value_from_file_at_dir("/sys/firmware/efi/",
+						   "fw_platform_size");
+	char **arch_names = firmware_bits == 64 ? arch_names_64
+						 : arch_names_32;
+	int n_arches = firmware_bits == 64 ? n_arches_64 : n_arches_32;
+	int i;
+
+	int rc;
+
+	*shim_fs_path = NULL;
+	*fwup_fs_path = NULL;
+	*fwup_esp_path = NULL;
+
+	i = find_matching_file(shim_fs_path_tmpl, ".efi", arch_names,
+			       n_arches, &shim_fs_path_tmp);
+	if (i < 0) {
+		i = find_matching_file(fwup_fs_path_tmpl, ".efi", arch_names,
+				       n_arches, &fwup_fs_path_tmp);
+		if (i < 0) {
+			errno = ENOENT;
+			ret = i;
+			goto out;
+		}
+	}
+	rc = asprintf(&fwup_esp_path_tmp, "%s%s.efi", fwup_esp_path_tmpl,
+		      arch_names[i]);
+	if (rc < 0)
+		goto out;
+
+	if (shim_fs_path_tmp) {
+		*shim_fs_path = strdup(shim_fs_path_tmp);
+		if (!*shim_fs_path)
+			goto out;
+	}
+	if (fwup_fs_path_tmp) {
+		*fwup_fs_path = strdup(fwup_fs_path_tmp);
+		if (!*fwup_fs_path)
+			goto out;
+	}
+	if (fwup_esp_path_tmp)
+		*fwup_esp_path = fwup_esp_path_tmp;
+
+	return 0;
+out:
+	if (*shim_fs_path)
+		free(*shim_fs_path);
+	if (*fwup_fs_path)
+		free(*fwup_fs_path);
+	if (fwup_esp_path_tmp)
+		free(fwup_esp_path_tmp);
+	return ret;
+}
+
+static int
 set_up_boot_next(void)
 {
 	ssize_t sz, dp_size = 0;
 	uint8_t *dp_buf = NULL;
 	int rc;
 	int saved_errno;
-
-	char shim_fs_path_tmpl[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/shim";
-	char fwup_fs_path_tmpl[] = "/boot/efi/EFI/"FWUP_EFI_DIR_NAME"/fwup";
-	uint8_t fwup_esp_path_tmpl[] = "\\fwup";
-	int use_fwup_path = 0;
+	int ret = -1;
 
 	uint16_t *loader_str = NULL;
 	size_t loader_sz = 0;
-	uint64_t firmware_bits = 0;
 
-	firmware_bits = get_value_from_file_at_dir("/sys/firmware/efi/",
-						   "fw_platform_size");
+	char *shim_fs_path = NULL;
+	char *fwup_fs_path = NULL;
+	char *fwup_esp_path = NULL;
+	int use_fwup_path = 0;
 
-	char **arch_names = firmware_bits == 64 ? arch_names_64
-						 : arch_names_32;
-	int n_arches = firmware_bits == 64 ? n_arches_64 : n_arches_32;
+	char *label = NULL;
 
-	int found = 0;
-	int i;
-	char *shim_fs_path = NULL, *fwup_fs_path = NULL, *fwup_esp_path = NULL;
-	i = find_matching_file(shim_fs_path_tmpl, ".efi", arch_names,
-			       n_arches, &shim_fs_path);
-	if (i < 0) {
-		use_fwup_path = 1;
-		i = find_matching_file(fwup_fs_path_tmpl, ".efi", arch_names,
-				       n_arches, &fwup_fs_path);
-		if (i < 0) {
-			errno = ENOENT;
-			return i;
-		}
-	}
-	rc = asprintf(&fwup_esp_path, "%s%s.efi", fwup_esp_path_tmpl,
-		      arch_names[i]);
+	rc = get_paths(&shim_fs_path, &fwup_fs_path, &fwup_esp_path);
 	if (rc < 0)
-		return rc;
+		return -1;
+
+	if (!shim_fs_path)
+		use_fwup_path = 1;
 
 	sz = efi_generate_file_device_path(dp_buf, dp_size, use_fwup_path
 							    ? fwup_fs_path
@@ -542,12 +593,12 @@ set_up_boot_next(void)
 					   EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
 					   EFIBOOT_ABBREV_HD);
 	if (sz < 0)
-		return -1;
+		goto out;
 
 	dp_size=sz;
 	dp_buf = calloc(1, dp_size);
 	if (!dp_buf)
-		return -1;
+		goto out;
 
 	if (!use_fwup_path) {
 		loader_str = utf8_to_ucs2((uint8_t *)fwup_esp_path, -1);
@@ -568,12 +619,10 @@ set_up_boot_next(void)
 	uint8_t *opt=NULL;
 	ssize_t opt_size=0;
 	uint32_t attributes = LOAD_OPTION_ACTIVE;
-	int ret = -1;
-	char *label = NULL;
 
 	rc = asprintf(&label, "Linux-Firmware-Updater %s", fwup_esp_path);
 	if (rc < 0)
-		return -1;
+		goto out;
 
 	sz = efi_loadopt_create(opt, opt_size, attributes,
 				  (efidp)dp_buf, dp_size,
@@ -597,7 +646,7 @@ set_up_boot_next(void)
 	char *name = NULL;
 
 	uint32_t boot_next = 0x10000;
-	found=0;
+	int found = 0;
 
 	uint8_t *var_data = NULL;
 	size_t var_data_size = 0;
@@ -704,6 +753,14 @@ out:
 		free(dp_buf);
 	if (opt)
 		free(opt);
+	if (label)
+		free(label);
+	if (fwup_esp_path)
+		free(fwup_esp_path);
+	if (fwup_fs_path)
+		free(fwup_fs_path);
+	if (shim_fs_path)
+		free(shim_fs_path);
 
 	errno = saved_errno;
 	return ret;
