@@ -222,7 +222,13 @@ err:
 	varname = onstack(varname, strlen(varname)+1);
 
 	dps = efidp_size((efidp)info->dp_ptr);
-	if (dps < 0 || (size_t)dps > SSIZE_MAX - sizeof(*info)) {
+	/* make sure dps is at least big enough to have our structure */
+	if (dps < 0 || (size_t)dps < sizeof(*info)) {
+		errno = EINVAL;
+		return -1;
+	}
+	/* Make sure sizeof(*info) + dps won't integer overflow */
+	if ((size_t)dps > SSIZE_MAX - sizeof(*info)) {
 		errno = EOVERFLOW;
 		return -1;
 	}
