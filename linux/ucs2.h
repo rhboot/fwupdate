@@ -24,7 +24,7 @@ ucs2_to_utf8(const uint16_t const *chars, size_t max)
 		} else if (chars[i] > 0x7f && chars[i] <= 0x7ff) {
 			ret[j++] = 0xc0 | ev_bits(chars[i], 0x1f, 6);
 			ret[j]   = 0x80 | ev_bits(chars[i], 0x3f, 0);
-		} else if (chars[i] > 0x7ff && chars[i] < 0x10000) {
+		} else if (chars[i] > 0x7ff /* && chars[i] < 0x10000 */ ) {
 			ret[j++] = 0xe0 | ev_bits(chars[i], 0xf, 12);
 			ret[j++] = 0x80 | ev_bits(chars[i], 0x3f, 6);
 			ret[j]   = 0x80| ev_bits(chars[i], 0x3f, 0);
