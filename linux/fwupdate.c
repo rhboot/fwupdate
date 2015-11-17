@@ -36,7 +36,7 @@ print_system_resources(void)
 	rc = fwup_resource_iter_create(&iter);
 	if (rc < 0) {
 		if (errno != ENOENT)
-			warn("Could not create iterator");
+			warn(_("Could not create iterator"));
 		return -1;
 	}
 
@@ -55,7 +55,7 @@ print_system_resources(void)
 		fwup_get_fw_version(re, &vers);
 		fwup_get_lowest_supported_fw_version(re, &lowest);
 
-		printf("%s version %d can be updated to any version above %d\n",
+		printf(_("%s version %d can be updated to any version above %d\n"),
 			id_guid, vers, lowest-1);
 		free(id_guid);
 	}
@@ -155,17 +155,17 @@ main(int argc, char *argv[]) {
 		rc = fwup_supported();
 		if (rc == 0) {
 			if (!quiet)
-				printf("Firmware updates are not supported on this machine.\n");
+				printf("%s", _("Firmware updates are not supported on this machine.\n"));
 			return 1;
 		} else if (rc == 1) {
 			if (!quiet)
-				printf("Firmware updates are supported on this machine.\n");
+				printf("%s", _("Firmware updates are supported on this machine.\n"));
 			return 0;
 		}
 	} else if (action & ACTION_LIST) {
 		rc = print_system_resources();
 		if (rc < 0 && errno != ENOENT)
-			errx(5, "Could not list system firmware resources");
+			errx(5, _("Could not list system firmware resources"));
 		return 0;
 	} else if (action & ACTION_APPLY) {
 		fwup_resource_iter *iter = NULL;
