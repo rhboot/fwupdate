@@ -766,7 +766,7 @@ get_existing_media_path(update_info *info)
 	/* build a complete path */
 	rc = asprintf(&fullpath, "/boot/efi%s", relpath);
 	if (rc < 0)
-		goto out;
+		fullpath = NULL;
 
 out:
 	free(relpath);
