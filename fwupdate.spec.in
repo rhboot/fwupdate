@@ -94,7 +94,7 @@ rm -rf $RPM_BUILD_ROOT
 %license COPYING
 # %%doc README
 %{_bindir}/fwupdate
-%{_datadir}/locale/en/*.po
+%{_datadir}/locale/en/fwupdate.po
 %doc %{_mandir}/man1/*
 %dir %{_datadir}/bash-completion/completions
 %{_datadir}/bash-completion/completions/fwupdate
@@ -109,6 +109,7 @@ rm -rf $RPM_BUILD_ROOT
 %files libs
 %defattr(-,root,root,-)
 %{_libdir}/*.so.*
+%{_datadir}/locale/en/libfwup.po
 %{_unitdir}/fwupdate-cleanup.service
 %attr(0755,root,root) %dir %{_datadir}/fwupdate/
 %config(noreplace) %ghost %{_datadir}/fwupdate/done
