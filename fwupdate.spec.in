@@ -34,11 +34,11 @@ fwupdate provides a simple command line interface to the UEFI firmware updates.
 
 %package libs
 Summary: Library to manage UEFI firmware updates
+Requires: shim
+Requires: %{name}-efi = %{version}-%{release}
 
 %description libs
 Library to allow for the simple manipulation of UEFI firmware updates.
-Requires: shim
-Requires: %{name}-efi = %{version}-%{release}
 
 %package devel
 Summary: Development headers for libfwup
