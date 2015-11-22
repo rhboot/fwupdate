@@ -675,8 +675,9 @@ debug_hook(void)
 				       &guid, &attributes,  &data_size, &data);
 	if (EFI_ERROR(efi_status) || data != 1) {
 		efi_status = uefi_call_wrapper(RT->GetVariable, 5,
-					       L"FWUPDATE_VERBOSE", &guid,
-					       &attributes, &data_size, &data);
+					       L"FWUPDATE_VERBOSE",
+					       &fwupdate_guid, &attributes,
+					       &data_size, &data);
 		if (EFI_ERROR(efi_status) || data != 1) {
 			return;
 		}
