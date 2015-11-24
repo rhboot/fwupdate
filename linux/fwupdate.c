@@ -27,7 +27,7 @@
 #define CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE   0x00020000
 #define CAPSULE_FLAGS_INITIATE_RESET          0x00040000
 
-int
+static int
 print_system_resources(void)
 {
 	fwup_resource_iter *iter;
@@ -69,6 +69,7 @@ print_system_resources(void)
 #define ACTION_APPLY		0x01
 #define ACTION_LIST		0x02
 #define ACTION_SUPPORTED	0x04
+#define ACTION_INFO		0x08
 
 int
 main(int argc, char *argv[]) {
@@ -95,6 +96,10 @@ main(int argc, char *argv[]) {
 		{"supported", 's', POPT_ARG_VAL|POPT_ARGFLAG_OR, &action,
 			ACTION_SUPPORTED,
 			_("Query for firmware update support"), NULL},
+		{"info", 'i', POPT_ARG_VAL|POPT_ARGFLAG_OR, &action,
+			ACTION_INFO,
+			_("Show the information of firmware update status"),
+			NULL},
 		{"quiet", 'q', POPT_ARG_VAL, &quiet, 1, _("Work quietly"),
 			NULL},
 		POPT_AUTOALIAS
@@ -134,7 +139,6 @@ main(int argc, char *argv[]) {
 			exit(1);
 		}
 	}
-
 
 	if (rc < -1)
 		errx(2, _("invalid argument: \"%s\": %s"),
@@ -197,6 +201,11 @@ main(int argc, char *argv[]) {
 			}
 		}
 		errx(2, _("firmware resource not found"));
+	} else if (action & ACTION_INFO) {
+		rc = fwup_print_update_info();
+		if (rc < 0)
+			errx(6, _("Could not display firmware update status"));
+		return 0;
 	}
 
 	return 0;
