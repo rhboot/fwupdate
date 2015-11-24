@@ -228,8 +228,7 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 	CHAR16 *variable_name;
 	EFI_GUID vendor_guid = empty_guid;
 
-	updates = AllocateZeroPool(sizeof (update_table *)
-				   * n_updates_allocated);
+	updates = AllocatePool(sizeof (update_table *) * n_updates_allocated);
 	if (!updates) {
 		Print(L"%a:%a():%d: Tried to allocate %d\n",
 		      __FILE__, __func__, __LINE__,
@@ -246,6 +245,7 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 		      __FILE__, __func__, __LINE__,
 		      GNVN_BUF_SIZE * 2);
 		Print(L"Could not allocate memory.\n");
+		FreePool(updates);
 		return EFI_OUT_OF_RESOURCES;
 	}
 
@@ -303,8 +303,8 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 		if (n_updates == n_updates_allocated) {
 			update_table **new_ups;
 
-			new_ups = AllocateZeroPool(sizeof (update_table *) *
-						   n_updates_allocated * 2);
+			new_ups = AllocatePool(sizeof (update_table *) *
+					       n_updates_allocated * 2);
 			if (!new_ups) {
 				Print(L"%a:%a():%d: Tried to allocate %d\n",
 				      __FILE__, __func__, __LINE__,
@@ -321,40 +321,52 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 			updates = new_ups;
 		}
 
-		updates[n_updates]->name = StrDuplicate(vn);
-		rc = get_info(vn, updates[n_updates]);
+		update_table *update = AllocatePool(sizeof (update_table));
+		if (!update) {
+			Print(L"%a:%a():%d: Tried to allocate %d\n",
+			      __FILE__, __func__, __LINE__,
+			      sizeof (update_table));
+			ret = EFI_OUT_OF_RESOURCES;
+			goto err;
+		}
+
+		update->name = StrDuplicate(vn);
+		rc = get_info(vn, update);
 		if (EFI_ERROR(rc)) {
 			Print(L"Could not get update info for \"%s\", "
 			      L"aborting.\n", vn);
 			ret = rc;
+			FreePool(update->name);
+			FreePool(update);
 			goto err;
 		}
-		if (updates[n_updates]->info->status &
-		    FWUPDATE_ATTEMPT_UPDATE) {
+		if (update->info->status & FWUPDATE_ATTEMPT_UPDATE) {
 			EFI_TIME_CAPABILITIES timecaps = { 0, };
+
 			uefi_call_wrapper(RT->GetTime, 2,
-				&updates[n_updates]->info->time_attempted,
-				&timecaps);
-			updates[n_updates]->info->status = FWUPDATE_ATTEMPTED;
-			n_updates++;
+					  &update->info->time_attempted,
+					  &timecaps);
+			update->info->status = FWUPDATE_ATTEMPTED;
+			updates[n_updates++] = update;
 		} else {
-			FreePool(updates[n_updates]->info);
-			FreePool(updates[n_updates]);
-			updates[n_updates] = NULL;
+			FreePool(update->info);
+			FreePool(update->name);
+			FreePool(update);
 		}
 	}
+
+	FreePool(variable_name);
 
 	*n_updates_out = n_updates;
 	*updates_out = updates;
 
 	return EFI_SUCCESS;
 err:
-	if (variable_name)
-		FreePool(variable_name);
+	FreePool(variable_name);
 
-	for (int i = 0; i < n_updates && updates[i]; i++) {
-		if (updates[i]->name)
-			FreePool(updates[i]->name);
+	for (int i = 0; i < n_updates; i++) {
+		FreePool(updates[i]->name);
+		FreePool(updates[i]->info);
 		FreePool(updates[i]);
 	}
 
