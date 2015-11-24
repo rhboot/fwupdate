@@ -1195,3 +1195,107 @@ fwup_last_attempt_status_to_string (uint64_t status)
 		return "Battery level is too low";
 	return NULL;
 }
+
+
+/**
+ * fwup_print_update_info:
+ * Print the information of firmware update status.
+ *
+ * Returns: -1 on error, @errno being set
+ *
+ * Since: 0.5
+ */
+int
+fwup_print_update_info(void)
+{
+	fwup_resource_iter *iter;
+	int id;
+	int rc;
+
+	rc = fwup_resource_iter_create(&iter);
+	if (rc < 0) {
+		if (errno != ENOENT)
+			warn(_("Could not create iterator"));
+		return -1;
+	}
+
+	fwup_resource *re = NULL;
+	id = 0;
+	while ((rc = fwup_resource_iter_next(iter, &re)) > 0) {
+		update_info *info = re->info;
+		efi_guid_t *guid = &info->guid;
+		char *id_guid = NULL;
+		ssize_t dp_sz;
+		char *path;
+
+		rc = efi_guid_to_id_guid(guid, &id_guid);
+		if (rc < 0)
+			break;
+
+
+		dp_sz = efidp_format_device_path(NULL, 0,
+						 (const_efidp)info->dp_ptr,
+						 0);
+		if (dp_sz <= 0) {
+			errno = EINVAL;
+			rc = -1;
+			free(id_guid);
+			break;
+		}
+
+		path = malloc(dp_sz);
+		if (!path) {
+			rc = -1;
+			free(id_guid);
+			break;
+		}
+
+		if (efidp_format_device_path(path, dp_sz,
+					     (const_efidp)info->dp_ptr, 0)
+					     != dp_sz) {
+			errno = EINVAL;
+			rc = -1;
+			free(path);
+			free(id_guid);
+			break;
+		}
+
+		printf("\nInformation for the update status entry %d:\n", id++);
+		printf("  Information Version: %d\n", info->update_info_version);
+		printf("  Firmware GUID: %s\n", id_guid);
+		printf("  Capsule Flags: 0x%08x\n", info->capsule_flags);
+		printf("  Hardware Instance: %" PRIu64 "\n", info->hw_inst);
+		printf("  Update Status: %s\n",
+		       info->status == FWUPDATE_ATTEMPT_UPDATE ? "Preparing"
+		       : info->status == FWUPDATE_ATTEMPTED ? "Attempted"
+		       : "Unknown");
+		if (info->status == FWUPDATE_ATTEMPTED) {
+			efi_time_t *time_attempted;
+			struct tm tm;
+
+			time_attempted = (efi_time_t *)&info->time_attempted;
+			tm.tm_year = time_attempted->year - 1900;
+			tm.tm_mon = time_attempted->month - 1;
+			tm.tm_mday = time_attempted->day;
+			tm.tm_hour = time_attempted->hour;
+			tm.tm_min = time_attempted->minute;
+			tm.tm_sec = time_attempted->second;
+			tm.tm_isdst = time_attempted->daylight;
+
+			printf("  Attempted Time: ");
+			if (mktime(&tm) != (time_t)-1)
+				printf("%s", asctime(&tm));
+			else
+				printf("Unknown\n");
+		}
+		printf("  Capsule File Path: %s\n", path);
+
+		free(path);
+		free(id_guid);
+	}
+
+	fwup_resource_iter_destroy(&iter);
+	if (rc < 0)
+		return -1;
+	return 0;
+}
