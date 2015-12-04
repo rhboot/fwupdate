@@ -331,6 +331,15 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 		}
 
 		update->name = StrDuplicate(vn);
+		if (!update->name) {
+			Print(L"%a:%a():%d: Tried to allocate %d\n",
+			      __FILE__, __func__, __LINE__,
+			      StrSize(vn));
+			ret = EFI_OUT_OF_RESOURCES;
+			FreePool(update);
+			goto err;
+		}
+
 		rc = get_info(vn, update);
 		if (EFI_ERROR(rc)) {
 			Print(L"Could not get update info for \"%s\", "
