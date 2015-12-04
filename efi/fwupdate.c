@@ -246,6 +246,7 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 		      __FILE__, __func__, __LINE__,
 		      GNVN_BUF_SIZE * 2);
 		Print(L"Could not allocate memory.\n");
+		FreePool(updates);
 		return EFI_OUT_OF_RESOURCES;
 	}
 
