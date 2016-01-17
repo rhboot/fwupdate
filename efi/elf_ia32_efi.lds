@@ -6,6 +6,7 @@ SECTIONS
   . = 0;
   ImageBase = .;
   .hash : { *(.hash) }	/* this MUST come first! */
+  .gnu.hash : { *(.gnu.hash) }
   . = ALIGN(4096);
   .text :
   {
