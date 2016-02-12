@@ -3,7 +3,7 @@ include $(TOPDIR)/Make.version
 include $(TOPDIR)/Make.defaults
 
 CFLAGS		?= -O0 -g3
-BUILDFLAGS	:= $(CFLAGS) -fpic -Wall -fshort-wchar \
+BUILDFLAGS	:= $(CFLAGS) -pedantic -fpic -Wall -fshort-wchar \
 	-fno-merge-constants -ffreestanding \
 	-fno-stack-protector -fno-stack-check --std=c11 -DCONFIG_$(ARCH) \
 	-I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
