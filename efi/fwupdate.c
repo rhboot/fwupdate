@@ -265,12 +265,19 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 	UINTN variable_name_size = 0;
 	CHAR16 *variable_name;
 	EFI_GUID vendor_guid = empty_guid;
+	UINTN mult_res;
 
-	updates = AllocatePool(sizeof (update_table *) * n_updates_allocated);
+	if (!uintn_mult(sizeof (update_table *), n_updates_allocated,
+			&mult_res)) {
+		Print(L"%a:%a():%d: would overflow size\n",
+		      __FILE__, __func__, __LINE__);
+		return EFI_OUT_OF_RESOURCES;
+	}
+
+	updates = AllocateZeroPool(mult_res);
 	if (!updates) {
 		Print(L"%a:%a():%d: Tried to allocate %d\n",
-		      __FILE__, __func__, __LINE__,
-		      sizeof (update_table *) * n_updates_allocated);
+		      __FILE__, __func__, __LINE__, mult_res);
 		Print(L"Could not allocate memory.\n");
 		return EFI_OUT_OF_RESOURCES;
 	}
@@ -299,6 +306,13 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 			CHAR16 *new_name;
 
 			new_allocation = variable_name_size;
+			if (!uintn_mult(new_allocation, 2, &mult_res)) {
+				Print(L"%a:%a():%d: %d * 2 would overflow size\n",
+				      __FILE__, __func__, __LINE__,
+				      new_allocation);
+				ret = EFI_OUT_OF_RESOURCES;
+				goto err;
+			}
 			new_name = AllocatePool(new_allocation * 2);
 			if (!new_name) {
 				Print(L"%a:%a():%d: Tried to allocate %d\n",
@@ -340,20 +354,27 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 
 		if (n_updates == n_updates_allocated) {
 			update_table **new_ups;
+			if (!uintn_mult(n_updates_allocated, 2, &mult_res)) {
+mult_err:
+				Print(L"%a:%a():%d: "
+				      L"allocation would overflow size\n",
+				      __FILE__, __func__, __LINE__);
+				ret = EFI_OUT_OF_RESOURCES;
+				goto err;
+			}
+			if (!uintn_mult(mult_res, sizeof (update_table *),
+					&mult_res))
+				goto mult_err;
 
-			new_ups = AllocatePool(sizeof (update_table *) *
-					       n_updates_allocated * 2);
+			new_ups = AllocateZeroPool(mult_res);
 			if (!new_ups) {
 				Print(L"%a:%a():%d: Tried to allocate %d\n",
-				      __FILE__, __func__, __LINE__,
-				      sizeof (update_table *)
-				      * n_updates_allocated * 2);
+				      __FILE__, __func__, __LINE__, mult_res);
 				Print(L"Could not allocate memory.\n");
 				ret = EFI_OUT_OF_RESOURCES;
 				goto err;
 			}
-			CopyMem(new_ups, updates, sizeof (update_table *) *
-						      n_updates_allocated);
+			CopyMem(new_ups, updates, mult_res);
 			n_updates_allocated *= 2;
 			FreePool(updates);
 			updates = new_ups;
