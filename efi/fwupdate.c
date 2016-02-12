@@ -572,6 +572,15 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 	}
 
 	sz /= sizeof (CHAR16);
+	/*
+	 * check against some arbitrary limit to avoid having a stack
+	 * overflow here.
+	 */
+	if (sz > 1024) {
+		Print(L"%a:%a():%d: Invalid file device path.\n",
+			      __FILE__, __func__, __LINE__);
+		return EFI_INVALID_PARAMETER;
+	}
 	CHAR16 filename[sz+1];
 	CopyMem(filename, (UINT8 *)file_dp + 4, sz * sizeof (CHAR16));
 	filename[sz] = L'\0';
