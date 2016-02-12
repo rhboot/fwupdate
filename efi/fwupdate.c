@@ -658,7 +658,9 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 		cbd_out->Union.DataBlock =
 			(EFI_PHYSICAL_ADDRESS)(UINTN)fbuf;
 		*capsule_out = (EFI_CAPSULE_HEADER *)fbuf;
-		(*capsule_out)->Flags |= update->info->capsule_flags;
+		(*capsule_out)->Flags |= update->info->capsule_flags |
+			CAPSULE_FLAGS_PERSIST_ACROSS_RESET |
+			CAPSULE_FLAGS_INITIATE_RESET;
 	} else {
 		if (debugging) {
 			Print(L"Image does not have embedded header\n");
@@ -675,7 +677,9 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 		}
 		capsule->CapsuleGuid = update->info->guid;
 		capsule->HeaderSize = sizeof (*capsule);
-		capsule->Flags = update->info->capsule_flags;
+		capsule->Flags = update->info->capsule_flags |
+			CAPSULE_FLAGS_PERSIST_ACROSS_RESET |
+			CAPSULE_FLAGS_INITIATE_RESET;
 		capsule->CapsuleImageSize = fsize + sizeof (*capsule);
 
 		UINT8 *buffer = (UINT8 *)capsule + capsule->HeaderSize;
