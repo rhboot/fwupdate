@@ -227,6 +227,12 @@ get_info(CHAR16 *name, update_table *info_out)
 
 	UINTN is = info_size - EFI_FIELD_OFFSET(update_info, dp);
 	EFI_DEVICE_PATH *hdr = (EFI_DEVICE_PATH *)&info->dp;
+	/*
+	 * "sz" is INTN not UINTN on purpose:
+	 * a) that size would be much to big anyway, but also
+	 * b) it makes the sz < 4 comparison later give us a free overflow
+	 *    check.
+	 */
 	INTN sz = sizeof (EFI_DEVICE_PATH) - is;
 	if (is >= sizeof (EFI_DEVICE_PATH))
 		sz = DevicePathSize(hdr);
