@@ -32,6 +32,28 @@ typedef struct update_table_s {
 static int debugging;
 
 /*
+ * I'm not actually sure when these appear, but they're present in the
+ * version in front of me.
+ */
+#if defined(__GNUC__) && defined(__GNUC_MINOR__)
+#if __GNUC__ >= 5 && __GNUC_MINOR__ >= 1
+#define uintn_mult(a, b, c) __builtin_mul_overflow(a, b, c)
+#endif
+#endif
+#ifndef uintn_mult
+#define uintn_mult(a, b, c) ({					\
+		const UINTN _limit = ~0ULL;			\
+		int _ret = 1;					\
+		if ((a) != 0 && (b) != 0) {			\
+			_ret = _limit / (a) < (b);		\
+		}						\
+		if (_ret)					\
+			*(c) = ((a) * (b));			\
+		_ret;						\
+	})
+#endif
+
+/*
  * Allocate some raw pages that aren't part of the pool allocator.
  */
 static EFI_STATUS
@@ -69,14 +91,22 @@ EFI_STATUS
 read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 {
 	UINT8 *b = NULL;
-	UINTN bs = 512;
+	const UINTN bs = 512;
 	UINTN n_blocks = 4096;
 	UINTN i = 0;
 	EFI_STATUS rc;
 
 	while (1) {
 		void *newb = NULL;
-		rc = allocate(&newb, bs * n_blocks * 2);
+		UINTN news = 0;
+		if (!uintn_mult(bs * 2, n_blocks, &news)) {
+			if (b)
+				free(b, bs * n_blocks);
+			Print(L"%a:%a():%d: allocation would overflow size\n",
+			      __FILE__, __func__, __LINE__);
+			return EFI_OUT_OF_RESOURCES;
+		}
+		rc = allocate(&newb, news);
 		if (EFI_ERROR(rc)) {
 			Print(L"%a:%a():%d: Tried to allocate %d\n",
 			      __FILE__, __func__, __LINE__,
