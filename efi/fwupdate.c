@@ -174,11 +174,13 @@ get_info(CHAR16 *name, update_table *info_out)
 	update_info *info = NULL;
 	UINTN info_size = 0;
 	UINT32 attributes = 0;
+	void *info_ptr = NULL;
 
-	rc = read_variable(name, fwupdate_guid, (void **)&info, &info_size,
+	rc = read_variable(name, fwupdate_guid, &info_ptr, &info_size,
 			   &attributes);
 	if (EFI_ERROR(rc))
 		return rc;
+	info = (update_info *)info_ptr;
 
 	if (info_size < sizeof (*info)) {
 		Print(L"Update \"%s\" is is too small.\n", name);
