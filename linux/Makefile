@@ -23,6 +23,7 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wno-unused-result -Wno-unused-function \
 	-DFWUP_EFI_DIR_NAME=\"$(EFIDIR)\"  \
 	-I$(TOPDIR)/linux/include -iquote$(TOPDIR)/include/ \
 	$(foreach pklib,$(PKLIBS), $(shell pkg-config --cflags $(pklib))) \
+	-Wnull-dereference \
 	$(PJONES)
 
 BINTARGETS=fwupdate

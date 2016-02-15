@@ -5,9 +5,10 @@ include $(TOPDIR)/Make.defaults
 CFLAGS		?= -O0 -g3
 BUILDFLAGS	:= $(CFLAGS) -pedantic -fpic -Wall -fshort-wchar \
 	-fno-merge-constants -ffreestanding \
-	-fno-stack-protector -fno-stack-check --std=c11 -DCONFIG_$(ARCH) \
+	-fno-stack-protector -fno-stack-check --std=gnu11 -DCONFIG_$(ARCH) \
 	-I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
-	-iquote$(TOPDIR)/include "-DDEBUGDIR=L\"$(DEBUGDIR)/\""
+	-iquote$(TOPDIR)/include "-DDEBUGDIR=L\"$(DEBUGDIR)/\"" \
+	-Wnull-dereference
 CCLDFLAGS	?= -nostdlib -Wl,--warn-common \
 	-Wl,--no-undefined -Wl,--fatal-warnings \
 	-Wl,-shared -Wl,-Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) \
