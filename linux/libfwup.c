@@ -29,6 +29,10 @@
 #include "ucs2.h"
 #include "fwup-efi.h"
 
+#include </usr/include/smbios_c/token.h>
+#define DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED 0x0461
+#define DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED 0x0462
+
 static char *arch_names_32[] = {
 #if defined(__x86_64__) || defined(__i386__) || defined(__i686__)
 	"ia32",
@@ -78,6 +82,73 @@ efidp_end_entire(efidp_header *dp)
 	return 1;
 }
 
+/*
+	esrt_disabled
+	tests if ESRT is disabled (but can be enabled)
+	return codes:
+		-1 : the tokens were not found. system is unsupported
+		-2 : libsmbios failure, this scenario shouldn't be reached
+		 2 : ESRT is currently disabled and can be enabled.
+		 3 : tokens were found, will be enabled next boot
+
+ */
+int
+esrt_disabled(void)
+{
+	if (!token_is_bool(DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED))
+		return -1;
+	if (!token_is_active(DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED))
+	{
+		if (token_is_active(DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED))
+			return 3;
+		return -2;
+	}
+	return 2;
+}
+
+/*
+	enable_esrt
+	attempts to enable ESRT
+	return codes:
+		 <= 0 : failure
+		 1 : already enabled
+		 2 : success
+		 3 : tokens were found, will be enabled next boot
+
+ */
+int
+enable_esrt(void)
+{
+	int rc;
+	rc = fwup_supported();
+	/* can't enable or already enabled */
+	if (rc != 2)
+		return rc;
+	/* disabled in BIOS, but supported to be enabled via tool */
+	rc = token_is_bool(DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED);
+	if (!rc)
+		return -1;
+	rc = token_is_active(DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED);
+	if (rc)
+		return -2;
+	token_activate(DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED);
+	rc = token_is_active(DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED);
+	if (!rc)
+		return -3;
+	return 2;
+}
+
+/*
+	fwup_supported
+	tests if firmware updating supported
+	return codes:
+	 <0 : error
+		0 : unsupported
+		1 : supported
+		2 : ESRT is currently disabled but can be enabled
+		3 : ESRT is currently disabled but will be enabled on next boot
+
+ */
 int
 fwup_supported(void)
 {
@@ -86,7 +157,13 @@ fwup_supported(void)
 
 	rc = stat(get_esrt_dir(1), &buf);
 	if (rc < 0)
-		return 0;
+	{
+		/* check if we have the ability to turn on ESRT */
+		rc = esrt_disabled();
+		if (rc < 0)
+			return 0;
+		return rc;
+	}
 	if (buf.st_nlink < 3)
 		return 0;
 	return 1;

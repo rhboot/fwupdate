@@ -2,7 +2,7 @@ TOPDIR	?= $(shell pwd)/..
 include $(TOPDIR)/Make.version
 include $(TOPDIR)/Make.defaults
 
-LIB_LIBS= pthread
+LIB_LIBS= pthread smbios_c
 BIN_LIBS= popt pthread
 PKLIBS	= efivar efiboot
 CFLAGS	?= -g -O0

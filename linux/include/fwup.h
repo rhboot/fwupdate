@@ -17,6 +17,7 @@
 #include <time.h>
 
 extern int fwup_supported(void);
+extern int enable_esrt(void);
 
 #define FWUP_RESOURCE_TYPE_UNKNOWN		0
 #define FWUP_RESOURCE_TYPE_SYSTEM_FIRMWARE	1
