@@ -70,6 +70,7 @@ print_system_resources(void)
 #define ACTION_LIST		0x02
 #define ACTION_SUPPORTED	0x04
 #define ACTION_INFO		0x08
+#define ACTION_ENABLE		0x10
 
 int
 main(int argc, char *argv[]) {
@@ -100,6 +101,9 @@ main(int argc, char *argv[]) {
 			ACTION_INFO,
 			_("Show the information of firmware update status"),
 			NULL},
+		{"enable", 'e', POPT_ARG_VAL|POPT_ARGFLAG_OR, &action,
+			ACTION_ENABLE,
+			_("Enable firmware update support on supported systems (will require a reboot)"), NULL},
 		{"quiet", 'q', POPT_ARG_VAL, &quiet, 1, _("Work quietly"),
 			NULL},
 		POPT_AUTOALIAS
@@ -165,6 +169,15 @@ main(int argc, char *argv[]) {
 			if (!quiet)
 				printf("%s", _("Firmware updates are supported on this machine.\n"));
 			return 0;
+		} else if (rc == 2) {
+			if (!quiet)
+				printf("%s", _("Firmware updates are supported on this machine, but currently disabled.\n"));
+			return 2;
+		}
+		else if (rc == 3) {
+			if (!quiet)
+				printf("%s", _("Firmware updates are supported on this machine, and will be enabled on the next reboot.\n"));
+				return 2;
 		}
 	} else if (action & ACTION_LIST) {
 		rc = print_system_resources();
@@ -206,6 +219,26 @@ main(int argc, char *argv[]) {
 		if (rc < 0)
 			errx(6, _("Could not display firmware update status"));
 		return 0;
+	} else if (action & ACTION_ENABLE) {
+		if (geteuid() != 0) {
+			if (!quiet)
+				printf("%s", _("To enable firmware updates, this tool must be launched as root.\n"));
+			return -1;
+		}
+		rc = enable_esrt();
+		if (rc < 1) {
+			if (!quiet)
+				printf("%s", _("Firmware updates can not be enabled on this machine from this tool.\n"));
+			return 1;
+		} else if (rc == 1) {
+			if (!quiet)
+				printf("%s", _("Firmware updates are already enabled.\n"));
+			return 1;
+		} else if (rc == 2 || rc == 3) {
+			if (!quiet)
+				printf("%s", _("Firmware updates will be enabled after the system is rebooted.\n"));
+			return 0;
+		}
 	}
 
 	return 0;
