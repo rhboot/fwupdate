@@ -7,8 +7,7 @@ BUILDFLAGS	:= $(CFLAGS) -fpic -Werror -Wall -Wextra -fshort-wchar \
 	-fno-merge-constants -ffreestanding \
 	-fno-stack-protector -fno-stack-check --std=gnu11 -DCONFIG_$(ARCH) \
 	-I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
-	-iquote$(TOPDIR)/include "-DDEBUGDIR=L\"$(DEBUGDIR)/\"" \
-	-Wnull-dereference
+	-iquote$(TOPDIR)/include "-DDEBUGDIR=L\"$(DEBUGDIR)/\""
 CCLDFLAGS	?= -nostdlib -Wl,--warn-common \
 	-Wl,--no-undefined -Wl,--fatal-warnings \
 	-Wl,-shared -Wl,-Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) \
