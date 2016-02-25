@@ -964,7 +964,9 @@ out:
  * Since: 0.3
  */
 int
-fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd)
+fwup_set_up_update(fwup_resource *re,
+		   uint64_t hw_inst __attribute__((__unused__)),
+		   int infd)
 {
 	char *path = NULL;
 	int outfd = -1;
@@ -1091,7 +1093,9 @@ out:
  * Since: 0.5
  */
 int
-fwup_set_up_update_with_buf(fwup_resource *re, uint64_t hw_inst, const void *buf, size_t sz)
+fwup_set_up_update_with_buf(fwup_resource *re,
+			    uint64_t hw_inst __attribute__((__unused__)),
+			    const void *buf, size_t sz)
 {
 	char *path = NULL;
 	int fd = -1;
