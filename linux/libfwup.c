@@ -695,11 +695,11 @@ do_next:
 			continue;
 		}
 
-		sz = efi_loadopt_pathlen(loadopt);
+		sz = efi_loadopt_pathlen(loadopt, var_data_size);
 		if (sz != efidp_size((efidp)dp_buf))
 			goto do_next;
 
-		efidp found_dp = efi_loadopt_path(loadopt);
+		efidp found_dp = efi_loadopt_path(loadopt, var_data_size);
 		if (memcmp(found_dp, dp_buf, sz))
 			goto do_next;
 
