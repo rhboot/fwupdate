@@ -197,6 +197,26 @@ read_variable(CHAR16 *name, EFI_GUID guid, void **buf_out, UINTN *buf_size_out,
 	return EFI_SUCCESS;
 }
 
+static INTN
+dp_size(EFI_DEVICE_PATH *dp, INTN limit)
+{
+	INTN ret = 0;
+	while (1) {
+		if (limit < 4)
+			break;
+		INTN nodelen = DevicePathNodeLength(dp);
+		if (nodelen > limit)
+			break;
+		limit -= nodelen;
+		ret += nodelen;
+
+		if (IsDevicePathEnd(dp))
+			return ret;
+		dp = NextDevicePathNode(dp);
+	}
+	return -1;
+}
+
 static EFI_STATUS
 get_info(CHAR16 *name, update_table *info_out)
 {
@@ -225,24 +245,21 @@ get_info(CHAR16 *name, update_table *info_out)
 		return EFI_INVALID_PARAMETER;
 	}
 
-	UINTN is = info_size - EFI_FIELD_OFFSET(update_info, dp);
 	EFI_DEVICE_PATH *hdr = (EFI_DEVICE_PATH *)&info->dp;
-	/*
-	 * "sz" is INTN not UINTN on purpose:
-	 * a) that size would be much to big anyway, but also
-	 * b) it makes the sz < 4 comparison later give us a free overflow
-	 *    check.
-	 */
-	INTN sz = sizeof (EFI_DEVICE_PATH) - is;
-	if (is >= sizeof (EFI_DEVICE_PATH))
-		sz = DevicePathSize(hdr);
-	if (is != sz || sz < 4) {
+	INTN is = EFI_FIELD_OFFSET(update_info, dp);
+	INTN sz = dp_size(hdr, info_size);
+	if (sz < 0 || is < 0) {
+invalid_size:
 		Print(L"Update \"%s\" has an invalid file path.\n"
 		      L"update info size: %d dp size: %d size for dp: %d\n",
 		      name, info_size, sz, is);
 		delete_variable(name, fwupdate_guid, attributes);
 		return EFI_INVALID_PARAMETER;
 	}
+	if (is > (INTN)info_size)
+		goto invalid_size;
+	if (is != sz)
+		goto invalid_size;
 
 	info_out->info = info;
 	info_out->size = info_size;
