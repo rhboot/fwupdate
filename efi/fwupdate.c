@@ -449,7 +449,7 @@ mult_err:
 err:
 	FreePool(variable_name);
 
-	for (int i = 0; i < n_updates; i++) {
+	for (unsigned int i = 0; i < n_updates; i++) {
 		FreePool(updates[i]->name);
 		FreePool(updates[i]->info);
 		FreePool(updates[i]);
@@ -773,7 +773,7 @@ debug_hook(void)
 	UINTN data_size = 1;
 	EFI_STATUS efi_status;
 	UINT32 attributes;
-	volatile register int x = 0;
+	register volatile int x = 0;
 	extern char _text, _data;
 
 	/*
