@@ -2,9 +2,9 @@ TOPDIR	?= $(shell pwd)/..
 include $(TOPDIR)/Make.version
 include $(TOPDIR)/Make.defaults
 
-LIB_LIBS= pthread smbios_c
+LIB_LIBS= pthread
 BIN_LIBS= popt pthread
-PKLIBS	= efivar efiboot
+PKLIBS	= efivar efiboot libsmbios_c
 CFLAGS	?= -g -O0
 PJONES  =
 BIN_CCLDFLAGS = $(foreach lib,$(BIN_LIBS),-l$(lib)) \
