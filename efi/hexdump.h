@@ -19,8 +19,8 @@ format_hex(UINT8 *data, UINTN size, CHAR16 *buf)
 	UINTN sz = (UINTN)data % 16;
 	CHAR16 hexchars[] = L"0123456789abcdef";
 	int offset = 0;
-	int i;
-	int j;
+	unsigned int i;
+	unsigned int j;
 
 	for (i = 0; i < sz; i++) {
 		buf[offset++] = L' ';
@@ -56,8 +56,8 @@ format_text(UINT8 *data, UINTN size, CHAR16 *buf)
 {
 	UINTN sz = (UINTN)data % 16;
 	int offset = 0;
-	int i;
-	int j;
+	unsigned int i;
+	unsigned int j;
 
 	for (i = 0; i < sz; i++)
 		buf[offset++] = L' ';
