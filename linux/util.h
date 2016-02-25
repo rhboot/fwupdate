@@ -23,6 +23,14 @@
 #define C_(Context,String) dgettext (Context,String)
 #define NC_(Context, String) (String)
 
+extern int quiet;
+
+#define qprintf(fmt, args...) ({					\
+		if (!quiet) {						\
+			printf((fmt), ## args);				\
+		}							\
+	})
+
 static inline int
 __attribute__((unused))
 read_file_at(int dfd, char *name, uint8_t **buf, size_t *bufsize)

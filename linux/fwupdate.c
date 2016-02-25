@@ -27,6 +27,8 @@
 #define CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE   0x00020000
 #define CAPSULE_FLAGS_INITIATE_RESET          0x00040000
 
+int quiet = 0;
+
 static int
 print_system_resources(void)
 {
@@ -75,7 +77,6 @@ print_system_resources(void)
 int
 main(int argc, char *argv[]) {
 	int action = 0;
-	int quiet = 0;
 
 	const char *guidstr = NULL;
 	const char *filename = NULL;
@@ -183,22 +184,23 @@ main(int argc, char *argv[]) {
 	if (action & ACTION_SUPPORTED) {
 		rc = fwup_supported();
 		if (rc == 0) {
-			if (!quiet)
-				printf("%s", _("Firmware updates are not supported on this machine.\n"));
+			qprintf("%s\n",
+			  _("Firmware updates are not supported on this machine."));
 			return 1;
 		} else if (rc == 1) {
-			if (!quiet)
-				printf("%s", _("Firmware updates are supported on this machine.\n"));
+			qprintf("%s\n",
+			  _("Firmware updates are supported on this machine."));
 			return 0;
 		} else if (rc == 2) {
-			if (!quiet)
-				printf("%s", _("Firmware updates are supported on this machine, but currently disabled.\n"));
+			qprintf("%s\n%s\n",
+			  _("Firmware updates are supported on this machine."),
+			  _("Support is currently disabled."));
 			return 2;
-		}
-		else if (rc == 3) {
-			if (!quiet)
-				printf("%s", _("Firmware updates are supported on this machine, and will be enabled on the next reboot.\n"));
-				return 2;
+		} else if (rc == 3) {
+			qprintf("%s\n%s\n",
+			  _("Firmware updates are supported on this machine."),
+			  _("Support will be enabled on the next reboot."));
+			return 2;
 		}
 	} else if (action & ACTION_LIST) {
 		rc = print_system_resources();
@@ -242,22 +244,22 @@ main(int argc, char *argv[]) {
 		return 0;
 	} else if (action & ACTION_ENABLE) {
 		if (geteuid() != 0) {
-			if (!quiet)
-				printf("%s", _("To enable firmware updates, this tool must be launched as root.\n"));
+			qprintf("%s\n",
+				_("To enable firmware updates, this tool must be launched as root."));
 			return -1;
 		}
 		rc = enable_esrt();
 		if (rc < 1) {
-			if (!quiet)
-				printf("%s", _("Firmware updates can not be enabled on this machine from this tool.\n"));
+			qprintf("%s\n",
+				_("Firmware updates can not be enabled on this machine from this tool."));
 			return 1;
 		} else if (rc == 1) {
-			if (!quiet)
-				printf("%s", _("Firmware updates are already enabled.\n"));
+			qprintf("%s\n",
+				_("Firmware updates are already enabled."));
 			return 1;
 		} else if (rc == 2 || rc == 3) {
-			if (!quiet)
-				printf("%s", _("Firmware updates will be enabled after the system is rebooted.\n"));
+			qprintf("%s\n",
+				_("Firmware updates will be enabled after the system is rebooted."));
 			return 0;
 		}
 	}
