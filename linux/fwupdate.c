@@ -248,7 +248,7 @@ main(int argc, char *argv[]) {
 				_("To enable firmware updates, this tool must be launched as root."));
 			return -1;
 		}
-		rc = enable_esrt();
+		rc = fwup_enable_esrt();
 		if (rc < 1) {
 			qprintf("%s\n",
 				_("Firmware updates can not be enabled on this machine from this tool."));

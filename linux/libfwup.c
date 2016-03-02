@@ -83,7 +83,7 @@ efidp_end_entire(efidp_header *dp)
 }
 
 /*
-	esrt_disabled
+	fwup_esrt_disabled
 	tests if ESRT is disabled (but can be enabled)
 	return codes:
 		-1 : the tokens were not found. system is unsupported
@@ -93,7 +93,7 @@ efidp_end_entire(efidp_header *dp)
 
  */
 int
-esrt_disabled(void)
+fwup_esrt_disabled(void)
 {
 	if (!token_is_bool(DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED))
 		return -1;
@@ -107,7 +107,7 @@ esrt_disabled(void)
 }
 
 /*
-	enable_esrt
+	fwup_enable_esrt
 	attempts to enable ESRT
 	return codes:
 		 <= 0 : failure
@@ -117,7 +117,7 @@ esrt_disabled(void)
 
  */
 int
-enable_esrt(void)
+fwup_enable_esrt(void)
 {
 	int rc;
 	rc = fwup_supported();
