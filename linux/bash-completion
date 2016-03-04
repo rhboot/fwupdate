@@ -5,13 +5,13 @@ _fwupdate()
 	local cur=${COMP_WORDS[COMP_CWORD]}
 
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY=( $( compgen -W "-a -l" -- $cur ) )
+		COMPREPLY=( $( compgen -W "-a -l" -- "$cur" ) )
 		return 0
 	fi
 
 	case "${COMP_WORDS[COMP_CWORD-1]}" in
 	-a)
-		COMPREPLY=( $( compgen -W "$(fwupdate -l | cut -d{ -f2 | cut -d} -f1)" -- $cur ) )
+		COMPREPLY=( $( compgen -W "$(fwupdate -l | cut -d\{ -f2 | cut -d\} -f1)" -- "$cur" ) )
 		return 0
 		;;
 	esac

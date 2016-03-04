@@ -7,7 +7,7 @@ fi
 BOOTNUM=$(efibootmgr | grep "Linux.Firmware.Updater" | sed "s/\ .*//; s/*//; s/Boot//")
 if [ -n "$BOOTNUM" ]; then
 	for num in $BOOTNUM; do
-		efibootmgr -q -b $num -B
+		efibootmgr -q -b "$num" -B
 	done
 fi
 
