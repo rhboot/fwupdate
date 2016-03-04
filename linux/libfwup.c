@@ -952,7 +952,7 @@ get_fd_and_media_path(update_info *info, char **path)
 			      FWUP_EFI_DIR_NAME);
 		if (rc < 0) {
 			warn("asprintf failed");
-			goto out;
+			return fd;
 		}
 		fd = mkostemps(fullpath, 4, O_CREAT|O_TRUNC|O_CLOEXEC);
 		if (fd < 0) {
