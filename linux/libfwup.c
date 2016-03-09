@@ -159,7 +159,7 @@ fwup_supported(void)
 	if (rc < 0)
 	{
 		/* check if we have the ability to turn on ESRT */
-		rc = esrt_disabled();
+		rc = fwup_esrt_disabled();
 		if (rc < 0)
 			return 0;
 		return rc;
