@@ -47,7 +47,7 @@ static int debugging;
 		if ((a) != 0 && (b) != 0) {			\
 			_ret = _limit / (a) < (b);		\
 		}						\
-		if (_ret)					\
+		if (!_ret)					\
 			*(c) = ((a) * (b));			\
 		_ret;						\
 	})
@@ -99,11 +99,11 @@ read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 	while (1) {
 		void *newb = NULL;
 		UINTN news = 0;
-		if (!uintn_mult(bs * 2, n_blocks, &news)) {
+		if (uintn_mult(bs * 2, n_blocks, &news)) {
 			if (b)
 				free(b, bs * n_blocks);
-			Print(L"%a:%a():%d: allocation would overflow size\n",
-			      __FILE__, __func__, __LINE__);
+			Print(L"%a:%a():%d: allocation %d * %d would overflow size\n",
+			      __FILE__, __func__, __LINE__, bs * 2, n_blocks);
 			return EFI_OUT_OF_RESOURCES;
 		}
 		rc = allocate(&newb, news);
@@ -284,10 +284,11 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 	EFI_GUID vendor_guid = empty_guid;
 	UINTN mult_res;
 
-	if (!uintn_mult(sizeof (update_table *), n_updates_allocated,
+	if (uintn_mult(sizeof (update_table *), n_updates_allocated,
 			&mult_res)) {
-		Print(L"%a:%a():%d: would overflow size\n",
-		      __FILE__, __func__, __LINE__);
+		Print(L"%a:%a():%d: allocation %d * %d would overflow size\n",
+		      __FILE__, __func__, __LINE__,
+		      sizeof (update_table *), n_updates_allocated);
 		return EFI_OUT_OF_RESOURCES;
 	}
 
@@ -323,7 +324,7 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 			CHAR16 *new_name;
 
 			new_allocation = variable_name_size;
-			if (!uintn_mult(new_allocation, 2, &mult_res)) {
+			if (uintn_mult(new_allocation, 2, &mult_res)) {
 				Print(L"%a:%a():%d: %d * 2 would overflow size\n",
 				      __FILE__, __func__, __LINE__,
 				      new_allocation);
@@ -371,17 +372,23 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 
 		if (n_updates == n_updates_allocated) {
 			update_table **new_ups;
-			if (!uintn_mult(n_updates_allocated, 2, &mult_res)) {
+			UINTN mul_a, mul_b;
+			if (uintn_mult(n_updates_allocated, 2, &mult_res)) {
+				mul_a = n_updates_allocated;
+				mul_b = 2;
 mult_err:
-				Print(L"%a:%a():%d: "
-				      L"allocation would overflow size\n",
-				      __FILE__, __func__, __LINE__);
+				Print(L"%a:%a():%d: allocation %d * %d would overflow size\n",
+				      __FILE__, __func__, __LINE__,
+				      mul_a, mul_b);
 				ret = EFI_OUT_OF_RESOURCES;
 				goto err;
 			}
-			if (!uintn_mult(mult_res, sizeof (update_table *),
-					&mult_res))
+			if (uintn_mult(mult_res, sizeof (update_table *),
+					&mult_res)) {
+				mul_a = mult_res;
+				mul_b = sizeof (update_table *);
 				goto mult_err;
+			}
 
 			new_ups = AllocateZeroPool(mult_res);
 			if (!new_ups) {
