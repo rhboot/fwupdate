@@ -79,7 +79,7 @@ clean :
 	@rm -vf libfwup.so*
 	@rm -vf cleanup.service cleanup
 
-install : all
+install : check_efidir_error all
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)
 	$(foreach x, $(LIBTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)/$(libdir);)
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(pcdir)

@@ -36,7 +36,13 @@ localedir	?= $(datadir)/locale/
 libexecdir	?= $(prefix)libexec/
 libdatadir	?= $(prefix)lib/
 
-EFIDIR		?= redhat
+EFIDIR		?= $(shell x=$$(which --skip-alias --skip-functions git 2>/dev/null) ; [ -n "$$x" ] && git config --get fwupdate.efidir)
+ifeq ($(EFIDIR),)
+	EFIDIR_ERROR = $(error EFIDIR or .gitconfig fwupdate.efidir must be set to this distro's reserved EFI System Partition subdirectory name)
+endif
 DEBUGINFO	?= $(prefix)lib/debug/
 DEBUGSOURCE	?= $(prefix)src/debug/
 TARGETDIR	?= /boot/efi/EFI/$(EFIDIR)/
+
+.PHONY: check_efidir_error
+check_efidir_error : ; $(EFIDIR_ERROR) $(info Building with EFIDIR as $(EFIDIR))

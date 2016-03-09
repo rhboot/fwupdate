@@ -3,7 +3,7 @@ include $(TOPDIR)/Make.version
 include $(TOPDIR)/Make.defaults
 SUBDIRS = efi linux docs include
 
-all clean install :
+all clean install : check_efidir_error
 	@set -e ; for x in $(SUBDIRS) ; do \
 		$(MAKE) DESTDIR=$(DESTDIR) TOPDIR=$(TOPDIR) VERSION=$(VERSION) \
 			LIBDIR=$(LIBDIR) bindir=$(bindir) mandir=$(mandir) \
