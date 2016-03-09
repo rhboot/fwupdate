@@ -30,7 +30,7 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wextra -Werror -Wno-error=cpp \
 
 BINTARGETS=fwupdate
 INCTARGETS=include/fwup-version.h include/fwup.h
-LIBTARGETS=libfwup.so.$(VERSION) libfwup.so.$(MAJOR_VERSION)
+LIBTARGETS=libfwup.so.$(VERSION)
 PCTARGETS=fwup.pc
 POTARGETS = fwupdate.po libfwup.po
 TARGETS=$(BINTARGETS) $(INCTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) libfwup.so cleanup.service cleanup
@@ -49,11 +49,8 @@ include/fwup.h : | include/fwup-version.h
 
 %.so.$(VERSION) : %.o
 	$(CC) $(BUILDFLAGS) \
-		-Wl,-soname,$(patsubst %.o,%.so.$(MAJOR_VERSION),$<) \
+		-Wl,-soname,$(patsubst %.o,%.so.$(VERSION),$<) \
 		-o $@ $^ $(LIB_CCLDFLAGS)
-
-%.so.$(MAJOR_VERSION) : %.so.$(VERSION)
-	ln -sf $< $@
 
 %.so : %.so.$(VERSION)
 	ln -sf $< $@
@@ -98,7 +95,7 @@ install : check_efidir_error all
 	$(INSTALL) -m 644 $(POTARGETS) $(DESTDIR)/$(localedir)/en/
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(bindir)
 	$(foreach x, $(BINTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)/$(bindir);)
-	$(foreach x, $(wildcard *.so.$(VERSION)), ln -fs $(x) $(patsubst %.so.$(VERSION),%.so,$(DESTDIR)/$(libdir)/$(x)); ln -fs $(x) $(patsubst %.so.$(VERSION),%.so.$(MAJOR_VERSION),$(DESTDIR)/$(libdir)/$(x));)
+	$(foreach x, $(wildcard *.so.$(VERSION)), ln -fs $(x) $(patsubst %.so.$(VERSION),%.so,$(DESTDIR)/$(libdir)/$(x));)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/fwupdate/
 	$(INSTALL) -d -m 755 $(DESTDIR)$(libexecdir)/fwupdate/
 	$(INSTALL) -m 755 cleanup $(DESTDIR)$(libexecdir)/fwupdate/cleanup
