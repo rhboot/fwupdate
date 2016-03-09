@@ -16,7 +16,7 @@ LIB_CCLDFLAGS = $(foreach lib,$(LIB_LIBS),-l$(lib)) \
 		$(shell pkg-config --libs-only-l --libs-only-other $(pklib))) \
 	$(LDFLAGS) -shared -fPIC -Wl,-z,relro,-z,now
 
-BUILDFLAGS := $(CFLAGS) -Wall -Wextra -Werror \
+BUILDFLAGS := $(CFLAGS) -Wall -Wextra -Werror -Wno-error=cpp \
 	-Wno-unused-result -Wno-unused-function \
 	-Wsign-compare -Werror=sign-compare \
 	-fshort-wchar --std=gnu11 \
