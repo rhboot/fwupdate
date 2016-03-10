@@ -246,7 +246,7 @@ get_info(CHAR16 *name, update_table *info_out)
 	}
 
 	EFI_DEVICE_PATH *hdr = (EFI_DEVICE_PATH *)&info->dp;
-	INTN is = EFI_FIELD_OFFSET(update_info, dp);
+	INTN is = info_size - EFI_FIELD_OFFSET(update_info, dp);
 	INTN sz = dp_size(hdr, info_size);
 	if (sz < 0 || is < 0) {
 invalid_size:
