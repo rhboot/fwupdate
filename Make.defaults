@@ -36,7 +36,7 @@ localedir	?= $(datadir)/locale/
 libexecdir	?= $(prefix)libexec/
 libdatadir	?= $(prefix)lib/
 
-EFIDIR		?= redhat
+EFIDIR		?= $(lsb_release -s -i | tr A-Z a-z)
 DEBUGINFO	?= $(prefix)lib/debug/
 DEBUGSOURCE	?= $(prefix)src/debug/
 TARGETDIR	?= /boot/efi/EFI/$(EFIDIR)/
