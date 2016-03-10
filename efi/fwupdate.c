@@ -246,7 +246,16 @@ get_info(CHAR16 *name, update_table *info_out)
 	}
 
 	EFI_DEVICE_PATH *hdr = (EFI_DEVICE_PATH *)&info->dp;
-	INTN is = info_size - EFI_FIELD_OFFSET(update_info, dp);
+	INTN is = EFI_FIELD_OFFSET(update_info, dp);
+	if (is > (INTN)info_size) {
+		Print(L"Update \"%s\" has an invalid file path.\n"
+		      L"Device path offset is %d, but total size is %d\n",
+		      name, is, info_size);
+		delete_variable(name, fwupdate_guid, attributes);
+		return EFI_INVALID_PARAMETER;
+	}
+
+	is = info_size - is;
 	INTN sz = dp_size(hdr, info_size);
 	if (sz < 0 || is < 0) {
 invalid_size:
