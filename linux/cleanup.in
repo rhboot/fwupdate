@@ -4,6 +4,8 @@ if [ -e "@@DATADIR@@fwupdate/done" ]; then
 	exit 0
 fi
 
+efibootmgr -q
+
 BOOTNUM=$(efibootmgr | grep "Linux.Firmware.Updater" | sed "s/\ .*//; s/*//; s/Boot//")
 if [ -n "$BOOTNUM" ]; then
 	for num in $BOOTNUM; do
