@@ -1,3 +1,5 @@
+default : all
+
 TOPDIR	?= $(shell pwd)/..
 include $(TOPDIR)/Make.version
 include $(TOPDIR)/Make.defaults
@@ -27,7 +29,7 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wextra -Werror -Wno-error=cpp \
 	$(PJONES)
 
 BINTARGETS=fwupdate
-INCTARGETS=include/fwup.h
+INCTARGETS=include/fwup-version.h include/fwup.h
 LIBTARGETS=libfwup.so.$(VERSION) libfwup.so.$(MAJOR_VERSION)
 PCTARGETS=fwup.pc
 POTARGETS = fwupdate.po libfwup.po
@@ -38,6 +40,9 @@ TARGETS=$(BINTARGETS) $(INCTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) libf
 all : $(TARGETS)
 
 fwupdate : libfwup.so
+
+libfwup.c : | include/fwup.h include/fwup-version.h
+include/fwup.h : | include/fwup-version.h
 
 % : %.o
 	$(CC) $(BUILDFLAGS) -o $@ $(patsubst lib%.so,-l%,$^) $(BIN_CCLDFLAGS)
@@ -61,6 +66,8 @@ fwupdate : libfwup.so
 
 % : %.in
 	sed -e "s,@@VERSION@@,$(VERSION),g" \
+		-e "s,@@FWUP_MAJOR_VERSION@@,$(MAJOR_VERSION),g" \
+		-e "s,@@FWUP_MINOR_VERSION@@,$(MINOR_VERSION),g" \
 		-e "s,@@DATADIR@@,$(datadir),g" \
 		-e "s,@@EFIDIR@@,$(EFIDIR),g" \
 		-e "s,@@LIBDIR@@,$(libdir),g" \
@@ -78,6 +85,7 @@ clean :
 	@rm -vf $(BINTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) *.o
 	@rm -vf libfwup.so*
 	@rm -vf cleanup.service cleanup
+	@rm -vf include/fwup-version.h
 
 install : check_efidir_error all
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)

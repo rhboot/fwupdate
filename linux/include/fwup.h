@@ -7,14 +7,17 @@
  *
  * Author: Peter Jones <pjones@redhat.com>
  */
-#ifndef LIBFW_H
-#define LIBFW_H
+#ifndef LIBFWUP_H
+#define LIBFWUP_H
+#define LIBFWUP_H_INSIDE__
 
 #include <dirent.h>
 #include <efivar.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <time.h>
+
+#include <fwup-version.h>
 
 extern int fwup_supported(void);
 extern int fwup_esrt_disabled(void);
@@ -57,4 +60,5 @@ extern int fwup_get_last_attempt_info(fwup_resource *re, uint32_t *version,
 extern const char *fwup_last_attempt_status_to_string (uint64_t status);
 extern int fwup_print_update_info(void);
 
-#endif /* LIBFW_H */
+#undef LIBFWUP_H_INSIDE__
+#endif /* LIBFWUP_H */
