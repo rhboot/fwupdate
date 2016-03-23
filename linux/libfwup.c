@@ -1152,8 +1152,10 @@ out:
 	if (fout)
 		fclose(fout);
 	free_info(info);
-	if (outfd >= 0)
+	if (outfd >= 0) {
+		fsync(outfd);
 		close(outfd);
+	}
 	errno = error;
 	return rc;
 }
