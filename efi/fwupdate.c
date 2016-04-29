@@ -731,17 +731,16 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 static EFI_STATUS
 apply_capsules(EFI_CAPSULE_HEADER **capsules,
 	       EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd,
-	       UINTN num_updates)
+	       UINTN num_updates, EFI_RESET_TYPE *reset)
 {
-	EFI_RESET_TYPE reset;
 	UINT64 max_capsule_size;
 	EFI_STATUS rc;
 
 	rc = uefi_call_wrapper(RT->QueryCapsuleCapabilities, 4, capsules,
-				num_updates, &max_capsule_size, &reset);
+				num_updates, &max_capsule_size, reset);
 	if (debugging) {
 		Print(L"QueryCapsuleCapabilities: %r max: %ld reset:%d\n",
-		      rc, max_capsule_size, reset);
+		      rc, max_capsule_size, *reset);
 		Print(L"Capsules: %d\n", num_updates);
 	}
 
@@ -827,6 +826,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	EFI_STATUS rc;
 	update_table **updates = NULL;
 	UINTN n_updates = 0;
+	EFI_RESET_TYPE reset_type = EfiResetWarm;
 
 	InitializeLib(image, systab);
 
@@ -847,6 +847,13 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 
 	/*
 	 * Step 1: find and validate update state variables
+	 */
+	/* XXX TODO:
+	 * 1) survey the reset types first, and separate into groups
+	 *    according to them
+	 * 2) if there's more than one, mirror BootCurrent back into BootNext
+	 *    so we can do multiple runs
+	 * 3) only select the ones from one type for the first go
 	 */
 	rc = find_updates(&n_updates, &updates);
 	if (EFI_ERROR(rc)) {
@@ -897,7 +904,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	/*
 	 * Step 4: apply the capsules.
 	 */
-	rc = apply_capsules(capsules, cbd_data, n_updates);
+	rc = apply_capsules(capsules, cbd_data, n_updates, &reset_type);
 	if (EFI_ERROR(rc)) {
 		Print(L"fwupdate: Could not apply capsules: %r\n", rc);
 		return rc;
@@ -910,7 +917,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 		Print(L"Reset System\n");
 		uefi_call_wrapper(BS->Stall, 1, 10000000);
 	}
-	uefi_call_wrapper(RT->ResetSystem, 4, EfiResetWarm, EFI_SUCCESS,
+	uefi_call_wrapper(RT->ResetSystem, 4, reset_type, EFI_SUCCESS,
 			  0, NULL);
 
 	return EFI_SUCCESS;
