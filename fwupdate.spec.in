@@ -1,5 +1,5 @@
-%global efivar_version 0.21-1
-%global efibootmgr_version 0.12-1
+%global efivar_version 0.24-1
+%global efibootmgr_version 13
 
 Name:           fwupdate
 Version:        @@VERSION@@
@@ -12,7 +12,7 @@ BuildRequires:  efivar-devel >= %{efivar_version}
 BuildRequires:  gnu-efi gnu-efi-devel
 BuildRequires:  pesign
 BuildRequires:  elfutils popt-devel git gettext pkgconfig
-BuildRequires:  systemd libsmbios_c-devel
+BuildRequires:  systemd libsmbios-devel
 ExclusiveArch:  x86_64 %{ix86} aarch64
 Source0:        https://github.com/rhinstaller/fwupdate/releases/download/%{name}-%{version}/%{name}-%{version}.tar.bz2
 
