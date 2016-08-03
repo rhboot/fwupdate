@@ -77,6 +77,7 @@ print_system_resources(void)
 int
 main(int argc, char *argv[]) {
 	int action = 0;
+	int force = 0;
 
 	const char *guidstr = NULL;
 	const char *filename = NULL;
@@ -128,6 +129,12 @@ main(int argc, char *argv[]) {
 		 .arg = &quiet,
 		 .val = 1,
 		 .descrip = _("Work quietly") },
+		{.longName = "force",
+		 .shortName = 'f',
+		 .argInfo = POPT_ARG_VAL,
+		 .arg = &force,
+		 .val = 1,
+		 .descrip = _("Forces flash even if GUID isn't in ESRT.") },
 		POPT_AUTOALIAS
 		POPT_AUTOHELP
 		POPT_TABLEEND
@@ -211,30 +218,44 @@ main(int argc, char *argv[]) {
 		fwup_resource_iter *iter = NULL;
 		fwup_resource_iter_create(&iter);
 		fwup_resource *re = NULL;
+		efi_guid_t *tmpguid = NULL;
 
 		while (1) {
 			rc = fwup_resource_iter_next(iter, &re);
-			if (rc < 0)
+			if (rc < 0) {
+				if (force)
+					break;
 				err(2, _("Could not iterate resources"));
+			}
 			if (rc == 0)
 				break;
 
-			efi_guid_t *tmpguid = NULL;
 
 			fwup_get_guid(re, &tmpguid);
 
 			if (!efi_guid_cmp(tmpguid, &guid)) {
-				int fd = open(filename, O_RDONLY);
-				if (fd < 0)
-					err(2, _("could not open \"%s\""),
-					    filename);
-
-				rc = fwup_set_up_update(re, 0, fd);
-				if (rc < 0)
-					err(2, _("Could not set up firmware update"));
-				fwup_resource_iter_destroy(&iter);
-				exit(0);
+				break;
 			}
+			tmpguid = NULL;
+		}
+
+		if (!tmpguid && force) {
+			rc = fwup_set_guid (iter, &re, &guid);
+			if (rc < 0)
+				err(2, _("Error configuring GUID"));
+			tmpguid = &guid;
+		}
+
+		if (tmpguid) {
+			int fd = open(filename, O_RDONLY);
+			if (fd < 0)
+				err(2, _("could not open \"%s\""),
+				    filename);
+				rc = fwup_set_up_update(re, 0, fd);
+			if (rc < 0)
+				err(2, _("Could not set up firmware update"));
+			fwup_resource_iter_destroy(&iter);
+			exit(0);
 		}
 		errx(2, _("firmware resource not found"));
 	} else if (action & ACTION_INFO) {
