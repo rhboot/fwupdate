@@ -764,6 +764,10 @@ set_up_boot_next(void)
 
 	char *label = NULL;
 
+	uint8_t *opt=NULL;
+	ssize_t opt_size=0;
+	uint32_t attributes = LOAD_OPTION_ACTIVE;
+
 	rc = get_paths(&shim_fs_path, &fwup_fs_path, &fwup_esp_path);
 	if (rc < 0) {
 		efi_error("could not find paths for shim and fwup");
@@ -807,10 +811,6 @@ set_up_boot_next(void)
 		efi_error("efi_generate_file_device_path() failed");
 		goto out;
 	}
-
-	uint8_t *opt=NULL;
-	ssize_t opt_size=0;
-	uint32_t attributes = LOAD_OPTION_ACTIVE;
 
 	rc = asprintf(&label, "Linux-Firmware-Updater %s", fwup_esp_path);
 	if (rc < 0) {
