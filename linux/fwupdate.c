@@ -22,11 +22,13 @@
 
 #include <fwup.h>
 #include "util.h"
+#include "error.h"
 
 #define CAPSULE_FLAGS_PERSIST_ACROSS_RESET    0x00010000
 #define CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE   0x00020000
 #define CAPSULE_FLAGS_INITIATE_RESET          0x00040000
 
+int verbose = 0;
 int quiet = 0;
 
 static int
@@ -38,7 +40,7 @@ print_system_resources(void)
 	rc = fwup_resource_iter_create(&iter);
 	if (rc < 0) {
 		if (errno != ENOENT)
-			warn(_("Could not create iterator"));
+			efi_error(_("Could not create iterator"));
 		return -1;
 	}
 
@@ -51,8 +53,10 @@ print_system_resources(void)
 
 		fwup_get_guid(re, &guid);
 		rc = efi_guid_to_id_guid(guid, &id_guid);
-		if (rc < 0)
+		if (rc < 0) {
+			efi_error("efi_guid_to_id_guid failed");
 			return -1;
+		}
 
 		fwup_get_fw_version(re, &vers);
 		fwup_get_lowest_supported_fw_version(re, &lowest);
@@ -135,6 +139,13 @@ main(int argc, char *argv[]) {
 		 .arg = &force,
 		 .val = 1,
 		 .descrip = _("Forces flash even if GUID isn't in ESRT.") },
+		{.longName = "verbose",
+		 .shortName = 'v',
+		 .argInfo = POPT_ARG_VAL|POPT_ARGFLAG_OPTIONAL,
+		 .arg = &verbose,
+		 .val = 2,
+		 .descrip = _("Be more verbose on errors"),
+		},
 		POPT_AUTOALIAS
 		POPT_AUTOHELP
 		POPT_TABLEEND
@@ -146,7 +157,7 @@ main(int argc, char *argv[]) {
 	int rc;
 	rc = poptReadDefaultConfig(optcon, 0);
 	if (rc < 0 && !(rc == POPT_ERROR_ERRNO && errno == ENOENT))
-		errx(1, _("poptReadDefaultConfig failed: %s: %s"),
+		errorx(1, _("poptReadDefaultConfig failed: %s: %s"),
 			poptBadOption(optcon, 0), poptStrerror(rc));
 
 	while ((rc = poptGetNextOpt(optcon)) > 0)
@@ -156,17 +167,17 @@ main(int argc, char *argv[]) {
 		int rc;
 		guidstr = poptGetArg(optcon);
 		if (!guidstr) {
-			warnx(_("missing argument: %s"), "guid");
+			warningx(_("missing argument: %s"), "guid");
 			poptPrintUsage(optcon, stderr, 0);
 			exit(1);
 		}
 		rc = efi_str_to_guid(guidstr, &guid);
 		if (rc < 0)
-			errx(1, _("Invalid guid: \"%s\""), guidstr);
+			errorx(1, _("Invalid guid: \"%s\""), guidstr);
 
 		filename = poptGetArg(optcon);
 		if (!filename) {
-				warnx(_("missing argument: %s"),
+				warningx(_("missing argument: %s"),
 				      "filename.cap");
 			poptPrintUsage(optcon, stderr, 0);
 			exit(1);
@@ -174,15 +185,15 @@ main(int argc, char *argv[]) {
 	}
 
 	if (rc < -1)
-		errx(2, _("invalid argument: \"%s\": %s"),
+		errorx(2, _("invalid argument: \"%s\": %s"),
 			poptBadOption(optcon, 0), poptStrerror(rc));
 
 	if (poptPeekArg(optcon))
-		errx(3, _("invalid argument: \"%s\""),
+		errorx(3, _("invalid argument: \"%s\""),
 			poptPeekArg(optcon));
 
 	if (!action) {
-		warnx(_("no action specified"));
+		warningx(_("no action specified"));
 		poptPrintUsage(optcon, stderr, 0);
 		exit(4);
 	}
@@ -212,7 +223,8 @@ main(int argc, char *argv[]) {
 	} else if (action & ACTION_LIST) {
 		rc = print_system_resources();
 		if (rc < 0 && errno != ENOENT)
-			errx(5, _("Could not list system firmware resources"));
+			errorx(5,
+			       _("Could not list system firmware resources"));
 		return 0;
 	} else if (action & ACTION_APPLY) {
 		fwup_resource_iter *iter = NULL;
@@ -223,7 +235,7 @@ main(int argc, char *argv[]) {
 		while (!force) {
 			rc = fwup_resource_iter_next(iter, &re);
 			if (rc < 0)
-				err(2, _("Could not iterate resources"));
+				error(2, _("Could not iterate resources"));
 			if (rc == 0)
 				break;
 
@@ -238,27 +250,28 @@ main(int argc, char *argv[]) {
 		if (!tmpguid && force) {
 			rc = fwup_set_guid(iter, &re, &guid);
 			if (rc < 0)
-				err(2, _("Error configuring GUID"));
+				error(2, _("Error configuring GUID"));
 			tmpguid = &guid;
 		}
 
 		if (tmpguid) {
 			int fd = open(filename, O_RDONLY);
 			if (fd < 0)
-				err(2, _("could not open \"%s\""), filename);
+				error(2, _("could not open \"%s\""), filename);
 
 			rc = fwup_set_up_update(re, 0, fd);
 			if (rc < 0)
-				err(2, _("Could not set up firmware update"));
+				error(2, _("Could not set up firmware update"));
 
 			fwup_resource_iter_destroy(&iter);
 			exit(0);
 		}
-		errx(2, _("firmware resource not found"));
+		errorx(2, _("firmware resource not found"));
 	} else if (action & ACTION_INFO) {
 		rc = fwup_print_update_info();
 		if (rc < 0)
-			errx(6, _("Could not display firmware update status"));
+			errorx(6,
+			       _("Could not display firmware update status"));
 		return 0;
 	} else if (action & ACTION_ENABLE) {
 		if (geteuid() != 0) {

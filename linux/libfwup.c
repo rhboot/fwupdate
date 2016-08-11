@@ -29,6 +29,9 @@
 #include "ucs2.h"
 #include "fwup-efi.h"
 
+static int verbose;
+#include "error.h"
+
 #include </usr/include/smbios_c/token.h>
 #define DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED 0x0461
 #define DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED 0x0462
@@ -122,19 +125,28 @@ fwup_enable_esrt(void)
 	int rc;
 	rc = fwup_supported();
 	/* can't enable or already enabled */
-	if (rc != 2)
+	if (rc != 2) {
+		efi_error("fwup_supported() returned %d", rc);
 		return rc;
+	}
 	/* disabled in BIOS, but supported to be enabled via tool */
 	rc = token_is_bool(DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED);
-	if (!rc)
+	if (!rc) {
+		efi_error(
+			"DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED is unsupported");
 		return -1;
+	}
 	rc = token_is_active(DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED);
-	if (rc)
+	if (rc) {
+		efi_error("DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED is enabled");
 		return -2;
+	}
 	token_activate(DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED);
 	rc = token_is_active(DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED);
-	if (!rc)
+	if (!rc) {
+		efi_error("DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED activation failed");
 		return -3;
+	}
 	return 2;
 }
 
@@ -158,14 +170,19 @@ fwup_supported(void)
 	rc = stat(get_esrt_dir(1), &buf);
 	if (rc < 0)
 	{
+		efi_error("ESRT is not present");
 		/* check if we have the ability to turn on ESRT */
 		rc = fwup_esrt_disabled();
-		if (rc < 0)
+		if (rc < 0) {
+			efi_error("ESRT cannot be enabled");
 			return 0;
+		}
 		return rc;
 	}
-	if (buf.st_nlink < 3)
+	if (buf.st_nlink < 3) {
+		efi_error("ESRT has no entries.");
 		return 0;
+	}
 	return 1;
 }
 
@@ -202,13 +219,17 @@ get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
 	int error;
 
 	rc = efi_guid_to_str(guid, &guidstr);
-	if (rc < 0)
+	if (rc < 0) {
+		efi_error("efi_guid_to_str() failed");
 		return -1;
+	}
 	guidstr = onstack(guidstr, strlen(guidstr)+1);
 
 	rc = asprintf(&varname, "fwupdate-%s-%"PRIx64, guidstr, hw_inst);
-	if (rc < 0)
+	if (rc < 0) {
+		efi_error("asprintf() failed");
 		return -1;
+	}
 	varname = onstack(varname, strlen(varname)+1);
 
 	uint8_t *data = NULL;
@@ -217,11 +238,15 @@ get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
 
 	rc = efi_get_variable(varguid, varname, &data, &data_size, &attributes);
 	if (rc < 0) {
-		if (errno != ENOENT)
+		if (errno != ENOENT) {
+			efi_error("efi_get_variable() failed");
 			return -1;
+		}
 		local = calloc(1, sizeof (*local));
-		if (!local)
+		if (!local) {
+			efi_error("calloc(1, %zd) failed", sizeof (*local));
 			return -1;
+		}
 
 		local->update_info_version = UPDATE_INFO_VERSION;
 		local->guid = *guid;
@@ -229,6 +254,7 @@ get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
 
 		local->dp_ptr = calloc(1, 1024);
 		if (!local->dp_ptr) {
+			efi_error("calloc(1, 1024) failed");
 alloc_err:
 			error = errno;
 			free_info(local);
@@ -240,6 +266,7 @@ alloc_err:
 		sz = efidp_make_end_entire((uint8_t *)local->dp_ptr, 1024);
 		if (sz < 0) {
 			rc = sz;
+			efi_error("efidp_make_end_entire() failed");
 			goto alloc_err;
 		}
 		*info = local;
@@ -253,17 +280,26 @@ alloc_err:
 			free(data);
 get_err:
 		rc = efi_del_variable(varguid, varname);
-		if (rc < 0)
+		if (rc < 0) {
+			efi_error("efi_del_variable() failed");
 			return -1;
-		return get_info(guid, hw_inst, info);
+		}
+		rc = get_info(guid, hw_inst, info);
+		if (rc < 0) {
+			efi_error("get_info() failed");
+			return rc;
+		}
 	}
 	local = (update_info *)data;
 
-	if (local->update_info_version != UPDATE_INFO_VERSION)
+	if (local->update_info_version != UPDATE_INFO_VERSION) {
+		efi_error("fwupdate saved state version mismatch");
 		goto get_err;
+	}
 
 	ssize_t sz = efidp_size((efidp)local->dp);
 	if (sz < 0) {
+		efi_error("efidp_size() failed");
 		free(data);
 		errno = EINVAL;
 		return -1;
@@ -271,6 +307,7 @@ get_err:
 
 	efidp_header *dp = malloc((size_t)sz);
 	if (!dp) {
+		efi_error("malloc(%zd) failed", (size_t)sz);
 		free(data);
 		errno = ENOMEM;
 		return -1;
@@ -295,24 +332,29 @@ put_info(update_info *info)
 
 	rc = efi_guid_to_str(&info->guid, &guidstr);
 	if (rc < 0) {
+		efi_error("efi_guid_to_str() failed");
 err:
 		return rc;
 	}
 	guidstr = onstack(guidstr, strlen(guidstr)+1);
 
 	rc = asprintf(&varname, "fwupdate-%s-%"PRIx64, guidstr, info->hw_inst);
-	if (rc < 0)
+	if (rc < 0) {
+		efi_error("asprintf() failed");
 		goto err;
+	}
 	varname = onstack(varname, strlen(varname)+1);
 
 	dps = efidp_size((efidp)info->dp_ptr);
 	/* make sure dps is at least big enough to have our structure */
 	if (dps < 0 || (size_t)dps < sizeof(*info)) {
+		efi_error("device path size (%zd) was unreasonable", dps);
 		errno = EINVAL;
 		return -1;
 	}
 	/* Make sure sizeof(*info) + dps won't integer overflow */
 	if ((size_t)dps > SSIZE_MAX - sizeof(*info)) {
+		efi_error("device path size (%zd) would overflow", dps);
 		errno = EOVERFLOW;
 		return -1;
 	}
@@ -333,6 +375,8 @@ err:
 	rc = efi_set_variable(varguid, varname, (uint8_t *)info2,
 			      is, attributes, 0600);
 	error = errno;
+	if (rc < 0)
+		efi_error("efi_set_variable(%s) failed", varname);
 	free(info2);
 	errno = error;
 	return rc;
@@ -354,18 +398,27 @@ int
 fwup_resource_iter_create(fwup_resource_iter **iter)
 {
 	int error;
+	const char *path;
 	if (!iter) {
+		efi_error("invalid iter");
 		errno = EINVAL;
 		return -1;
 	}
 	fwup_resource_iter *new = calloc(1, sizeof (fwup_resource_iter));
 	if (!new) {
+		efi_error("calloc(1, %zd) failed", sizeof (fwup_resource_iter));
 		errno = ENOMEM;
 		return -1;
 	}
 
-	new->dir = opendir(get_esrt_dir(1));
+	path = get_esrt_dir(1);
+	if (!path) {
+		efi_error("get_esrt_dir(1) failed");
+		return -1;
+	}
+	new->dir = opendir(path);
 	if (!new->dir) {
+		efi_error("opendir(path) failed");
 err:
 		error = errno;
 		free(new);
@@ -374,8 +427,10 @@ err:
 	}
 
 	new->dirfd = dirfd(new->dir);
-	if (new->dirfd < 0)
+	if (new->dirfd < 0) {
+		efi_error("dirfd() failed");
 		goto err;
+	}
 
 	*iter = new;
 	return 0;
@@ -396,6 +451,7 @@ int
 fwup_resource_iter_destroy(fwup_resource_iter **iterp)
 {
 	if (!iterp) {
+		efi_error("invalid iter");
 		errno = EINVAL;
 		return -1;
 	}
@@ -428,8 +484,10 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 		errno = 0;
 		entry = readdir(iter->dir);
 		if (!entry) {
-			if (errno != 0)
+			if (errno != 0) {
+				efi_error("readdir failed");
 				return -1;
+			}
 			return 0;
 		}
 		if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
@@ -438,6 +496,7 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 
 	int dfd = openat(iter->dirfd, entry->d_name, O_RDONLY|O_DIRECTORY);
 	if (dfd < 0) {
+		efi_error("openat() failed");
 		return -1;
 	}
 
@@ -445,6 +504,7 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 	get_string_from_file(dfd, "fw_class", &class);
 	int rc = efi_str_to_guid(class, &res->esre.guid);
 	if (rc < 0) {
+		efi_error("efi_str_to_guid() failed");
 		return rc;
 	}
 	res->esre.fw_type = get_value_from_file(dfd, "fw_type");
@@ -458,8 +518,10 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 			get_value_from_file(dfd, "lowest_supported_fw_version");
 
 	rc = get_info(&res->esre.guid, 0, &res->info);
-	if (rc < 0)
+	if (rc < 0) {
+		efi_error("get_info() failed");
 		return rc;
+	}
 
 	res->info->capsule_flags = res->esre.capsule_flags;
 
@@ -474,6 +536,7 @@ fwup_set_guid(fwup_resource_iter *iter, fwup_resource **re,
 {
 	fwup_resource *res;
 	if (!iter || !re) {
+		efi_error("invalid %s", iter ? "resource" : "iter");
 		errno = EINVAL;
 		return -1;
 	}
@@ -487,6 +550,7 @@ int
 fwup_clear_status(fwup_resource *re)
 {
 	if (!re) {
+		efi_error("invalid resource");
 		errno = EINVAL;
 		return -1;
 	}
@@ -496,6 +560,8 @@ fwup_clear_status(fwup_resource *re)
 	re->info->status = 0;
 
 	rc = put_info(re->info);
+	if (rc < 0)
+		efi_error("put_info() failed");
 	return rc;
 }
 
@@ -503,6 +569,7 @@ int
 fwup_get_guid(fwup_resource *re, efi_guid_t **guid)
 {
 	if (!re || !guid) {
+		efi_error("invalid %s", guid ? "resource" : "guid");
 		errno = EINVAL;
 		return -1;
 	}
@@ -515,6 +582,7 @@ int
 fwup_get_fw_version(fwup_resource *re, uint32_t *version)
 {
 	if (!re || !version) {
+		efi_error("invalid %s", version ? "resource" : "version");
 		errno = EINVAL;
 		return -1;
 	}
@@ -527,6 +595,7 @@ int
 fwup_get_fw_type(fwup_resource *re, uint32_t *type)
 {
 	if (!re || !type) {
+		efi_error("invalid %s", type ? "resource" : "type");
 		errno = EINVAL;
 		return -1;
 	}
@@ -539,6 +608,7 @@ int
 fwup_get_lowest_supported_fw_version(fwup_resource *re, uint32_t *version)
 {
 	if (!re || !version) {
+		efi_error("invalid %s", version ? "resource" : "version");
 		errno = EINVAL;
 		return -1;
 	}
@@ -551,6 +621,7 @@ int
 fwup_get_attempt_status(fwup_resource *re, uint32_t *status)
 {
 	if (!re || !status) {
+		efi_error("invalid %s", status ? "resource" : "status");
 		errno = EINVAL;
 		return -1;
 	}
@@ -565,11 +636,13 @@ fwup_get_last_attempt_info(fwup_resource *re, uint32_t *version,
 			   uint32_t *status, time_t *when)
 {
 	if (!re || !version || !status || !when) {
+		efi_error("invalid argument");
 		errno = EINVAL;
 		return -1;
 	}
 
 	if (!re->info->status) {
+		efi_error("invalid status");
 		errno = ENOENT;
 		return -1;
 	}
@@ -632,24 +705,31 @@ get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 	i = find_matching_file(fwup_fs_path_tmpl, ".efi", arch_names,
 				       n_arches, &fwup_fs_path_tmp);
 	if (i < 0) {
+		efi_error("could not find shim or fwup on ESP");
 		errno = ENOENT;
 		ret = i;
 		goto out;
 	}
 	rc = asprintf(&fwup_esp_path_tmp, "%s%s.efi", fwup_esp_path_tmpl,
 		      arch_names[i]);
-	if (rc < 0)
+	if (rc < 0) {
+		efi_error("asprintf failed");
 		goto out;
+	}
 
 	if (shim_fs_path_tmp) {
 		*shim_fs_path = strdup(shim_fs_path_tmp);
-		if (!*shim_fs_path)
+		if (!*shim_fs_path) {
+			efi_error("strdup failed");
 			goto out;
+		}
 	}
 	if (fwup_fs_path_tmp) {
 		*fwup_fs_path = strdup(fwup_fs_path_tmp);
-		if (!*fwup_fs_path)
+		if (!*fwup_fs_path) {
+			efi_error("strdup failed");
 			goto out;
+		}
 	}
 	if (fwup_esp_path_tmp)
 		*fwup_esp_path = fwup_esp_path_tmp;
@@ -685,8 +765,10 @@ set_up_boot_next(void)
 	char *label = NULL;
 
 	rc = get_paths(&shim_fs_path, &fwup_fs_path, &fwup_esp_path);
-	if (rc < 0)
+	if (rc < 0) {
+		efi_error("could not find paths for shim and fwup");
 		return -1;
+	}
 
 	if (!shim_fs_path)
 		use_fwup_path = 1;
@@ -696,13 +778,17 @@ set_up_boot_next(void)
 							    : shim_fs_path,
 					   EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
 					   EFIBOOT_ABBREV_HD);
-	if (sz < 0)
+	if (sz < 0) {
+		efi_error("efi_generate_file_device_path() failed");
 		goto out;
+	}
 
 	dp_size=sz;
 	dp_buf = calloc(1, dp_size);
-	if (!dp_buf)
+	if (!dp_buf) {
+		efi_error("calloc(1, %zd) failed", dp_size);
 		goto out;
+	}
 
 	if (!use_fwup_path) {
 		loader_str = utf8_to_ucs2((uint8_t *)fwup_esp_path, -1);
@@ -717,33 +803,43 @@ set_up_boot_next(void)
 							    : shim_fs_path,
 					   EFIBOOT_OPTIONS_IGNORE_FS_ERROR|
 					   EFIBOOT_ABBREV_HD);
-	if (sz != dp_size)
+	if (sz != dp_size) {
+		efi_error("efi_generate_file_device_path() failed");
 		goto out;
+	}
 
 	uint8_t *opt=NULL;
 	ssize_t opt_size=0;
 	uint32_t attributes = LOAD_OPTION_ACTIVE;
 
 	rc = asprintf(&label, "Linux-Firmware-Updater %s", fwup_esp_path);
-	if (rc < 0)
+	if (rc < 0) {
+		efi_error("asprintf() failed");
 		goto out;
+	}
 
 	sz = efi_loadopt_create(opt, opt_size, attributes,
 				  (efidp)dp_buf, dp_size,
 				  (uint8_t *)label,
 				  (uint8_t *)loader_str, loader_sz);
-	if (sz < 0)
+	if (sz < 0) {
+		efi_error("efi_loadopt_create() failed");
 		goto out;
+	}
 	opt = calloc(1, sz);
-	if (!opt)
+	if (!opt) {
+		efi_error("calloc(1, %zd) failed", sz);
 		goto out;
+	}
 	opt_size = sz;
 	sz = efi_loadopt_create(opt, opt_size, attributes,
 				  (efidp)dp_buf, dp_size,
 				  (uint8_t *)label,
 				  (uint8_t *)loader_str, loader_sz);
-	if (sz != opt_size)
+	if (sz != opt_size) {
+		efi_error("loadopt size was unreasonable.");
 		goto out;
+	}
 
 	int set_entries[0x10000 / sizeof(int)] = {0,};
 	efi_guid_t *guid = NULL;
@@ -763,8 +859,10 @@ set_up_boot_next(void)
 		int scanned=0;
 		uint16_t entry=0;
 		rc = sscanf(name, "Boot%hX%n", &entry, &scanned);
-		if (rc < 0)
+		if (rc < 0) {
+			efi_error("sscanf failed");
 			goto out;
+		}
 		if (rc != 1)
 			continue;
 		if (scanned != 8)
@@ -777,45 +875,60 @@ set_up_boot_next(void)
 
 		rc = efi_get_variable(*guid, name, &var_data, &var_data_size,
 				      &attr);
-		if (rc < 0)
+		if (rc < 0) {
+			efi_error("efi_get_variable() failed");
 			continue;
+		}
 
 		loadopt = (efi_load_option *)var_data;
 		if (!efi_loadopt_is_valid(loadopt, var_data_size)) {
+			efi_error("load option was invalid");
 do_next:
 			free(var_data);
 			continue;
 		}
 
 		sz = efi_loadopt_pathlen(loadopt, var_data_size);
-		if (sz != efidp_size((efidp)dp_buf))
+		if (sz != efidp_size((efidp)dp_buf)) {
+			efi_error("device path doesn't match");
 			goto do_next;
+		}
 
 		efidp found_dp = efi_loadopt_path(loadopt, var_data_size);
-		if (memcmp(found_dp, dp_buf, sz))
+		if (memcmp(found_dp, dp_buf, sz)) {
+			efi_error("device path doesn't match");
 			goto do_next;
+		}
 
-		if ((ssize_t)var_data_size != opt_size)
+		if ((ssize_t)var_data_size != opt_size) {
+			efi_error("variable data doesn't match");
 			goto do_next;
-		if (memcmp(loadopt, opt, opt_size))
+		}
+
+		if (memcmp(loadopt, opt, opt_size)) {
+			efi_error("load option doesn't match");
 			goto do_next;
-		if (memcmp(loadopt, opt, opt_size))
-			goto do_next;
+		}
 
 		found = 1;
 		boot_next = entry;
+		efi_error_clear();
 		break;
 	}
-	if (rc < 0)
+	if (rc < 0) {
+		efi_error("failed to find boot variable");
 		goto out;
+	}
 
 	if (found) {
 		efi_loadopt_attr_set(loadopt, LOAD_OPTION_ACTIVE);
 		rc = efi_set_variable(*guid, name, var_data,
 				      var_data_size, attr, 0600);
 		free(var_data);
-		if (rc < 0)
+		if (rc < 0) {
+			efi_error("could not set boot variable active");
 			goto out;
+		}
 	} else {
 		char boot_next_name[] = "Boot####";
 		for (uint32_t value = 0; value < 0x10000; value++) {
@@ -829,8 +942,10 @@ do_next:
 			break;
 		}
 
-		if (boot_next >= 0x10000)
+		if (boot_next >= 0x10000) {
+			efi_error("no free boot variables!");
 			goto out;
+		}
 
 		sprintf(boot_next_name, "Boot%04X", boot_next);
 		rc = efi_set_variable(efi_guid_global, boot_next_name, opt,
@@ -839,9 +954,10 @@ do_next:
 				      EFI_VARIABLE_BOOTSERVICE_ACCESS |
 				      EFI_VARIABLE_RUNTIME_ACCESS,
 				      0600);
-		if (rc < 0)
+		if (rc < 0) {
+			efi_error("could not set boot variable");
 			goto out;
-
+		}
 	}
 
 	uint16_t real_boot_next = boot_next;
@@ -851,6 +967,10 @@ do_next:
 			      EFI_VARIABLE_BOOTSERVICE_ACCESS |
 			      EFI_VARIABLE_RUNTIME_ACCESS,
 			      0600);
+	if (rc < 0)
+		efi_error("could not set BootNext");
+	else
+		efi_error_clear();
 	ret = rc;
 
 out:
@@ -959,7 +1079,7 @@ get_fd_and_media_path(update_info *info, char **path)
 	if (fullpath) {
 		fd = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR, 0600);
 		if (fd < 0) {
-			warn("open of %s failed", fullpath);
+			efi_error("open of %s failed", fullpath);
 			goto out;
 		}
 	} else {
@@ -968,12 +1088,12 @@ get_fd_and_media_path(update_info *info, char **path)
 			      "/boot/efi/EFI/%s/fw/fwupdate-XXXXXX.cap",
 			      FWUP_EFI_DIR_NAME);
 		if (rc < 0) {
-			warn("asprintf failed");
+			efi_error("asprintf failed");
 			return fd;
 		}
 		fd = mkostemps(fullpath, 4, O_CREAT|O_TRUNC|O_CLOEXEC);
 		if (fd < 0) {
-			warn("mkostemps(%s) failed", fullpath);
+			efi_error("mkostemps(%s) failed", fullpath);
 			goto out;
 		}
 	}
@@ -1072,7 +1192,8 @@ fwup_set_up_update(fwup_resource *re,
 
 	/* check parameters */
 	if (infd < 0) {
-		warn("fd invalid.\n");
+		efi_error("invalid file descriptor");
+		errno = EINVAL;
 		return -1;
 	}
 
@@ -1081,7 +1202,7 @@ fwup_set_up_update(fwup_resource *re,
 	/* get device */
 	rc = get_info(&re->esre.guid, 0, &info);
 	if (rc < 0) {
-		warn("get_info failed.\n");
+		efi_error("get_info failed.");
 		goto out;
 	}
 
@@ -1110,11 +1231,11 @@ fwup_set_up_update(fwup_resource *re,
 			if (feof(fin)) {
 				break;
 			} else if (ferror(fin)) {
-				warn("read failed");
+				efi_error("read failed");
 				rc = -1;
 				goto out;
 			} else {
-				warnx("fgetc() == EOF but no error is set.");
+				efi_error("fgetc() == EOF but no error is set.");
 				errno = EINVAL;
 				rc = -1;
 				goto out;
@@ -1126,11 +1247,11 @@ fwup_set_up_update(fwup_resource *re,
 			if (feof(fout)) {
 				break;
 			} else if (ferror(fout)) {
-				warn("write failed");
+				efi_error("write failed");
 				rc = -1;
 				goto out;
 			} else {
-				warnx("fputc() == EOF but no error is set.");
+				efi_error("fputc() == EOF but no error is set.");
 				errno = EINVAL;
 				rc = -1;
 				goto out;
@@ -1149,7 +1270,7 @@ fwup_set_up_update(fwup_resource *re,
 	info->capsule_flags = re->esre.capsule_flags;
 	rc = put_info(info);
 	if (rc < 0) {
-		warn("put_info failed.\n");
+		efi_error("put_info failed.");
 		goto out;
 	}
 
@@ -1202,7 +1323,7 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 
 	/* check parameters */
 	if (buf == NULL || sz == 0) {
-		warn("buf invalid.\n");
+		efi_error("buf invalid.");
 		rc = -1;
 		goto out;
 	}
@@ -1210,7 +1331,7 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 	/* get device */
 	rc = get_info(&re->esre.guid, 0, &info);
 	if (rc < 0) {
-		warn("get_info failed.\n");
+		efi_error("get_info failed.");
 		goto out;
 	}
 
@@ -1230,7 +1351,7 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 			continue;
 		if (wsz < 0) {
 			rc = wsz;
-			warn("write failed");
+			efi_error("write failed");
 			goto out;
 		}
 		off += wsz;
@@ -1247,7 +1368,7 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 	info->capsule_flags = re->esre.capsule_flags;
 	rc = put_info(info);
 	if (rc < 0) {
-		warn("put_info failed.\n");
+		efi_error("put_info failed.");
 		goto out;
 	}
 
@@ -1296,7 +1417,6 @@ fwup_last_attempt_status_to_string (uint64_t status)
 	return NULL;
 }
 
-
 /**
  * fwup_print_update_info:
  * Print the information of firmware update status.
@@ -1315,7 +1435,7 @@ fwup_print_update_info(void)
 	rc = fwup_resource_iter_create(&iter);
 	if (rc < 0) {
 		if (errno != ENOENT)
-			warn(_("Could not create iterator"));
+			efi_error(_("Could not create iterator"));
 		return -1;
 	}
 
