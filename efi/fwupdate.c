@@ -31,6 +31,8 @@ typedef struct update_table_s {
 
 static int debugging;
 
+#define SECONDS 1000000
+
 /*
  * I'm not actually sure when these appear, but they're present in the
  * version in front of me.
@@ -746,7 +748,7 @@ apply_capsules(EFI_CAPSULE_HEADER **capsules,
 		Print(L"Capsules: %d\n", num_updates);
 	}
 
-	uefi_call_wrapper(BS->Stall, 1, 1000000);
+	uefi_call_wrapper(BS->Stall, 1, 1 * SECONDS);
 	rc = uefi_call_wrapper(RT->UpdateCapsule, 3, capsules, num_updates,
 			       (EFI_PHYSICAL_ADDRESS)(VOID *)cbd);
 	if (EFI_ERROR(rc)) {
@@ -917,8 +919,9 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	 */
 	if (debugging) {
 		Print(L"Reset System\n");
-		uefi_call_wrapper(BS->Stall, 1, 10000000);
+		uefi_call_wrapper(BS->Stall, 1, 5 * SECONDS);
 	}
+	uefi_call_wrapper(BS->Stall, 1, 5 * SECONDS);
 	uefi_call_wrapper(RT->ResetSystem, 4, reset_type, EFI_SUCCESS,
 			  0, NULL);
 
