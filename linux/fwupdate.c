@@ -220,27 +220,23 @@ main(int argc, char *argv[]) {
 		fwup_resource *re = NULL;
 		efi_guid_t *tmpguid = NULL;
 
-		while (1) {
+		while (!force) {
 			rc = fwup_resource_iter_next(iter, &re);
-			if (rc < 0) {
-				if (force)
-					break;
+			if (rc < 0)
 				err(2, _("Could not iterate resources"));
-			}
 			if (rc == 0)
 				break;
 
-
 			fwup_get_guid(re, &tmpguid);
 
-			if (!efi_guid_cmp(tmpguid, &guid)) {
+			if (!efi_guid_cmp(tmpguid, &guid))
 				break;
-			}
+
 			tmpguid = NULL;
 		}
 
 		if (!tmpguid && force) {
-			rc = fwup_set_guid (iter, &re, &guid);
+			rc = fwup_set_guid(iter, &re, &guid);
 			if (rc < 0)
 				err(2, _("Error configuring GUID"));
 			tmpguid = &guid;
@@ -249,11 +245,12 @@ main(int argc, char *argv[]) {
 		if (tmpguid) {
 			int fd = open(filename, O_RDONLY);
 			if (fd < 0)
-				err(2, _("could not open \"%s\""),
-				    filename);
-				rc = fwup_set_up_update(re, 0, fd);
+				err(2, _("could not open \"%s\""), filename);
+
+			rc = fwup_set_up_update(re, 0, fd);
 			if (rc < 0)
 				err(2, _("Could not set up firmware update"));
+
 			fwup_resource_iter_destroy(&iter);
 			exit(0);
 		}

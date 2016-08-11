@@ -469,7 +469,9 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 }
 
 int
-fwup_set_guid(fwup_resource_iter *iter, fwup_resource **re, const efi_guid_t *guid) {
+fwup_set_guid(fwup_resource_iter *iter, fwup_resource **re,
+	      const efi_guid_t *guid)
+{
 	fwup_resource *res;
 	if (!iter || !re) {
 		errno = EINVAL;
