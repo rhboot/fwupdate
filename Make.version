@@ -1,1 +1,1 @@
-VERSION = 6
+VERSION = 7

@@ -1,4 +1,4 @@
-%global efivar_version 0.26-1
+%global efivar_version 28-1
 %global efibootmgr_version 13-1
 
 Name:           fwupdate
@@ -124,6 +124,10 @@ rm -rf $RPM_BUILD_ROOT
 /boot/efi/EFI/%{efidir}/fwup%{efiarch}.efi
 
 %changelog
+* Tue Aug 16 2016 Peter Jones <pjones@redhat.com> - 7-1
+- Update to fwupdate 7.
+- Minor bug fixes.
+
 * Tue Aug 16 2016 Peter Jones <pjones@redhat.com> - 6-1
 - Update to 0.6
 - lots of build fixes for newer compilers and such
