@@ -599,8 +599,10 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 		return EFI_UNSUPPORTED;
 	}
 
+	UINT16 sz16;
 	UINTN sz;
-	CopyMem(&sz, &file_dp->Length[0], 2);
+	CopyMem(&sz16, &file_dp->Length[0], sizeof(sz16));
+	sz = sz16;
 	sz -= 4;
 	if (sz <= 6 || sz % 2 != 0) {
 		Print(L"%a:%a():%d: Invalid file device path.\n",
