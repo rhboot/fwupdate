@@ -164,7 +164,6 @@ main(int argc, char *argv[]) {
 		;
 
 	if (action & ACTION_APPLY) {
-		int rc;
 		guidstr = poptGetArg(optcon);
 		if (!guidstr) {
 			warningx(_("missing argument: %s"), "guid");
