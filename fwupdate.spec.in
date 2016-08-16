@@ -1,5 +1,5 @@
-%global efivar_version 0.24-1
-%global efibootmgr_version 13
+%global efivar_version 0.26-1
+%global efibootmgr_version 13-1
 
 Name:           fwupdate
 Version:        @@VERSION@@
@@ -124,6 +124,14 @@ rm -rf $RPM_BUILD_ROOT
 /boot/efi/EFI/%{efidir}/fwup%{efiarch}.efi
 
 %changelog
+* Tue Aug 16 2016 Peter Jones <pjones@redhat.com> - 6-1
+- Update to 0.6
+- lots of build fixes for newer compilers and such
+- Use libsmbios on some systems to enable firmware updates (Mario Limonciello)
+- Use the correct reset type from the QueryCapsuleInfo data
+- Lots of fixes from auditing
+- Use efivar's error reporting infrastructure
+
 * Tue Jun 02 2015 Peter Jones <pjones@redhat.com> - 0.4-1
 - Update to 0.4
 - Set DESTDIR so it's more consistently respected
