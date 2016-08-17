@@ -30,10 +30,10 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wextra -Werror -Wno-error=cpp \
 
 BINTARGETS=fwupdate
 INCTARGETS=include/fwup-version.h include/fwup.h
-LIBTARGETS=libfwup.so.$(VERSION)
+LIBTARGETS=libfwup.so
 PCTARGETS=fwup.pc
 POTARGETS = fwupdate.po libfwup.po
-TARGETS=$(BINTARGETS) $(INCTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) libfwup.so cleanup.service cleanup
+TARGETS=$(BINTARGETS) $(INCTARGETS) $(foreach x,$(LIBTARGETS),$(x) $(x).1 $(x).1.$(VERSION)) $(PCTARGETS) $(POTARGETS) libfwup.so cleanup.service cleanup
 
 .SUFFIXES:
 
@@ -47,12 +47,15 @@ include/fwup.h : | include/fwup-version.h
 % : %.o
 	$(CC) $(BUILDFLAGS) -o $@ $(patsubst lib%.so,-l%,$^) $(BIN_CCLDFLAGS)
 
-%.so.$(VERSION) : %.o
+%.so.1.$(VERSION) : %.o
 	$(CC) $(BUILDFLAGS) \
-		-Wl,-soname,$(patsubst %.o,%.so.$(VERSION),$<) \
+		-Wl,-soname,$(patsubst %.o,%.so.1,$<) \
 		-o $@ $^ $(LIB_CCLDFLAGS)
 
-%.so : %.so.$(VERSION)
+%.so.1 : %.so.1.$(VERSION)
+	ln -sf $< $@
+
+%.so : %.so.1.$(VERSION)
 	ln -sf $< $@
 
 %.po : %.c
@@ -86,7 +89,7 @@ clean :
 
 install : check_efidir_error all
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)
-	$(foreach x, $(LIBTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)/$(libdir);)
+	$(foreach x, $(LIBTARGETS), $(INSTALL) -m 755 $(x).1.$(VERSION) $(DESTDIR)/$(libdir);)
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(pcdir)
 	$(foreach x, $(PCTARGETS), $(INSTALL) -m 644 $(x) $(DESTDIR)/$(pcdir) ;)
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(includedir)/
@@ -95,7 +98,10 @@ install : check_efidir_error all
 	$(INSTALL) -m 644 $(POTARGETS) $(DESTDIR)/$(localedir)/en/
 	$(INSTALL) -d -m 755 $(DESTDIR)/$(bindir)
 	$(foreach x, $(BINTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)/$(bindir);)
-	$(foreach x, $(wildcard *.so.$(VERSION)), ln -fs $(x) $(patsubst %.so.$(VERSION),%.so,$(DESTDIR)/$(libdir)/$(x));)
+	$(foreach x, $(wildcard *.so.1.$(VERSION)), \
+		ln -fs $(x) $(patsubst %.so.1.$(VERSION),%.so.1,$(DESTDIR)/$(libdir)/$(x)) ;\
+		ln -fs $(x) $(patsubst %.so.1.$(VERSION),%.so,$(DESTDIR)/$(libdir)/$(x)) ;\
+		)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/fwupdate/
 	$(INSTALL) -d -m 755 $(DESTDIR)$(libexecdir)/fwupdate/
 	$(INSTALL) -m 755 cleanup $(DESTDIR)$(libexecdir)/fwupdate/cleanup
