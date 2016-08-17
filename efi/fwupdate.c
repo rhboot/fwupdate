@@ -67,11 +67,24 @@ allocate(void **addr, UINTN size)
 	UINTN pages = size / 4096 + ((size % 4096) ? 1 : 0);
 	EFI_STATUS rc;
 	EFI_PHYSICAL_ADDRESS pageaddr = 0;
+	EFI_ALLOCATE_TYPE type = AllocateAnyPages;
 
-	rc = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages,
+	if (sizeof (VOID *) == 4) {
+		pageaddr = 0xffffffffULL - 8192;
+		type = AllocateMaxAddress;
+	}
+
+	rc = uefi_call_wrapper(BS->AllocatePages, 4, type,
 			       EfiLoaderData, pages,
 			       &pageaddr);
-	*addr = (void *)pageaddr;
+	if (EFI_ERROR(rc))
+		return rc;
+	if (sizeof (VOID *) == 4 && pageaddr > 0xffffffffULL) {
+		uefi_call_wrapper(BS->FreePages, 2, pageaddr, pages);
+		Print(L"Got bad allocation at 0x%016x\n", (UINT64)pageaddr);
+		return EFI_OUT_OF_RESOURCES;
+	}
+	*addr = (void *)(UINTN)pageaddr;
 	return rc;
 }
 
@@ -84,7 +97,8 @@ free(void *addr, UINTN size)
 	UINTN pages = size / 4096 + ((size % 4096) ? 1 : 0);
 	EFI_STATUS rc;
 
-	rc = uefi_call_wrapper(BS->FreePages, 2, (EFI_PHYSICAL_ADDRESS)addr,
+	rc = uefi_call_wrapper(BS->FreePages, 2,
+			       (EFI_PHYSICAL_ADDRESS)(UINTN)addr,
 			       pages);
 	return rc;
 }
@@ -752,7 +766,7 @@ apply_capsules(EFI_CAPSULE_HEADER **capsules,
 
 	uefi_call_wrapper(BS->Stall, 1, 1 * SECONDS);
 	rc = uefi_call_wrapper(RT->UpdateCapsule, 3, capsules, num_updates,
-			       (EFI_PHYSICAL_ADDRESS)(VOID *)cbd);
+			       (EFI_PHYSICAL_ADDRESS)(UINTN)cbd);
 	if (EFI_ERROR(rc)) {
 		Print(L"%a:%a():%d: Could not apply capsule update: %r\n",
 			      __FILE__, __func__, __LINE__, rc);

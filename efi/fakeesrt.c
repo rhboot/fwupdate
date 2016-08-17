@@ -37,24 +37,35 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *systab)
 	};
 	EFI_STATUS status;
 	EFI_PHYSICAL_ADDRESS mem = 0;
+	EFI_ALLOCATE_TYPE type = AllocateAnyPages;
 
 	InitializeLib(image_handle, systab);
 
-	status = systab->BootServices->AllocatePages(AllocateAnyPages,
-						EfiRuntimeServicesData,
-						1, &mem);
+	if (sizeof (VOID *) == 4) {
+		mem = 0xffffffffULL - 8192;
+		type = AllocateMaxAddress;
+	}
+	status = uefi_call_wrapper(systab->BootServices->AllocatePages, 4,
+				   type, EfiRuntimeServicesData, 1, &mem);
 	if (EFI_ERROR(status)) {
 		Print(L"AllocatePages failed: %r\n", status);
 		return status;
 	}
-	VOID *ptr = (VOID *)mem;
+	if (sizeof (VOID *) == 4 && mem > 0xffffffffULL) {
+		Print(L"Got bad allocation at 0x%016x\n", (UINT64)mem);
+		return EFI_OUT_OF_RESOURCES;
+	}
+	VOID *ptr = (VOID *)(UINTN)mem;
 
 	CopyMem(ptr, &esrt, sizeof (esrt));
 
-	status = systab->BootServices->InstallConfigurationTable(&EsrtGuid,
-								ptr);
+	status = uefi_call_wrapper(
+				systab->BootServices->InstallConfigurationTable,
+				2, &EsrtGuid, ptr);
 	if (EFI_ERROR(status)) {
 		Print(L"InstallConfigurationTable failed: %r\n", status);
+		uefi_call_wrapper(systab->BootServices->FreePages, 2,
+				  mem, 1);
 		return status;
 	}
 
