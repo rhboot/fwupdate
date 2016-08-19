@@ -127,6 +127,14 @@ rm -rf $RPM_BUILD_ROOT
 /boot/efi/EFI/%{efidir}/fwup%{efiarch}.efi
 
 %changelog
+* Fri Aug 19 2016 Peter Jones <pjones@redhat.com> - 8-1
+- Update to fwupdate 8
+- Fix some i686 build errors
+- Be less stupid about SONAMEs so in the future we'll only have to rebuild
+  dependent things on actual ABI changes.
+- Only depend on libsmbios on x86, for now, because it hasn't been ported to
+  Aarch64.
+
 * Tue Aug 16 2016 Peter Jones <pjones@redhat.com> - 7-1
 - Update to fwupdate 7.
 - Minor bug fixes.
