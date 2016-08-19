@@ -32,9 +32,12 @@
 static int verbose;
 #include "error.h"
 
+#ifdef FWUPDATE_HAVE_LIBSMBIOS__
 #include </usr/include/smbios_c/token.h>
+
 #define DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED 0x0461
 #define DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED 0x0462
+#endif
 
 static char *arch_names_32[] = {
 #if defined(__x86_64__) || defined(__i386__) || defined(__i686__)
@@ -98,6 +101,7 @@ efidp_end_entire(efidp_header *dp)
 int
 fwup_esrt_disabled(void)
 {
+#ifdef FWUPDATE_HAVE_LIBSMBIOS__
 	if (!token_is_bool(DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED))
 		return -1;
 	if (!token_is_active(DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED))
@@ -107,6 +111,9 @@ fwup_esrt_disabled(void)
 		return -2;
 	}
 	return 2;
+#else
+	return -1;
+#endif
 }
 
 /*
@@ -122,6 +129,7 @@ fwup_esrt_disabled(void)
 int
 fwup_enable_esrt(void)
 {
+#ifdef FWUPDATE_HAVE_LIBSMBIOS__
 	int rc;
 	rc = fwup_supported();
 	/* can't enable or already enabled */
@@ -148,6 +156,10 @@ fwup_enable_esrt(void)
 		return -3;
 	}
 	return 2;
+#else
+	errno = ENOSYS;
+	return -1;
+#endif
 }
 
 /*

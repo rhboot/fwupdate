@@ -12,7 +12,10 @@ BuildRequires:  efivar-devel >= %{efivar_version}
 BuildRequires:  gnu-efi gnu-efi-devel
 BuildRequires:  pesign
 BuildRequires:  elfutils popt-devel git gettext pkgconfig
-BuildRequires:  systemd libsmbios-devel
+BuildRequires:  systemd
+%ifarch x86_64 %{ix86}
+BuildRequires:	libsmbios-devel
+%endif
 ExclusiveArch:  x86_64 %{ix86} aarch64
 Source0:        https://github.com/rhinstaller/fwupdate/releases/download/%{name}-%{version}/%{name}-%{version}.tar.bz2
 

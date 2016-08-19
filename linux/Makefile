@@ -6,7 +6,14 @@ include $(TOPDIR)/Make.defaults
 
 LIB_LIBS= pthread
 BIN_LIBS= popt pthread
-PKLIBS	= efivar efiboot libsmbios_c
+PKLIBS	= efivar efiboot
+HAVE_LIBSMBIOS=no
+ifeq ($(ARCH),x86_64)
+	HAVE_LIBSMBIOS=yes
+endif
+ifeq ($(ARCH),ia32)
+	HAVE_LIBSMBIOS=yes
+endif
 CFLAGS	?= -g -O0
 PJONES  =
 BIN_CCLDFLAGS = $(foreach lib,$(BIN_LIBS),-l$(lib)) \
@@ -18,6 +25,10 @@ LIB_CCLDFLAGS = $(foreach lib,$(LIB_LIBS),-l$(lib)) \
 		$(shell pkg-config --libs-only-l --libs-only-other $(pklib))) \
 	$(LDFLAGS) -shared -fPIC -Wl,-z,relro,-z,now
 
+ifeq ($(HAVE_LIBSMBIOS),yes)
+	PKLIBS += libsmbios_c
+	CFLAGS += -DFWUPDATE_HAVE_LIBSMBIOS__
+endif
 BUILDFLAGS := $(CFLAGS) -Wall -Wextra -Werror -Wno-error=cpp \
 	-Wno-unused-result -Wno-unused-function \
 	-Wsign-compare -Werror=sign-compare \
