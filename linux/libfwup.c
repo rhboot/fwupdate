@@ -34,9 +34,14 @@ static int verbose;
 
 #ifdef FWUPDATE_HAVE_LIBSMBIOS__
 #include </usr/include/smbios_c/token.h>
+#include <smbios_c/smi.h>
 
 #define DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED 0x0461
 #define DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED 0x0462
+#define DELL_CLASS_ADMIN_PROP 10
+#define DELL_SELECT_ADMIN_PROP 3
+#define DELL_ADMIN_MASK 0xF
+#define DELL_ADMIN_INSTALLED 0
 #endif
 
 static char *arch_names_32[] = {
@@ -94,6 +99,7 @@ efidp_end_entire(efidp_header *dp)
 	return codes:
 		-1 : the tokens were not found. system is unsupported
 		-2 : libsmbios failure, this scenario shouldn't be reached
+		-3 : admin password is set
 		 2 : ESRT is currently disabled and can be enabled.
 		 3 : tokens were found, will be enabled next boot
 
@@ -102,6 +108,7 @@ int
 fwup_esrt_disabled(void)
 {
 #ifdef FWUPDATE_HAVE_LIBSMBIOS__
+	uint32_t args[4] = {0,}, out[4] = {0,};
 	if (!token_is_bool(DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED))
 		return -1;
 	if (!token_is_active(DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED))
@@ -110,6 +117,12 @@ fwup_esrt_disabled(void)
 			return 3;
 		return -2;
 	}
+	if (dell_simple_ci_smi(DELL_CLASS_ADMIN_PROP,
+			       DELL_SELECT_ADMIN_PROP,
+			       args, out))
+		return -2;
+	if (out[0] != 0 || (out[1] & DELL_ADMIN_MASK) == DELL_ADMIN_INSTALLED)
+		return -3;
 	return 2;
 #else
 	return -1;
