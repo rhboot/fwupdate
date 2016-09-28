@@ -1,5 +1,4 @@
-%global efivar_version 28-1
-%global efibootmgr_version 13-1
+%global efivar_version 30-1
 
 Name:           fwupdate
 Version:        @@VERSION@@
