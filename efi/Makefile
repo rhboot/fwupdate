@@ -15,7 +15,7 @@ CCLDFLAGS	?= -nostdlib -Wl,--warn-common \
 	-Wl,-shared -Wl,-Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) \
 	-Wl,--build-id=sha1 -Wl,--hash-style=sysv \
 	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
-OBJCOPY_GTE224 = $(shell expr `$(OBJCOPY) --version |grep ^"GNU objcopy" | sed 's/^.* //g' | cut -f1-2 -d.` \>= 2.24)
+OBJCOPY_GTE224 = $(shell expr `$(OBJCOPY) --version |grep ^"GNU objcopy" | sed 's/^[^0-9]*//g' | cut -f1-2 -d.` \>= 2.24)
 
 FWUP = fwupdate
 
