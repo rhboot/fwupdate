@@ -10,7 +10,7 @@
  */
 static inline char *
 __attribute__((__unused__))
-ucs2_to_utf8(const uint16_t const *chars, size_t max)
+ucs2_to_utf8(const uint16_t *chars, size_t max)
 {
 	size_t i, j;
 	char *ret = alloca(max * 6 + 1);
