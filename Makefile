@@ -3,7 +3,7 @@ default : all
 TOPDIR=$(shell pwd)
 include $(TOPDIR)/Make.version
 include $(TOPDIR)/Make.defaults
-SUBDIRS = efi linux docs include
+SUBDIRS ?= efi linux docs include
 
 all clean install : | check_efidir_error
 	@set -e ; for x in $(SUBDIRS) ; do \
