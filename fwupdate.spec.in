@@ -1,4 +1,5 @@
-%global efivar_version 30-1
+%global efivar_version 31-1
+%global efibootmgr_version 15-1
 
 Name:           fwupdate
 Version:        @@VERSION@@
@@ -13,7 +14,7 @@ BuildRequires:  pesign
 BuildRequires:  elfutils popt-devel git gettext pkgconfig
 BuildRequires:  systemd
 %ifarch x86_64 %{ix86}
-BuildRequires:	libsmbios-devel
+BuildRequires: libsmbios-devel
 %endif
 ExclusiveArch:  x86_64 %{ix86} aarch64
 Source0:        https://github.com/rhinstaller/fwupdate/releases/download/%{name}-%{version}/%{name}-%{version}.tar.bz2
@@ -126,6 +127,15 @@ rm -rf $RPM_BUILD_ROOT
 /boot/efi/EFI/%{efidir}/fwup%{efiarch}.efi
 
 %changelog
+* Mon Mar 06 2017 Peter Jones <pjones@redhat.com> - 9-1
+- Update to fwupdate 9
+- gcc 7 fixes
+- Ensure BootNext entries are in BootOrder to work around some broken
+  firmwares.
+- Minor bug fixes
+- Support for detecting that an admin password is set when trying to enable
+  firmware features.
+
 * Fri Aug 19 2016 Peter Jones <pjones@redhat.com> - 8-1
 - Update to fwupdate 8
 - Fix some i686 build errors
