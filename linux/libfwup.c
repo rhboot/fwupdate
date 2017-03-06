@@ -771,6 +771,68 @@ out:
 }
 
 static int
+add_to_boot_order(uint16_t boot_entry)
+{
+	uint16_t *boot_order = NULL, *new_boot_order = NULL;
+	size_t boot_order_size = 0;
+	uint32_t attr;
+	int rc;
+	unsigned int i;
+
+	rc = efi_get_variable_size(efi_guid_global, "BootOrder",
+				   &boot_order_size);
+	if (rc == ENOENT) {
+		boot_order_size = 0;
+		rc = 0;
+	} else if (rc < 0) {
+		efi_error("efi_get_variable_size() failed");
+		return rc;
+	}
+
+	if (boot_order_size != 0) {
+		rc = efi_get_variable(efi_guid_global, "BootOrder",
+				      (uint8_t **)&boot_order, &boot_order_size,
+				      &attr);
+		if (rc < 0) {
+			efi_error("efi_get_variable() failed");
+			goto out;
+		}
+
+		for (i = 0; i < boot_order_size / sizeof (uint16_t); i++) {
+			uint16_t val = boot_order[i];
+			if (val == boot_entry) {
+				rc = 0;
+				goto out;
+			}
+		}
+	}
+
+	new_boot_order = malloc(boot_order_size + sizeof (uint16_t));
+	if (!new_boot_order) {
+		efi_error("calloc(1, %zd) failed",
+			  boot_order_size + sizeof (uint16_t));
+		return -1;
+	}
+	memcpy(new_boot_order, boot_order, boot_order_size);
+
+	new_boot_order[i] = boot_entry;
+	boot_order_size += sizeof (uint16_t);
+
+	rc = efi_set_variable(efi_guid_global, "BootOrder",
+			      (uint8_t *)new_boot_order, boot_order_size,
+			      attr, 0600);
+	if (rc < 0)
+		efi_error("efi_set_variable() failed");
+
+out:
+	if (boot_order)
+		free(boot_order);
+	if (new_boot_order)
+		free(new_boot_order);
+	return rc;
+}
+
+static int
 set_up_boot_next(void)
 {
 	ssize_t sz, dp_size = 0;
@@ -984,6 +1046,13 @@ do_next:
 			goto out;
 		}
 	}
+
+	/* XXX TODO: conditionalize this on the UEFI version. */
+	rc = add_to_boot_order(boot_next);
+	if (rc < 0)
+		efi_error("could not set BootOrder");
+	else
+		efi_error_clear();
 
 	uint16_t real_boot_next = boot_next;
 	rc = efi_set_variable(efi_guid_global, "BootNext",
