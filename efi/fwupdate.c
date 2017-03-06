@@ -44,7 +44,7 @@ static int debugging;
 #endif
 #ifndef uintn_mult
 #define uintn_mult(a, b, c) ({					\
-		const UINTN _limit = ~0ULL;			\
+		const UINTN _limit = ~0UL;			\
 		int _ret = 1;					\
 		if ((a) != 0 && (b) != 0) {			\
 			_ret = _limit / (a) < (b);		\
