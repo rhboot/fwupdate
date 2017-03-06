@@ -777,7 +777,7 @@ add_to_boot_order(uint16_t boot_entry)
 	size_t boot_order_size = 0;
 	uint32_t attr;
 	int rc;
-	unsigned int i;
+	unsigned int i = 0;
 
 	rc = efi_get_variable_size(efi_guid_global, "BootOrder",
 				   &boot_order_size);
