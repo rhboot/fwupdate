@@ -790,7 +790,7 @@ add_to_boot_order(uint16_t boot_entry)
 			EFI_VARIABLE_BOOTSERVICE_ACCESS |
 			EFI_VARIABLE_RUNTIME_ACCESS;
 	int rc;
-	unsigned int i;
+	unsigned int i = 0;
 
 	rc = efi_get_variable_size(efi_guid_global, "BootOrder",
 				   &boot_order_size);
