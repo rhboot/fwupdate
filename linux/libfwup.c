@@ -1480,7 +1480,7 @@ fwup_print_update_info(void)
 
 		dp_sz = efidp_format_device_path(NULL, 0,
 						 (const_efidp)info->dp_ptr,
-						 0);
+						 4096);
 		if (dp_sz <= 0) {
 			errno = EINVAL;
 			rc = -1;
@@ -1496,7 +1496,7 @@ fwup_print_update_info(void)
 		}
 
 		if (efidp_format_device_path(path, dp_sz,
-					     (const_efidp)info->dp_ptr, 0)
+					     (const_efidp)info->dp_ptr, 4096)
 					     != dp_sz) {
 			errno = EINVAL;
 			rc = -1;
