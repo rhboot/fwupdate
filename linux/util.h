@@ -22,6 +22,7 @@
 #define N_(String) (String)
 #define C_(Context,String) dgettext (Context,String)
 #define NC_(Context, String) (String)
+#define EMPTY ""
 
 extern int quiet;
 

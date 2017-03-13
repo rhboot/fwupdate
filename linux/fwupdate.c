@@ -88,7 +88,7 @@ main(int argc, char *argv[]) {
 
 	efi_guid_t guid;
 
-	setlocale(LC_ALL, "");
+	setlocale(LC_ALL, EMPTY);
 	bindtextdomain("fwupdate", LOCALEDIR);
 	textdomain("fwupdate");
 
