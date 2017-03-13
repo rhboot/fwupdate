@@ -105,18 +105,18 @@ clean :
 
 buildiddir = $(dirname $(shell cat $(1).build-id))
 define inst =
- $(INSTALL) -d -m 755 $(DESTDIR)$(TARGETDIR)
- $(INSTALL) -m 755 $(1) $(DESTDIR)$(TARGETDIR)$(1)
- $(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGINFO)$(TARGETDIR)
+ $(INSTALL) -d -m 755 $(DESTDIR)$(TARGETDIR)/
+ $(INSTALL) -m 755 $(1) $(DESTDIR)$(TARGETDIR)/$(1)
+ $(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGINFO)$(TARGETDIR)/
  $(INSTALL) -m 755 $(1).debug $(DESTDIR)$(DEBUGINFO)$(TARGETDIR)/$(1).debug
- $(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGINFO).build-id/$(dir $(shell cat $(1).build-id))
- ln -sf ../../../../..$(TARGETDIR)$(1) $(DESTDIR)$(DEBUGINFO).build-id/$(shell cat $(1).build-id)
- ln -sf ../..$(TARGETDIR)$(1).debug $(DESTDIR)$(DEBUGINFO).build-id/$(shell cat $(1).build-id).debug
+ $(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGINFO)/.build-id/$(dir $(shell cat $(1).build-id))
+ ln -sf ../../../../..$(TARGETDIR)$(1) $(DESTDIR)$(DEBUGINFO)/.build-id/$(shell cat $(1).build-id)
+ ln -sf ../..$(TARGETDIR)$(1).debug $(DESTDIR)$(DEBUGINFO)/.build-id/$(shell cat $(1).build-id).debug
 endef
 
 install : | check_efidir_error
 install : $(FWUP).efi | $(FWUP).efi.debug $(FWUP).efi.build-id
 	$(INSTALL) -d -m 755 $(DESTDIR)$(TARGETDIR)/fw/
 	$(foreach prog,$^,$(call inst,$(prog)) ; )
-	$(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGSOURCE)fwupdate-$(VERSION)/efi
-	$(foreach src,$(wildcard *.[chS]),$(INSTALL) -m 644 $(src) $(DESTDIR)$(DEBUGSOURCE)fwupdate-$(VERSION)/efi/$(src) ;)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGSOURCE)/fwupdate-$(VERSION)/efi/
+	$(foreach src,$(wildcard *.[chS]),$(INSTALL) -m 644 $(src) $(DESTDIR)$(DEBUGSOURCE)/fwupdate-$(VERSION)/efi/$(src) ;)

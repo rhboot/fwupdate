@@ -4,4 +4,4 @@ Description=fwupdate housekeeping
 [Service]
 PrivateTmp=true
 Type=oneshot
-ExecStart=@@LIBEXECDIR@@fwupdate/cleanup
+ExecStart=@@LIBEXECDIR@@/fwupdate/cleanup
