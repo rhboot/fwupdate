@@ -94,19 +94,19 @@ clean :
 	@rm -vf include/fwup-version.h
 
 install : check_efidir_error all
-	$(INSTALL) -d -m 755 $(DESTDIR)/$(libdir)
-	$(foreach x, $(LIBTARGETS), $(INSTALL) -m 755 $(x).1.$(VERSION) $(DESTDIR)/$(libdir);)
-	$(INSTALL) -d -m 755 $(DESTDIR)/$(pcdir)
-	$(foreach x, $(PCTARGETS), $(INSTALL) -m 644 $(x) $(DESTDIR)/$(pcdir) ;)
-	$(INSTALL) -d -m 755 $(DESTDIR)/$(includedir)/
-	$(INSTALL) -m 644 $(INCTARGETS) $(DESTDIR)/$(includedir)/
-	$(INSTALL) -d -m 755 $(DESTDIR)/$(localedir)/en/
-	$(INSTALL) -m 644 $(POTARGETS) $(DESTDIR)/$(localedir)/en/
-	$(INSTALL) -d -m 755 $(DESTDIR)/$(bindir)
-	$(foreach x, $(BINTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)/$(bindir);)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(libdir)
+	$(foreach x, $(LIBTARGETS), $(INSTALL) -m 755 $(x).1.$(VERSION) $(DESTDIR)$(libdir);)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(pcdir)
+	$(foreach x, $(PCTARGETS), $(INSTALL) -m 644 $(x) $(DESTDIR)$(pcdir) ;)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(includedir)/
+	$(INSTALL) -m 644 $(INCTARGETS) $(DESTDIR)$(includedir)/
+	$(INSTALL) -d -m 755 $(DESTDIR)$(localedir)/en/
+	$(INSTALL) -m 644 $(POTARGETS) $(DESTDIR)$(localedir)/en/
+	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)/
+	$(foreach x, $(BINTARGETS), $(INSTALL) -m 755 $(x) $(DESTDIR)$(bindir);)
 	$(foreach x, $(wildcard *.so.1.$(VERSION)), \
-		ln -fs $(x) $(patsubst %.so.1.$(VERSION),%.so.1,$(DESTDIR)/$(libdir)/$(x)) ;\
-		ln -fs $(x) $(patsubst %.so.1.$(VERSION),%.so,$(DESTDIR)/$(libdir)/$(x)) ;\
+		ln -fs $(x) $(patsubst %.so.1.$(VERSION),%.so.1,$(DESTDIR)$(libdir)/$(x)) ;\
+		ln -fs $(x) $(patsubst %.so.1.$(VERSION),%.so,$(DESTDIR)$(libdir)/$(x)) ;\
 		)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/fwupdate/
 	$(INSTALL) -d -m 755 $(DESTDIR)$(libexecdir)/fwupdate/

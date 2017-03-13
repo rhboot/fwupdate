@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-if [ -e "@@DATADIR@@fwupdate/done" ]; then
+if [ -e "@@DATADIR@@/fwupdate/done" ]; then
 	exit 0
 fi
 
