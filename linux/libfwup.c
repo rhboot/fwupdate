@@ -48,7 +48,7 @@ static char *arch_names_32[] = {
 #if defined(__x86_64__) || defined(__i386__) || defined(__i686__)
 	"ia32",
 #endif
-	""
+	EMPTY
 	};
 
 static int n_arches_32 = sizeof(arch_names_32) / sizeof(arch_names_32[0]);
@@ -59,7 +59,7 @@ static char *arch_names_64[] = {
 #elif defined(__aarch64__)
 	"aa64",
 #endif
-	""
+	EMPTY
 	};
 
 static int n_arches_64 = sizeof(arch_names_64) / sizeof(arch_names_64[0]);
