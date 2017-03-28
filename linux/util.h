@@ -35,7 +35,7 @@ static inline int
 __attribute__((unused))
 read_file_at(int dfd, char *name, uint8_t **buf, size_t *bufsize)
 {
-	int saved_errno = errno;
+	int saved_errno;
 	uint8_t *p;
 	size_t size = 4096;
 	size_t filesize = 0;
