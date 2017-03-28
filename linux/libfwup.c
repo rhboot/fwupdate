@@ -310,10 +310,9 @@ get_err:
 			return -1;
 		}
 		rc = get_info(guid, hw_inst, info);
-		if (rc < 0) {
+		if (rc < 0)
 			efi_error("get_info() failed");
-			return rc;
-		}
+		return rc;
 	}
 	local = (update_info *)data;
 
