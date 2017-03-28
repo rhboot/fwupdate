@@ -825,6 +825,7 @@ add_to_boot_order(uint16_t boot_entry)
 	}
 	memcpy(new_boot_order, boot_order, boot_order_size);
 
+	i = boot_order_size / sizeof (uint16_t);
 	new_boot_order[i] = boot_entry;
 	boot_order_size += sizeof (uint16_t);
 
