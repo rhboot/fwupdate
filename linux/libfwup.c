@@ -422,7 +422,8 @@ int
 fwup_resource_iter_create(fwup_resource_iter **iter)
 {
 	int error;
-	const char *path;
+	char *path;
+
 	if (!iter) {
 		efi_error("invalid iter");
 		errno = EINVAL;
@@ -438,16 +439,13 @@ fwup_resource_iter_create(fwup_resource_iter **iter)
 	path = get_esrt_dir(1);
 	if (!path) {
 		efi_error("get_esrt_dir(1) failed");
-		return -1;
+		goto err;
 	}
+
 	new->dir = opendir(path);
 	if (!new->dir) {
 		efi_error("opendir(path) failed");
-err:
-		error = errno;
-		free(new);
-		errno = error;
-		return -1;
+		goto err;
 	}
 
 	new->dirfd = dirfd(new->dir);
@@ -458,6 +456,17 @@ err:
 
 	*iter = new;
 	return 0;
+err:
+	error = errno;
+	if (new) {
+		if (new->dir)
+			closedir(new->dir);
+		free(new);
+	}
+	if (path)
+		free(path);
+	errno = error;
+	return -1;
 }
 
 static void
