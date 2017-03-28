@@ -774,7 +774,9 @@ add_to_boot_order(uint16_t boot_entry)
 {
 	uint16_t *boot_order = NULL, *new_boot_order = NULL;
 	size_t boot_order_size = 0;
-	uint32_t attr;
+	uint32_t attr = EFI_VARIABLE_NON_VOLATILE |
+			EFI_VARIABLE_BOOTSERVICE_ACCESS |
+			EFI_VARIABLE_RUNTIME_ACCESS;
 	int rc;
 	unsigned int i;
 
