@@ -1373,7 +1373,6 @@ fwup_set_up_update(fwup_resource *re,
 		goto out;
 out:
 	error = errno;
-	lseek(infd, offset, SEEK_SET);
 	if (path)
 		free(path);
 	if (fin)
