@@ -1303,6 +1303,10 @@ fwup_set_up_update(fwup_resource *re,
 	}
 
 	offset = lseek(infd, 0, SEEK_CUR);
+	if (offset < 0) {
+		efi_error("lseek failed");
+		return -1;
+	}
 
 	/* get device */
 	rc = get_info(&re->esre.guid, 0, &info);
