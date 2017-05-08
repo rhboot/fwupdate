@@ -377,7 +377,10 @@ err:
 		return -1;
 	}
 	/* Make sure sizeof(*info) + dps won't integer overflow */
-	if ((size_t)dps > SSIZE_MAX - sizeof(*info)) {
+	if (((size_t)dps >= SSIZE_MAX - sizeof(*info)) ||
+	    /* Make sure extra hard by just picking an astonishingly large
+	     * value that's merely very very unlikely... */
+	    ((ssize_t)dps > sysconf(_SC_PAGESIZE) * 100)) {
 		efi_error("device path size (%zd) would overflow", dps);
 		errno = EOVERFLOW;
 		return -1;
