@@ -674,7 +674,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	UINTN fsize = 0;
 	EFI_CAPSULE_HEADER *capsule;
 
-	rc = open_file((EFI_DEVICE_PATH *)update->info->dp, &fh);
+	rc = open_file((EFI_DEVICE_PATH *)update->info->dp_buf, &fh);
 	if (EFI_ERROR(rc))
 		return rc;
 

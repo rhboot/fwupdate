@@ -31,7 +31,8 @@ typedef struct update_info_s {
 	/* variadic device path */
 	union {
 		efidp_header *dp_ptr;
-		uint8_t dp[sizeof(efidp_header)];
+		efidp_header dp;
+		uint8_t dp_buf[0];
 	};
 } __attribute__((__packed__)) update_info;
 

@@ -44,7 +44,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	InitializeLib(image, systab);
 
 	ZeroMem(&info->time_attempted, sizeof (info->time_attempted));
-	CopyMem(info->dp, devicepath, sizeof (devicepath)-1);
+	CopyMem(info->dp_buf, devicepath, sizeof (devicepath)-1);
 	CopyMem(&info->guid, &guid, sizeof (guid));
 
 	EFI_STATUS rc = uefi_call_wrapper(RT->SetVariable, 5, L"FwUpdates",

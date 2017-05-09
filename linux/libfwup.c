@@ -321,7 +321,7 @@ get_err:
 		goto get_err;
 	}
 
-	ssize_t sz = efidp_size((efidp)local->dp);
+	ssize_t sz = efidp_size((efidp)local->dp_buf);
 	if (sz < 0) {
 		efi_error("efidp_size() failed");
 		free(data);
@@ -337,7 +337,7 @@ get_err:
 		return -1;
 	}
 
-	memcpy(dp, local->dp, (size_t)sz);
+	memcpy(dp, local->dp_buf, (size_t)sz);
 	local->dp_ptr = dp;
 
 	*info = local;
@@ -394,7 +394,7 @@ err:
 		return -1;
 
 	memcpy(info2, info, sizeof(*info));
-	memcpy(info2->dp, info->dp_ptr, dps);
+	memcpy(info2->dp_buf, info->dp_ptr, dps);
 
 	uint32_t attributes = EFI_VARIABLE_NON_VOLATILE
 			      | EFI_VARIABLE_BOOTSERVICE_ACCESS
