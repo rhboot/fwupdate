@@ -10,3 +10,4 @@
 *.tar.*
 .*.sw?
 linux/include/fwup-version.h
+cov-int

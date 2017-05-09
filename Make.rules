@@ -1,0 +1,6 @@
+
+include $(TOPDIR)/Make.version
+
+define get-config
+$(shell git config --local --get "fwupdate.$(1)")
+endef
