@@ -7,8 +7,10 @@ include $(TOPDIR)/Make.defaults
 LIB_LIBS= pthread
 BIN_LIBS= popt pthread
 PKLIBS	= efivar efiboot
-CFLAGS	?= -g -O0
-PJONES  =
+CFLAGS	?= -g3 -Og -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \
+	   -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 \
+	   -grecord-gcc-switches
+PJONES	=
 BIN_CCLDFLAGS = $(foreach lib,$(BIN_LIBS),-l$(lib)) \
 	$(foreach pklib,$(PKLIBS), \
 		$(shell pkg-config --libs-only-l --libs-only-other $(pklib))) \

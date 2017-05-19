@@ -4,7 +4,9 @@ TOPDIR	?= $(shell pwd)/..
 include $(TOPDIR)/Make.version
 include $(TOPDIR)/Make.defaults
 
-CFLAGS		?= -O0 -g3
+CFLAGS	?= -Og -g3 -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \
+	   -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 \
+	   -grecord-gcc-switches
 BUILDFLAGS	:= $(CFLAGS) -fpic -Werror -Wall -Wextra -fshort-wchar \
 	-fno-merge-constants -ffreestanding \
 	-fno-stack-protector -fno-stack-check --std=gnu11 -DCONFIG_$(ARCH) \
