@@ -466,8 +466,6 @@ err:
 			closedir(new->dir);
 		free(new);
 	}
-	if (path)
-		free(path);
 	errno = error;
 	return -1;
 }
