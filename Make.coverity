@@ -1,7 +1,3 @@
-include $(TOPDIR)/Make.version
-include $(TOPDIR)/Make.rules
-include $(TOPDIR)/Make.defaults
-
 COV_EMAIL=$(call get-config,coverity.email)
 COV_TOKEN=$(call get-config,coverity.token)
 COV_URL=$(call get-config,coverity.url)
