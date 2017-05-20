@@ -1628,3 +1628,105 @@ fwup_print_update_info(void)
 		return -1;
 	return 0;
 }
+
+static int
+read_bgrt_info(int *xoffset, int *yoffset, int *xsize, int *ysize)
+{
+	int version;
+	int type;
+	int status;
+	int x = -1, y = -1;
+	DIR *dir;
+	int dfd;
+	int rc;
+	uint8_t *buf = NULL;
+	size_t buf_size = 0;
+	int saved_errno;
+	uint32_t ui32;
+
+	status = get_value_from_file_at_dir("/sys/firmware/acpi/bgrt",
+					    "status");
+	if (status != 1) {
+		errno = ENOSYS;
+		return -1;
+	}
+	type = get_value_from_file_at_dir("/sys/firmware/acpi/bgrt", "type");
+	if (type != 0) {
+		errno = EINVAL;
+		return -1;
+	}
+	version = get_value_from_file_at_dir("/sys/firmware/acpi/bgrt",
+					     "version");
+	if (version != 1) {
+		errno = ENOTTY;
+		return -1;
+	}
+
+	x = get_value_from_file_at_dir("/sys/firmware/acpi/bgrt", "xoffset");
+	y = get_value_from_file_at_dir("/sys/firmware/acpi/bgrt", "yoffset");
+
+	if (x < 0 || y < 0) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	dir = opendir("/sys/firmware/acpi/bgrt");
+	if (!dir)
+		return -1;
+
+	dfd = dirfd(dir);
+	if (dfd < 0) {
+		closedir(dir);
+		return -1;
+	}
+
+	rc = read_file_at(dfd, "image", &buf, &buf_size);
+	saved_errno = errno;
+	close(dfd);
+	closedir(dir);
+	errno = saved_errno;
+	if (rc < 0)
+		return -1;
+
+	if (buf_size < 26) {
+invalid:
+		free(buf);
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (memcmp(buf, "BM", 2) != 0)
+		goto invalid;
+
+	memcpy(&ui32, buf+10, 4);
+	if (ui32 < 26)
+		goto invalid;
+
+	memcpy(&ui32, buf+14, 4);
+	if (ui32 < 26 - 14)
+		goto invalid;
+
+	memcpy(xsize, buf+16, 4);
+	memcpy(ysize, buf+20, 4);
+	*xsize = buf[5];
+	*ysize = buf[6];
+
+	free(buf);
+
+	*xoffset = x;
+	*yoffset = y;
+
+	return 0;
+}
+
+#define fbdir "/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0"
+static int
+read_efifb_info(int *depth, int *height, int *width, int *linelength)
+{
+	*depth = get_value_from_file_at_dir(fbdir, "depth");
+	*height = get_value_from_file_at_dir(fbdir, "height");
+	*width = get_value_from_file_at_dir(fbdir, "width");
+	*linelength = get_value_from_file_at_dir(fbdir, "linelength");
+
+	return 0;
+}
