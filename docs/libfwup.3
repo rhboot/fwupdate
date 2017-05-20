@@ -36,6 +36,11 @@ libfwup - library to support management of system firmware updates
 
 \fBvoid \fRfwup_set_esp_mountpoint\fB(char *\fIpath\fB);\fR\p
  \- Override detection of the mountpoint for the ESP directory
+
+\fBint \fRfwup_get_ux_capsule_info\fB(\kZuint32_t *\fIscreen_x_size\fB,
+.tz \nZu
+	uint32_t *\fIscreen_y_size\fB);\fR\p
+ \- get the dimensions of the screen during boot
 .SH DESCRIPTION
 .nf
 .PP
@@ -97,6 +102,11 @@ Instruct fwupdate on whether to reuse old capsule filenames on the ESP.
 
 \fBvoid \fRfwup_set_esp_mountpoint\fB(char *\fIpath\fB);\fR\p
 Override detection of the mountpoint for the ESP directory.
+
+\fBint \fRfwup_get_ux_capsule_info\fB(\kZuint32_t *\fIscreen_x_size\fB,
+.tz \nZu
+	uint32_t *\fIscreen_y_size\fB);\fR\p
+Get the dimensions of the screen during boot.
 .SH AUTHORS
 .nf
 Peter Jones <pjones@redhat.com>

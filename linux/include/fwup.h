@@ -62,6 +62,8 @@ extern int fwup_get_lowest_supported_fw_version(fwup_resource *re,
 						uint32_t *version);
 extern int fwup_get_last_attempt_info(fwup_resource *re, uint32_t *version,
 			   uint32_t *status, time_t *when);
+extern int fwup_get_ux_capsule_info(uint32_t *screen_x_size,
+				    uint32_t *screen_y_size);
 extern const char *fwup_last_attempt_status_to_string (uint64_t status);
 extern int fwup_print_update_info(void);
 

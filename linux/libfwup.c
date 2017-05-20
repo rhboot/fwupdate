@@ -14,6 +14,7 @@
 #include <err.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -424,6 +425,9 @@ err:
 	errno = error;
 	return rc;
 }
+
+static int32_t fwup_screen_xsize;
+static int32_t fwup_screen_ysize;
 
 typedef struct fwup_resource_s
 {
@@ -1709,5 +1713,87 @@ fwup_print_update_info(void)
 	fwup_resource_iter_destroy(&iter);
 	if (rc < 0)
 		return -1;
+	return 0;
+}
+
+static int
+check_bgrt_status(void)
+{
+	int version;
+	int type;
+	int status;
+
+	status = get_value_from_file_at_dir("/sys/firmware/acpi/bgrt",
+					    "status");
+	if (status != 1) {
+		errno = ENOSYS;
+		return -1;
+	}
+	type = get_value_from_file_at_dir("/sys/firmware/acpi/bgrt", "type");
+	if (type != 0) {
+		errno = EINVAL;
+		return -1;
+	}
+	version = get_value_from_file_at_dir("/sys/firmware/acpi/bgrt",
+					     "version");
+	if (version != 1) {
+		errno = ENOTTY;
+		return -1;
+	}
+	return 0;
+}
+
+#define fbdir "/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0"
+static int
+read_efifb_info(int *depth, int *height, int *width, int *linelength)
+{
+	*depth = get_value_from_file_at_dir(fbdir, "depth");
+	*height = get_value_from_file_at_dir(fbdir, "height");
+	*width = get_value_from_file_at_dir(fbdir, "width");
+	*linelength = get_value_from_file_at_dir(fbdir, "linelength");
+
+	return 0;
+}
+
+int
+fwup_get_ux_capsule_info(uint32_t *screen_x_size, uint32_t *screen_y_size)
+{
+	static bool once = false;
+	int depth, height, width, stride;
+	int rc;
+
+	if (once == true) {
+		if (fwup_screen_xsize <= 0 || fwup_screen_ysize <= 0) {
+			errno = ENOSYS;
+			return -1;
+		}
+		if (screen_x_size)
+			*screen_x_size = fwup_screen_xsize;
+		if (screen_y_size)
+			*screen_y_size = fwup_screen_ysize;
+		return 0;
+	}
+
+	rc = check_bgrt_status();
+	if (rc < 0)
+		return rc;
+
+	rc = read_efifb_info(&depth, &height, &width, &stride);
+	if (rc < 0)
+		return rc;
+
+	fwup_screen_xsize = width;
+	fwup_screen_ysize = height;
+	once = true;
+	if (width <= 0 || height <= 0) {
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (screen_x_size)
+		*screen_x_size = fwup_screen_xsize;
+	if (screen_y_size)
+		*screen_y_size = fwup_screen_ysize;
+
 	return 0;
 }

@@ -19,7 +19,9 @@ MAN3TARGETS = libfwup.h.3 \
 	      fwup_get_guid.3 \
 	      fwup_get_fw_version.3 \
 	      fwup_get_lowest_supported_version.3 \
-	      fwup_get_last_attempt_info.3
+	      fwup_get_last_attempt_info.3 \
+	      fwup_get_fw_type.3 \
+	      fwup_get_ux_capsule_info.3
 
 MANSECTIONS = 1 3
 
