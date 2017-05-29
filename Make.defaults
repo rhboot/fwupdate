@@ -2,6 +2,7 @@ NAME		= fwupdate
 COMMIT_ID	= $(shell git log -1 --pretty=%H 2>/dev/null || echo master)
 INSTALL 	?= install
 MAKE		?= make
+PKG_CONFIG	?= $(CROSS_COMPILE)pkg-config
 CC		= $(CROSS_COMPILE)gcc
 LD		= $(CROSS_COMPILE)ld
 OBJCOPY		= $(CROSS_COMPILE)objcopy
