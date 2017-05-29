@@ -13,14 +13,14 @@ CFLAGS	?= -g3 -Og -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \
 PJONES	=
 BIN_CCLDFLAGS = $(foreach lib,$(BIN_LIBS),-l$(lib)) \
 	$(foreach pklib,$(PKLIBS), \
-		$(shell pkg-config --libs-only-l --libs-only-other $(pklib))) \
+		$(shell $(PKG_CONFIG) --libs-only-l --libs-only-other $(pklib))) \
 	$(LDFLAGS) -pie -fPIE -Wl,-z,relro,-z,now -L.
 LIB_CCLDFLAGS = $(foreach lib,$(LIB_LIBS),-l$(lib)) \
 	$(foreach pklib,$(PKLIBS), \
-		$(shell pkg-config --libs-only-l --libs-only-other $(pklib))) \
+		$(shell $(PKG_CONFIG) --libs-only-l --libs-only-other $(pklib))) \
 	$(LDFLAGS) -shared -fPIC -Wl,-z,relro,-z,now
 
-HAVE_LIBSMBIOS := $(shell pkg-config --exists libsmbios_c && \
+HAVE_LIBSMBIOS := $(shell $(PKG_CONFIG) --exists libsmbios_c && \
 				echo yes || echo no)
 ifeq ($(HAVE_LIBSMBIOS),yes)
 	PKLIBS += libsmbios_c
@@ -34,7 +34,7 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wextra -Werror -Wno-error=cpp \
 	-DFWUP_EFI_DIR_NAME=\"$(EFIDIR)\"  \
 	-DFWUP_EFI_BASE_DIR_NAME=\"$(EFIBASE)\"  \
 	-I$(TOPDIR)/linux/include -iquote$(TOPDIR)/include/ \
-	$(foreach pklib,$(PKLIBS), $(shell pkg-config --cflags $(pklib))) \
+	$(foreach pklib,$(PKLIBS), $(shell $(PKG_CONFIG) --cflags $(pklib))) \
 	$(PJONES)
 
 BINTARGETS=fwupdate
