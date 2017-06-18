@@ -14,8 +14,8 @@ if [ -n "$BOOTNUM" ]; then
 fi
 
 
-for x in /boot/efi/EFI/@@EFIDIR@@/fw/fwupdate-* ; do
-	if [ "${x}" != "/boot/efi/EFI/@@EFIDIR@@/fw/fwupdate-*" ]; then
+for x in @@EFIBASE@@/@@EFIDIR@@/fw/fwupdate-* ; do
+	if [ "${x}" != "@@EFIBASE@@/@@EFIDIR@@/fw/fwupdate-*" ]; then
 		rm -f "${x}"
 	fi
 done
