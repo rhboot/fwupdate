@@ -665,6 +665,119 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 }
 
 static EFI_STATUS
+delete_boot_entry(void)
+{
+	EFI_STATUS rc;
+
+	UINTN variable_name_allocation = GNVN_BUF_SIZE;
+	UINTN variable_name_size = 0;
+	CHAR16 *variable_name;
+	EFI_GUID vendor_guid = empty_guid;
+	UINTN mult_res;
+	EFI_STATUS ret = EFI_OUT_OF_RESOURCES;
+
+	variable_name = AllocateZeroPool(GNVN_BUF_SIZE * 2);
+	if (!variable_name) {
+		Print(L"%a:%a():%d: Tried to allocate %d\n",
+		      __FILE__, __func__, __LINE__,
+		      GNVN_BUF_SIZE * 2);
+		Print(L"Could not allocate memory.\n");
+		return EFI_OUT_OF_RESOURCES;
+	}
+
+	while (1) {
+		variable_name_size = variable_name_allocation;
+		rc = uefi_call_wrapper(RT->GetNextVariableName, 3,
+				       &variable_name_size, variable_name,
+				       &vendor_guid);
+		if (rc == EFI_BUFFER_TOO_SMALL) {
+
+			UINTN new_allocation;
+			CHAR16 *new_name;
+
+			new_allocation = variable_name_size;
+			if (uintn_mult(new_allocation, 2, &mult_res)) {
+				Print(L"%a:%a():%d: %d * 2 would overflow size\n",
+				      __FILE__, __func__, __LINE__,
+				      new_allocation);
+				ret = EFI_OUT_OF_RESOURCES;
+				goto err;
+			}
+			new_name = AllocatePool(new_allocation * 2);
+			if (!new_name) {
+				Print(L"%a:%a():%d: Tried to allocate %d\n",
+				      __FILE__, __func__, __LINE__,
+				      new_allocation * 2);
+				Print(L"Could not allocate memory.\n");
+				ret = EFI_OUT_OF_RESOURCES;
+				goto err;
+			}
+			CopyMem(new_name, variable_name,
+				variable_name_allocation);
+			variable_name_allocation = new_allocation;
+			FreePool(variable_name);
+			variable_name = new_name;
+			continue;
+		} else if (rc == EFI_NOT_FOUND) {
+			break;
+		} else if (EFI_ERROR(rc)) {
+			Print(L"%a:%a():%d: "
+			      L"Could not get variable name: %r\n",
+			      __FILE__, __func__, __LINE__, rc);
+			ret = rc;
+			goto err;
+		}
+
+		/* check if the variable name is Boot#### */
+		UINTN vns = StrLen(variable_name);
+		if (vns == 8 && CompareMem(variable_name, L"Boot", 8) == 0) {
+			UINTN info_size = 0;
+			UINT32 attributes = 0;
+			void *info_ptr = NULL;
+			CHAR16 *load_op_description = NULL;
+
+			rc = read_variable(variable_name, vendor_guid, &info_ptr,
+				&info_size, &attributes);
+			if (EFI_ERROR(rc)) {
+				ret = rc;
+				goto err;
+			}
+
+			/*
+			 * check if the boot path created by fwupdate,
+			 * check with EFI_LOAD_OPTION decription
+			 */
+			load_op_description = (CHAR16 *)((UINT8 *)info_ptr +
+				sizeof(UINT32) + sizeof(UINT16));
+
+			if (CompareMem(load_op_description,
+					L"Linux-Firmware-Updater",
+					sizeof (L"Linux-Firmware-Updater") - 2)
+					 == 0) {
+				delete_variable(variable_name, vendor_guid,
+						attributes);
+
+				FreePool(info_ptr);
+				goto out;
+
+			}
+
+			FreePool(info_ptr);
+		}
+	}
+
+out:
+	FreePool(variable_name);
+	return EFI_SUCCESS;
+
+err:
+	FreePool(variable_name);
+
+	return ret;
+}
+
+
+static EFI_STATUS
 add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	    EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd_out)
 {
@@ -755,6 +868,16 @@ apply_capsules(EFI_CAPSULE_HEADER **capsules,
 {
 	UINT64 max_capsule_size;
 	EFI_STATUS rc;
+
+	rc = delete_boot_entry();
+	if (EFI_ERROR(rc)) {
+		/*
+		 * Print out deleting boot entry error, but still try to apply
+		 * capsule.
+		 */
+		Print(L"%a:%a():%d: Could not delete boot entry: %r\n",
+			      __FILE__, __func__, __LINE__, rc);
+	}
 
 	rc = uefi_call_wrapper(RT->QueryCapsuleCapabilities, 4, capsules,
 				num_updates, &max_capsule_size, reset);
