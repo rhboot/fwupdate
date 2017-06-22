@@ -50,6 +50,8 @@ print_system_resources(void)
 		char *id_guid = NULL;
 		uint32_t vers;
 		uint32_t lowest;
+		uint32_t type;
+		char *str_type;
 
 		fwup_get_guid(re, &guid);
 		rc = efi_guid_to_id_guid(guid, &id_guid);
@@ -60,9 +62,27 @@ print_system_resources(void)
 
 		fwup_get_fw_version(re, &vers);
 		fwup_get_lowest_supported_fw_version(re, &lowest);
+		fwup_get_fw_type(re, &type);
+		switch (type) {
+		case FWUP_RESOURCE_TYPE_UNKNOWN:
+			str_type = "Unknown";
+			break;
+		case FWUP_RESOURCE_TYPE_SYSTEM_FIRMWARE:
+			str_type = "System Firmware";
+			break;
+		case FWUP_RESOURCE_TYPE_DEVICE_FIRMWARE:
+			str_type = "Device Firmware";
+			break;
+		case FWUP_RESOURCE_TYPE_UEFI_DRIVER:
+			str_type = "UEFI Driver";
+			break;
+		default:
+			str_type = "";
+			break;
+		}
 
-		printf(_("%s version %d can be updated to any version above %d\n"),
-			id_guid, vers, lowest-1);
+		printf(_("%s type, %s version %d can be updated to any version above %d\n"),
+			str_type , id_guid, vers, lowest-1);
 		free(id_guid);
 	}
 
