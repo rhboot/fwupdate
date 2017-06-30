@@ -665,6 +665,71 @@ open_file(EFI_DEVICE_PATH *dp, EFI_FILE_HANDLE *fh)
 }
 
 static EFI_STATUS
+delete_boot_order(CHAR16 *name, EFI_GUID guid)
+{
+
+	UINTN i;
+	UINT16 boot_num;
+	EFI_STATUS rc;
+	UINTN info_size = 0;
+	UINT32 attributes = 0;
+	void *info_ptr = NULL;
+	UINT16 *new_info_ptr = NULL;
+	BOOLEAN num_found = FALSE;
+	UINTN new_list_num = 0;
+
+	/* get boot hex number */
+	boot_num = xtoi((CHAR16 *)((UINT8 *)name + sizeof(L"Boot")));
+
+	rc = read_variable(L"BootOrder", guid, &info_ptr, &info_size,
+					&attributes);
+	if (EFI_ERROR(rc))
+		return rc;
+
+	new_info_ptr = AllocatePool(info_size);
+	if (!new_info_ptr) {
+		Print(L"%a:%a():%d: Tried to allocate %d\n",
+			__FILE__, __func__, __LINE__, info_size);
+		Print(L"Could not allocate memory.\n");
+		FreePool(info_ptr);
+		return EFI_OUT_OF_RESOURCES;
+	}
+
+	for (i = 0; i < (info_size / sizeof(UINT16)) ; i++) {
+		if (((UINT16 *)info_ptr)[i] != boot_num) {
+			new_info_ptr[i] = ((UINT16 *)info_ptr)[i];
+			new_list_num++;
+
+		} else {
+			num_found = TRUE;
+		}
+	}
+
+	/* if not in the BootOrder list, do not update BootOrder */
+	if (!num_found) {
+		rc = EFI_SUCCESS;
+		goto out;
+	}
+
+	rc = uefi_call_wrapper(RT->SetVariable, 5, L"BootOrder", &guid,
+				attributes, new_list_num * sizeof(UINT16),
+				new_info_ptr);
+	if (EFI_ERROR(rc)) {
+		Print(L"%a:%a():%d: Could not update variable "
+			L"status for \"%s\": %r\n",
+			__FILE__, __func__, __LINE__, name, rc);
+		goto out;
+	}
+
+out:
+
+	FreePool(info_ptr);
+	FreePool(new_info_ptr);
+
+	return rc;
+}
+
+static EFI_STATUS
 delete_boot_entry(void)
 {
 	EFI_STATUS rc;
@@ -754,12 +819,28 @@ delete_boot_entry(void)
 					L"Linux-Firmware-Updater",
 					sizeof (L"Linux-Firmware-Updater") - 2)
 					 == 0) {
-				delete_variable(variable_name, vendor_guid,
+				rc = delete_variable(variable_name, vendor_guid,
 						attributes);
 
-				FreePool(info_ptr);
-				goto out;
+				if (EFI_ERROR(rc)) {
+					Print(L"fail to delete Linux-Firmware-"
+						L"Updater boot path.\n");
+					FreePool(info_ptr);
+					ret = rc;
+					goto out;
+				}
 
+				/* delete the boot path from BootOrder list */
+				rc = delete_boot_order(variable_name,
+								vendor_guid);
+
+				if (EFI_ERROR(rc)) {
+					Print(L"fail to delete the boot path "
+						L"from BootOrder boot path.\n");
+					FreePool(info_ptr);
+					ret = rc;
+					goto out;
+				}
 			}
 
 			FreePool(info_ptr);
