@@ -1174,6 +1174,8 @@ out:
 static int
 get_fd_and_media_path(update_info *info, char **path)
 {
+	struct stat st;
+	char *directory = NULL;
 	char *fullpath = NULL;
 	int fd = -1;
 	int rc;
@@ -1190,11 +1192,25 @@ get_fd_and_media_path(update_info *info, char **path)
 		}
 	} else {
 		/* fall back to creating a new file from scratch */
-		rc = asprintf(&fullpath,
-			      "/boot/efi/EFI/%s/fw/fwupdate-XXXXXX.cap",
+		rc = asprintf(&directory,
+			      "/boot/efi/EFI/%s/fw",
 			      FWUP_EFI_DIR_NAME);
 		if (rc < 0) {
-			efi_error("asprintf failed");
+			efi_error("asprintf directory failed");
+			return fd;
+		}
+		if (stat(directory, &st) != 0 || (st.st_mode & S_IFDIR) == 0) {
+			rc = mkdir(directory, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+			if (rc < 0) {
+				efi_error("failed to make %s", directory);
+				goto out;
+			}
+		}
+		rc = asprintf(&fullpath,
+			      "%s/fwupdate-XXXXXX.cap",
+			      directory);
+		if (rc < 0) {
+			efi_error("asprintf fullpath failed");
 			return fd;
 		}
 		fd = mkostemps(fullpath, 4, O_CREAT|O_TRUNC|O_CLOEXEC);
@@ -1210,6 +1226,7 @@ get_fd_and_media_path(update_info *info, char **path)
 		fullpath = NULL;
 	}
 out:
+	free(directory);
 	free(fullpath);
 	return fd;
 }
