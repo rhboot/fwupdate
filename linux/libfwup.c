@@ -267,6 +267,8 @@ get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
 			efi_error("efi_get_variable() failed");
 			return -1;
 		}
+		efi_error_clear();
+
 		local = calloc(1, sizeof (*local));
 		if (!local) {
 			efi_error("calloc(1, %zd) failed", sizeof (*local));
@@ -795,6 +797,7 @@ add_to_boot_order(uint16_t boot_entry)
 	if (rc == ENOENT) {
 		boot_order_size = 0;
 		rc = 0;
+		efi_error_clear();
 	} else if (rc < 0) {
 		efi_error("efi_get_variable_size() failed");
 		return rc;
