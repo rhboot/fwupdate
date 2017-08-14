@@ -27,6 +27,11 @@ LIBDIR		?= unknown
 ifeq ($(LIBDIR),unknown)
 $(error Architecture $(ARCH) is not a supported build target.)
 endif
+ifneq ($(origin RPMARCH),undefined)
+DOTARCH		?= .$(shell $(CC) -dumpmachine | cut -f1 -d- | sed s,i[3456789]86,i686,)
+else
+DOTARCH		?= .$(RPMARCH)
+endif
 
 GNUEFIDIR	?= $(LIBDIR)/gnuefi
 libdir		?= $(LIBDIR)
