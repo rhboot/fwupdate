@@ -62,7 +62,10 @@ TARGETS = fakeesrt2.efi fakeesrt.efi dumpesrt.efi $(FWUP).efi mkvar.efi dumpf.ef
 
 all : $(TARGETS)
 
-.SECONDARY: $(foreach target,$(TARGETS),$(target).debug $(target).build-id)
+.SECONDARY: $(foreach target,$(TARGETS),$(target).debug \
+					$(target).build-id \
+					$(target).so \
+					)
 
 $(FWUP).so : fwupdate.so
 	ln -f $< $@
@@ -105,15 +108,16 @@ clean :
 	@rm -vf $(TARGETS) *.o *.so *.efi.signed *.efi *.efi.debug \
 		*.efi.build-id
 
-buildiddir = $(dirname $(shell cat $(1).build-id))
+buildiddir = $(dir $(shell cat $(1).build-id))
+buildidname = $(notdir $(shell cat $(1).build-id))
 define inst =
  $(INSTALL) -d -m 755 $(DESTDIR)$(TARGETDIR)/
  $(INSTALL) -m 755 $(1) $(DESTDIR)$(TARGETDIR)/$(1)
  $(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGINFO)$(TARGETDIR)/
  $(INSTALL) -m 755 $(1).debug $(DESTDIR)$(DEBUGINFO)$(TARGETDIR)/$(1).debug
- $(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGINFO)/.build-id/$(dir $(shell cat $(1).build-id))
- ln -sf ../../../../..$(TARGETDIR)$(1) $(DESTDIR)$(DEBUGINFO)/.build-id/$(shell cat $(1).build-id)
- ln -sf ../..$(TARGETDIR)$(1).debug $(DESTDIR)$(DEBUGINFO)/.build-id/$(shell cat $(1).build-id).debug
+ $(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGINFO)/.build-id/$(buildiddir)
+ ln -sf ../../../../$(TARGETDIR)/$(1) $(DESTDIR)$(DEBUGINFO)/.build-id/$(buildiddir)/$(buildidname)
+ ln -sf ../../$(TARGETDIR)$(1).debug $(DESTDIR)$(DEBUGINFO)/.build-id/$(buildiddir)/$(buildidname).debug
 endef
 
 install : | check_efidir_error
