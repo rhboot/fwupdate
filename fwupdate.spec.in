@@ -115,8 +115,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/*.so.*
 %{_datadir}/locale/en/libfwup.po
 %{_unitdir}/fwupdate-cleanup.service
-%attr(0755,root,root) %dir %{_datadir}/fwupdate/
-%config(noreplace) %ghost %{_datadir}/fwupdate/done
+%attr(0755,root,root) %dir %{_sharedstatedir}/fwupdate/
+%config(noreplace) %ghost %{_sharedstatedir}/fwupdate/done
 %attr(0755,root,root) %dir %{_libexecdir}/fwupdate/
 %{_libexecdir}/fwupdate/cleanup
 

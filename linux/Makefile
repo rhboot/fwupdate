@@ -1,8 +1,13 @@
 default : all
 
-TOPDIR	?= $(shell pwd)/..
-include $(TOPDIR)/Make.version
-include $(TOPDIR)/Make.defaults
+ifneq	($(origin TOPDIR),undefined)
+TOP     := $(abspath $(TOPDIR))
+else
+TOP     := $(abspath ..)
+endif
+include $(TOP)/Make.version
+include $(TOP)/Make.defaults
+VPATH	= $(TOP)/linux
 
 LIB_LIBS= pthread
 BIN_LIBS= popt pthread
@@ -33,12 +38,12 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wextra -Werror -Wno-error=cpp \
 	-DLOCALEDIR=\"$(localedir)\" -D_GNU_SOURCE \
 	-DFWUP_EFI_DIR_NAME=\"$(EFIDIR)\"  \
 	-DFWUP_EFI_BASE_DIR_NAME=\"$(EFIBASE)\"  \
-	-I$(TOPDIR)/linux/include -iquote$(TOPDIR)/include/ \
+	-I include -I $(TOP)/linux/include/ -iquote $(TOP)/include/ \
 	$(foreach pklib,$(PKLIBS), $(shell $(PKG_CONFIG) --cflags $(pklib))) \
 	$(PJONES)
 
 BINTARGETS=fwupdate
-INCTARGETS=include/fwup-version.h include/fwup.h
+INCTARGETS=include/fwup-version.h $(VPATH)/include/fwup.h
 LIBTARGETS=libfwup.so
 PCTARGETS=fwup.pc
 POTARGETS = fwupdate.po libfwup.po
@@ -50,8 +55,14 @@ all : $(TARGETS)
 
 fwupdate : libfwup.so
 
-libfwup.c : | include/fwup.h include/fwup-version.h
+include-dir :
+	if [ ! -d include ]; then \
+		$(INSTALL) -d -m 755 include ; \
+	fi
+
+libfwup.c : | include/fwup.h
 include/fwup.h : | include/fwup-version.h
+include/fwup-version.h : | include-dir
 
 % : %.o
 	$(CC) $(BUILDFLAGS) -o $@ $(patsubst lib%.so,-l%,$^) $(BIN_CCLDFLAGS)
@@ -119,5 +130,5 @@ install : check_efidir_error all
 	$(INSTALL) -m 644 cleanup.service \
 		$(DESTDIR)$(libdatadir)/systemd/system/fwupdate-cleanup.service
 	$(INSTALL) -d -m 755 $(DESTDIR)/usr/share/bash-completion/completions/
-	$(INSTALL) -m 755 bash-completion \
+	$(INSTALL) -m 755 $(VPATH)/bash-completion \
 		$(DESTDIR)/usr/share/bash-completion/completions/fwupdate

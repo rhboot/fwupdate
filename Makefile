@@ -1,20 +1,29 @@
 default : all
 
-TOPDIR=$(shell pwd)
-include $(TOPDIR)/Make.version
-include $(TOPDIR)/Make.rules
-include $(TOPDIR)/Make.defaults
-include $(TOPDIR)/Make.coverity
+ifneq ($(origin TOPDIR),undefined)
+TOP	:= $(abspath $(TOPDIR))
+else
+TOP	= $(abspath $(shell pwd))
+endif
+
+include $(TOP)/Make.version
+include $(TOP)/Make.rules
+include $(TOP)/Make.defaults
+include $(TOP)/Make.coverity
 SUBDIRS ?= efi linux docs include
 
 all clean install : | check_efidir_error
 	@set -e ; for x in $(SUBDIRS) ; do \
-		$(MAKE) DESTDIR=$(DESTDIR) TOPDIR=$(TOPDIR) VERSION=$(VERSION) \
+		if [ ! -d $${x} ]; then \
+			install -m 0755 -d $${x} ; \
+		fi ; \
+		$(MAKE) DESTDIR=$(DESTDIR) TOPDIR=$(TOP) VERSION=$(VERSION) \
 			LIBDIR=$(LIBDIR) bindir=$(bindir) mandir=$(mandir) \
-			-C $$x $@ ; \
+			-C $$x/ -f $(TOP)/$$x/Makefile $@ ; \
 	done
 
-fwupdate.spec : fwupdate.spec.in Makefile
+fwupdate.spec : | Makefile
+fwupdate.spec : $(TOP)/fwupdate.spec.in
 	@sed -e "s,@@VERSION@@,$(VERSION),g" $< > $@
 
 GITTAG = $(VERSION)

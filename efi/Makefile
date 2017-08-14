@@ -1,8 +1,13 @@
 default : all
 
-TOPDIR	?= $(shell pwd)/..
-include $(TOPDIR)/Make.version
-include $(TOPDIR)/Make.defaults
+ifneq	($(origin TOPDIR),undefined)
+TOP     := $(abspath $(TOPDIR))
+else
+TOP     := $(abspath ..)
+endif
+include $(TOP)/Make.version
+include $(TOP)/Make.defaults
+VPATH	= $(TOP)/efi
 
 CFLAGS	?= -Og -g3 -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \
 	   -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 \
@@ -11,7 +16,7 @@ BUILDFLAGS	:= $(CFLAGS) -fpic -Werror -Wall -Wextra -fshort-wchar \
 	-fno-merge-constants -ffreestanding \
 	-fno-stack-protector -fno-stack-check --std=gnu11 -DCONFIG_$(ARCH) \
 	-I/usr/include/efi/ -I/usr/include/efi/$(ARCH)/ \
-	-iquote$(TOPDIR)/include "-DDEBUGDIR=L\"$(DEBUGDIR)/\""
+	-iquote$(TOP)/include "-DDEBUGDIR=L\"$(DEBUGDIR)/\""
 CCLDFLAGS	?= -nostdlib -Wl,--warn-common \
 	-Wl,--no-undefined -Wl,--fatal-warnings \
 	-Wl,-shared -Wl,-Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) \

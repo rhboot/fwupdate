@@ -1,6 +1,11 @@
-TOPDIR	?= $(shell pwd)/..
-include $(TOPDIR)/Make.version
-include $(TOPDIR)/Make.defaults
+ifneq	($(origin TOPDIR),undefined)
+TOP     := $(abspath $(TOPDIR))
+else
+TOP     := $(abspath ..)
+endif
+include $(TOP)/Make.version
+include $(TOP)/Make.defaults
+VPATH	= $(TOP)/include
 
 all clean dep :
 

@@ -1,5 +1,5 @@
 
-include $(TOPDIR)/Make.version
+include $(TOP)/Make.version
 
 define get-config
 $(shell git config --local --get "fwupdate.$(1)")

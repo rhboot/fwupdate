@@ -1,7 +1,11 @@
-SRCDIR = .
-TOPDIR = $(SRCDIR)/..
+ifneq	($(origin TOPDIR),undefined)
+TOP     := $(abspath $(TOPDIR))
+else
+TOP     := $(abspath ..)
+endif
+VPATH	= $(TOP)/docs
 
-include $(TOPDIR)/Make.defaults
+include $(TOP)/Make.defaults
 
 MAN1TARGETS = fwupdate.1
 MAN3TARGETS = libfwup.h.3 \
@@ -17,16 +21,28 @@ MAN3TARGETS = libfwup.h.3 \
 	      fwup_get_lowest_supported_version.3 \
 	      fwup_get_last_attempt_info.3
 
+MANSECTIONS = 1 3
+
 all :
 
 clean :
 
 test :
 
-install :
+mandirs :
 	$(INSTALL) -d -m 755 $(DESTDIR)$(mandir)/man1/
-	$(foreach x, $(MAN1TARGETS), $(INSTALL) -m 644 $(x) $(DESTDIR)$(mandir)/man1/;)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(mandir)/man3/
-	$(foreach x, $(MAN3TARGETS), $(INSTALL) -m 644 $(x) $(DESTDIR)$(mandir)/man3/;)
 
-.PHONY: all clean test install
+install : | mandirs
+install : | $(foreach x, $(MAN1TARGETS), $(DESTDIR)$(mandir)/man1/$(x))
+install : | $(foreach x, $(MAN3TARGETS), $(DESTDIR)$(mandir)/man3/$(x))
+
+$(DESTDIR)$(mandir)/man1/%.1 : | mandirs
+$(DESTDIR)$(mandir)/man1/%.1 : %.1
+	$(INSTALL) -m 644 $< $@
+
+$(DESTDIR)$(mandir)/man3/%.3 : | mandirs
+$(DESTDIR)$(mandir)/man3/%.3 : %.3
+	$(INSTALL) -m 644 $< $@
+
+.PHONY: all clean test install mandirs
