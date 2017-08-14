@@ -75,10 +75,11 @@ make OPT_FLAGS="$RPM_OPT_FLAGS" libdir=%{_libdir} bindir=%{_bindir} \
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%make_install EFIDIR=%{efidir} libdir=%{_libdir} \
-       bindir=%{_bindir} mandir=%{_mandir} localedir=%{_datadir}/locale/ \
-       includedir=%{_includedir} libexecdir=%{_libexecdir} \
-       datadir=%{_datadir}
+%make_install EFIDIR=%{efidir} RPMARCH=%{_arch} RELEASE=%{RELEASE} \
+              libdir=%{_libdir} bindir=%{_bindir} mandir=%{_mandir} \
+              localedir=%{_datadir}/locale/ includedir=%{_includedir} \
+              libexecdir=%{_libexecdir} datadir=%{_datadir} \
+              sharedstatedir=%{_sharedstatedir}
 
 %post libs
 /sbin/ldconfig

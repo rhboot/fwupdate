@@ -77,7 +77,7 @@ include/fwup.h : | include/fwup-version.h
 	sed -e "s,@@VERSION@@,$(VERSION),g" \
 		-e "s,@@FWUP_MAJOR_VERSION@@,$(MAJOR_VERSION),g" \
 		-e "s,@@FWUP_MINOR_VERSION@@,$(MINOR_VERSION),g" \
-		-e "s,@@STATEDIR@@,$(statedir),g" \
+		-e "s,@@SHAREDSTATEDIR@@,$(statedir),g" \
 		-e "s,@@EFIBASE@@,$(EFIBASE),g" \
 		-e "s,@@EFIDIR@@,$(EFIDIR),g" \
 		-e "s,@@LIBDIR@@,$(libdir),g" \
@@ -112,7 +112,7 @@ install : check_efidir_error all
 		ln -fs $(x) $(patsubst %.so.1.$(VERSION),%.so.1,$(DESTDIR)$(libdir)/$(x)) ;\
 		ln -fs $(x) $(patsubst %.so.1.$(VERSION),%.so,$(DESTDIR)$(libdir)/$(x)) ;\
 		)
-	$(INSTALL) -d -m 755 $(DESTDIR)$(statedir)/fwupdate/
+	$(INSTALL) -d -m 755 $(DESTDIR)$(sharedstatedir)/fwupdate/
 	$(INSTALL) -d -m 755 $(DESTDIR)$(libexecdir)/fwupdate/
 	$(INSTALL) -m 755 cleanup $(DESTDIR)$(libexecdir)/fwupdate/cleanup
 	$(INSTALL) -d -m 755 $(DESTDIR)$(libdatadir)/systemd/system

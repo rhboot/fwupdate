@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-if [ -e "@@STATEDIR@@/fwupdate/done" ]; then
+if [ -e "@@SHAREDSTATEDIR@@/fwupdate/done" ]; then
 	exit 0
 fi
 
@@ -26,4 +26,4 @@ for x in /sys/firmware/efi/efivars/fwupdate-*-0abba7dc-e516-4167-bbf5-4d9d1c7394
 	fi
 done
 
-touch "@@STATEDIR@@/fwupdate/done"
+touch "@@SHAREDSTATEDIR@@/fwupdate/done"

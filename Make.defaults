@@ -38,7 +38,7 @@ datadir 	?= $(prefix)share
 localedir	?= $(datadir)/locale
 libexecdir	?= $(prefix)libexec
 libdatadir	?= $(prefix)lib
-statedir	?= /var/lib
+sharedstatedir	?= /var/lib
 
 EFIDIR		?= $(shell x=$$(which --skip-alias --skip-functions git 2>/dev/null) ; [ -n "$$x" ] && git config --get fwupdate.efidir)
 ifeq ($(EFIDIR),)
