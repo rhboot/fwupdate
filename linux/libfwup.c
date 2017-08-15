@@ -712,8 +712,8 @@ get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 {
 	int ret = -1;
 
-	char shim_fs_path_tmpl[] = FWUP_EFI_BASE_DIR_NAME"/"FWUP_EFI_DIR_NAME"/shim";
-	char fwup_fs_path_tmpl[] = FWUP_EFI_BASE_DIR_NAME"/"FWUP_EFI_DIR_NAME"/fwup";
+	char shim_fs_path_tmpl[] = FWUP_ESP_MOUNT_DIR_NAME"/EFI/"FWUP_EFI_DIR_NAME"/shim";
+	char fwup_fs_path_tmpl[] = FWUP_ESP_MOUNT_DIR_NAME"/EFI/"FWUP_EFI_DIR_NAME"/fwup";
 	uint8_t fwup_esp_path_tmpl[] = "\\fwup";
 
 	char *shim_fs_path_tmp = NULL;
@@ -1156,13 +1156,29 @@ get_existing_media_path(update_info *info)
 	untilt_slashes(relpath);
 
 	/* build a complete path */
-	rc = asprintf(&fullpath, FWUP_EFI_BASE_DIR_NAME "%s", relpath);
+	rc = asprintf(&fullpath, FWUP_ESP_MOUNT_DIR_NAME "%s", relpath);
 	if (rc < 0)
 		fullpath = NULL;
 
 out:
 	free(relpath);
 	return fullpath;
+}
+
+static int use_existing_media_path = 1;
+
+/**
+ * fwup_use_existing_media_path:
+ * @use_existing_media_path_: 0 or 1
+ *
+ * set use_existing_media_path, used in get_fd_and_media_path
+ * to know if we have to reuse the filename register for this
+ * update GUID in the firmware.
+ */
+void
+fwup_use_existing_media_path(int use_existing_media_path_)
+{
+	use_existing_media_path = use_existing_media_path_;
 }
 
 /**
@@ -1186,7 +1202,9 @@ get_fd_and_media_path(update_info *info, char **path)
 	/* look for an existing variable that we've used before for this
 	 * update GUID, and reuse the filename so we don't wind up
 	 * littering the filesystem with old updates */
-	fullpath = get_existing_media_path (info);
+	if (use_existing_media_path)
+		fullpath = get_existing_media_path (info);
+
 	if (fullpath) {
 		fd = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR, 0600);
 		if (fd < 0) {
@@ -1196,8 +1214,8 @@ get_fd_and_media_path(update_info *info, char **path)
 	} else {
 		/* fall back to creating a new file from scratch */
 		rc = asprintf(&directory,
-			      "%s/%s/fw",
-			      FWUP_EFI_BASE_DIR_NAME,
+			      "%s/EFI/%s/fw",
+			      FWUP_ESP_MOUNT_DIR_NAME,
 			      FWUP_EFI_DIR_NAME);
 		if (rc < 0) {
 			efi_error("asprintf directory failed");
@@ -1212,8 +1230,7 @@ get_fd_and_media_path(update_info *info, char **path)
 			}
 		}
 		rc = asprintf(&fullpath,
-			      "%s/%s/fw/fwupdate-XXXXXX.cap",
-			      FWUP_EFI_BASE_DIR_NAME,
+			      "%s/fwupdate-XXXXXX.cap",
 			      directory);
 		if (rc < 0) {
 			efi_error("asprintf fullpath failed");
