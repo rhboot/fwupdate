@@ -712,8 +712,8 @@ get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 {
 	int ret = -1;
 
-	char shim_fs_path_tmpl[] = FWUP_EFI_BASE_DIR_NAME"/"FWUP_EFI_DIR_NAME"/shim";
-	char fwup_fs_path_tmpl[] = FWUP_EFI_BASE_DIR_NAME"/"FWUP_EFI_DIR_NAME"/fwup";
+	char shim_fs_path_tmpl[] = FWUP_ESP_MOUNTPOINT"/EFI/"FWUP_EFI_DIR_NAME"/shim";
+	char fwup_fs_path_tmpl[] = FWUP_ESP_MOUNTPOINT"/EFI/"FWUP_EFI_DIR_NAME"/fwup";
 	uint8_t fwup_esp_path_tmpl[] = "\\fwup";
 
 	char *shim_fs_path_tmp = NULL;
@@ -1156,7 +1156,7 @@ get_existing_media_path(update_info *info)
 	untilt_slashes(relpath);
 
 	/* build a complete path */
-	rc = asprintf(&fullpath, FWUP_EFI_BASE_DIR_NAME "%s", relpath);
+	rc = asprintf(&fullpath, FWUP_ESP_MOUNTPOINT "%s", relpath);
 	if (rc < 0)
 		fullpath = NULL;
 
@@ -1204,8 +1204,8 @@ get_fd_and_media_path(update_info *info, char **path)
 	if (make_new_path) {
 		/* fall back to creating a new file from scratch */
 		rc = asprintf(&directory,
-			      "%s/%s/fw",
-			      FWUP_EFI_BASE_DIR_NAME,
+			      "%s/EFI/%s/fw",
+			      FWUP_ESP_MOUNTPOINT,
 			      FWUP_EFI_DIR_NAME);
 		if (rc < 0) {
 			efi_error("asprintf directory failed");
