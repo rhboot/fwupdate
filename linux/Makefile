@@ -32,7 +32,7 @@ BUILDFLAGS := $(CFLAGS) -Wall -Wextra -Werror -Wno-error=cpp \
 	-fshort-wchar --std=gnu11 \
 	-DLOCALEDIR=\"$(localedir)\" -D_GNU_SOURCE \
 	-DFWUP_EFI_DIR_NAME=\"$(EFIDIR)\"  \
-	-DFWUP_EFI_BASE_DIR_NAME=\"$(EFIBASE)\"  \
+	-DFWUP_ESP_MOUNT_DIR_NAME=\"$(ESPMOUNTDIR)\"  \
 	-I$(TOPDIR)/linux/include -iquote$(TOPDIR)/include/ \
 	$(foreach pklib,$(PKLIBS), $(shell $(PKG_CONFIG) --cflags $(pklib))) \
 	$(PJONES)
@@ -78,7 +78,7 @@ include/fwup.h : | include/fwup-version.h
 		-e "s,@@FWUP_MAJOR_VERSION@@,$(MAJOR_VERSION),g" \
 		-e "s,@@FWUP_MINOR_VERSION@@,$(MINOR_VERSION),g" \
 		-e "s,@@STATEDIR@@,$(statedir),g" \
-		-e "s,@@EFIBASE@@,$(EFIBASE),g" \
+		-e "s,@@ESPMOUNTDIR@@,$(ESPMOUNTDIR),g" \
 		-e "s,@@EFIDIR@@,$(EFIDIR),g" \
 		-e "s,@@LIBDIR@@,$(libdir),g" \
 		-e "s,@@LIBEXECDIR@@,$(libexecdir),g" \
