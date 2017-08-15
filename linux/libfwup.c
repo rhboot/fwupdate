@@ -1165,6 +1165,22 @@ out:
 	return fullpath;
 }
 
+static bool use_existing_media_path = true;
+
+/**
+ * fwup_use_existing_media_path:
+ * @use_existing_media_path_: 0 or 1
+ *
+ * set use_existing_media_path, used in get_fd_and_media_path
+ * to know if we have to reuse the filename register for this
+ * update GUID in the firmware.
+ */
+void
+fwup_use_existing_media_path(int use_existing_media_path_)
+{
+	use_existing_media_path = use_existing_media_path_;
+}
+
 /**
  * get_fd_and_media_path:
  * @info: the #update_info
@@ -1187,7 +1203,9 @@ get_fd_and_media_path(update_info *info, char **path)
 	/* look for an existing variable that we've used before for this
 	 * update GUID, and reuse the filename so we don't wind up
 	 * littering the filesystem with old updates */
-	fullpath = get_existing_media_path (info);
+	if (use_existing_media_path)
+		fullpath = get_existing_media_path (info);
+
 	if (fullpath) {
 		fd = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR, 0600);
 		if (fd < 0) {

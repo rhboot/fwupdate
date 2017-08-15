@@ -30,6 +30,9 @@ libfwup - library to support management of system firmware updates
 .ta \nZu
 	uint32_t *\fIstatus\fB, time_t *\fIwhen\fB);\fR\p
  \- operate on an individual firmware entry
+
+\fBvoid \fRfwup_use_existing_media_path\fB(int \fIuse_existing_media_path\fB);\fR\p
+ \- instruct fwupdate on whether to reuse old capsule filenames on the ESP.
 .SH DESCRIPTION
 .nf
 .PP
@@ -85,6 +88,9 @@ Get the status for the last attempt to update firmware resource \fIre\fR.
 
 \fBvoid \fRfwup_print_update_info\fB(void);\fR\p
 Print the information of firmware update status.
+
+\fBvoid \fRfwup_use_existing_media_path\fB(int \fIuse_existing_media_path\fB);\fR\p
+Instruct fwupdate on whether to reuse old capsule filenames on the ESP.
 .SH AUTHORS
 .nf
 Peter Jones <pjones@redhat.com>
