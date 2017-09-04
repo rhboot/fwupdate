@@ -81,6 +81,20 @@ static int n_arches_64 = sizeof(arch_names_64) / sizeof(arch_names_64[0]);
 		_ret;						\
 	})
 
+static char *esp_mountpoint;
+
+/**
+ * fwup_set_esp_mountpoint:
+ * @path: pointer to a string containing the path to the ESP mountpoint
+ *
+ * The string isn't copied so you should not free it after calling this function
+ */
+void
+fwup_set_esp_mountpoint(char *path)
+{
+	esp_mountpoint = path;
+}
+
 static int
 efidp_end_entire(efidp_header *dp)
 {
@@ -711,9 +725,10 @@ static int
 get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 {
 	int ret = -1;
+	int rc;
 
-	char shim_fs_path_tmpl[] = FWUP_ESP_MOUNTPOINT"/EFI/"FWUP_EFI_DIR_NAME"/shim";
-	char fwup_fs_path_tmpl[] = FWUP_ESP_MOUNTPOINT"/EFI/"FWUP_EFI_DIR_NAME"/fwup";
+	char *shim_fs_path_tmpl = NULL;
+	char *fwup_fs_path_tmpl = NULL;
 	uint8_t fwup_esp_path_tmpl[] = "\\fwup";
 
 	char *shim_fs_path_tmp = NULL;
@@ -722,14 +737,26 @@ get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 
 	uint64_t firmware_bits = 0;
 
+	rc = asprintf(&shim_fs_path_tmpl, "%s/EFI/%s/shim",
+		      esp_mountpoint, FWUP_EFI_DIR_NAME);
+	if (rc < 0) {
+		efi_error("asprintf failed");
+		goto out;
+	}
+
+	rc = asprintf(&fwup_fs_path_tmpl, "%s/EFI/%s/shup",
+		      esp_mountpoint, FWUP_EFI_DIR_NAME);
+	if (rc < 0) {
+		efi_error("asprintf failed");
+		goto out;
+	}
+
 	firmware_bits = get_value_from_file_at_dir("/sys/firmware/efi/",
 						   "fw_platform_size");
 	char **arch_names = firmware_bits == 64 ? arch_names_64
 						 : arch_names_32;
 	int n_arches = firmware_bits == 64 ? n_arches_64 : n_arches_32;
 	int i;
-
-	int rc;
 
 	*shim_fs_path = NULL;
 	*fwup_fs_path = NULL;
@@ -770,8 +797,15 @@ get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 	if (fwup_esp_path_tmp)
 		*fwup_esp_path = fwup_esp_path_tmp;
 
+	free(shim_fs_path_tmpl);
+	free(fwup_fs_path_tmpl);
+
 	return 0;
 out:
+	if (shim_fs_path_tmpl)
+		free(shim_fs_path_tmpl);
+	if (fwup_fs_path_tmpl)
+		free(fwup_fs_path_tmpl);
 	if (*shim_fs_path)
 		free(*shim_fs_path);
 	if (*fwup_fs_path)
@@ -1156,7 +1190,7 @@ get_existing_media_path(update_info *info)
 	untilt_slashes(relpath);
 
 	/* build a complete path */
-	rc = asprintf(&fullpath, FWUP_ESP_MOUNTPOINT "%s", relpath);
+	rc = asprintf(&fullpath, "%s%s", esp_mountpoint, relpath);
 	if (rc < 0)
 		fullpath = NULL;
 
@@ -1223,7 +1257,7 @@ get_fd_and_media_path(update_info *info, char **path)
 		/* fall back to creating a new file from scratch */
 		rc = asprintf(&directory,
 			      "%s/EFI/%s/fw",
-			      FWUP_ESP_MOUNTPOINT,
+			      esp_mountpoint,
 			      FWUP_EFI_DIR_NAME);
 		if (rc < 0) {
 			efi_error("asprintf directory failed");
