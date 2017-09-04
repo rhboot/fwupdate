@@ -41,6 +41,8 @@ extern int fwup_enable_esrt(void);
 typedef struct fwup_resource_s fwup_resource;
 typedef struct fwup_resource_iter_s fwup_resource_iter;
 
+extern void fwup_esp_mount_dir_name(char*);
+
 extern int fwup_resource_iter_next(fwup_resource_iter *iter,
 				   fwup_resource **re);
 extern int fwup_resource_iter_create(fwup_resource_iter **iter);

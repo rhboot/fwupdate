@@ -103,6 +103,7 @@ main(int argc, char *argv[]) {
 	int action = 0;
 	int force = 0;
 	int use_existing_media_path = 1;
+	char* esp_path = NULL;
 
 	const char *guidstr = NULL;
 	const char *filename = NULL;
@@ -160,6 +161,13 @@ main(int argc, char *argv[]) {
 		 .arg = &force,
 		 .val = 1,
 		 .descrip = _("Forces flash even if GUID isn't in ESRT.") },
+		{.longName = "esp-path",
+		 .shortName = 'p',
+		 .argInfo = POPT_ARG_STRING,
+		 .arg = &esp_path,
+		 .val = 0,
+		 .descrip = _("Change the ESP path (default to "FWUP_ESP_MOUNT_DIR_NAME")"),
+		 .argDescrip = "<esp-path>"},
 		{.longName = "dont-use-existing-media-path",
 		 .shortName = 'F',
 		 .argInfo = POPT_ARG_VAL,
@@ -208,6 +216,9 @@ main(int argc, char *argv[]) {
 			poptPrintUsage(optcon, stderr, 0);
 			exit(1);
 		}
+
+		if (esp_path)
+			fwup_esp_mount_dir_name(esp_path);
 	}
 
 	if (rc < -1)
