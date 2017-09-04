@@ -81,6 +81,20 @@ static int n_arches_64 = sizeof(arch_names_64) / sizeof(arch_names_64[0]);
 		_ret;						\
 	})
 
+static char* esp_mount_dir_name = FWUP_ESP_MOUNT_DIR_NAME;
+
+/**
+ * fwup_esp_mount_dir_name:
+ * @esp_mount_dir_name_: pointer to a string containing the ESP mount path
+ *
+ * The string isn't copied so you should not free it after calling this function
+ */
+void
+fwup_esp_mount_dir_name(char* esp_mount_dir_name_)
+{
+	esp_mount_dir_name = esp_mount_dir_name_;
+}
+
 static int
 efidp_end_entire(efidp_header *dp)
 {
@@ -711,9 +725,10 @@ static int
 get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 {
 	int ret = -1;
+	int rc;
 
-	char shim_fs_path_tmpl[] = FWUP_EFI_BASE_DIR_NAME"/"FWUP_EFI_DIR_NAME"/shim";
-	char fwup_fs_path_tmpl[] = FWUP_EFI_BASE_DIR_NAME"/"FWUP_EFI_DIR_NAME"/fwup";
+	char*   shim_fs_path_tmpl = NULL;
+	char*   fwup_fs_path_tmpl = NULL;
 	uint8_t fwup_esp_path_tmpl[] = "\\fwup";
 
 	char *shim_fs_path_tmp = NULL;
@@ -722,14 +737,26 @@ get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 
 	uint64_t firmware_bits = 0;
 
+	rc = asprintf(&shim_fs_path_tmpl, "%s/EFI/%s/shim",
+			esp_mount_dir_name, FWUP_EFI_DIR_NAME);
+	if (rc < 0) {
+		efi_error("asprintf failed");
+		goto out;
+	}
+
+	rc = asprintf(&fwup_fs_path_tmpl, "%s/EFI/%s/shup",
+			esp_mount_dir_name, FWUP_EFI_DIR_NAME);
+	if (rc < 0) {
+		efi_error("asprintf failed");
+		goto out;
+	}
+
 	firmware_bits = get_value_from_file_at_dir("/sys/firmware/efi/",
 						   "fw_platform_size");
 	char **arch_names = firmware_bits == 64 ? arch_names_64
 						 : arch_names_32;
 	int n_arches = firmware_bits == 64 ? n_arches_64 : n_arches_32;
 	int i;
-
-	int rc;
 
 	*shim_fs_path = NULL;
 	*fwup_fs_path = NULL;
@@ -770,8 +797,15 @@ get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 	if (fwup_esp_path_tmp)
 		*fwup_esp_path = fwup_esp_path_tmp;
 
+	free(shim_fs_path_tmpl);
+	free(fwup_fs_path_tmpl);
+
 	return 0;
 out:
+	if (shim_fs_path_tmpl)
+		free(shim_fs_path_tmpl);
+	if (fwup_fs_path_tmpl)
+		free(fwup_fs_path_tmpl);
 	if (*shim_fs_path)
 		free(*shim_fs_path);
 	if (*fwup_fs_path)
@@ -1156,13 +1190,29 @@ get_existing_media_path(update_info *info)
 	untilt_slashes(relpath);
 
 	/* build a complete path */
-	rc = asprintf(&fullpath, FWUP_EFI_BASE_DIR_NAME "%s", relpath);
+	rc = asprintf(&fullpath, "%s%s", esp_mount_dir_name, relpath);
 	if (rc < 0)
 		fullpath = NULL;
 
 out:
 	free(relpath);
 	return fullpath;
+}
+
+static int use_existing_media_path = 1;
+
+/**
+ * fwup_use_existing_media_path:
+ * @use_existing_media_path_: 0 or 1
+ *
+ * set use_existing_media_path, used in get_fd_and_media_path
+ * to know if we have to reuse the filename register for this
+ * update GUID in the firmware.
+ */
+void
+fwup_use_existing_media_path(int use_existing_media_path_)
+{
+	use_existing_media_path = use_existing_media_path_;
 }
 
 /**
@@ -1186,7 +1236,9 @@ get_fd_and_media_path(update_info *info, char **path)
 	/* look for an existing variable that we've used before for this
 	 * update GUID, and reuse the filename so we don't wind up
 	 * littering the filesystem with old updates */
-	fullpath = get_existing_media_path (info);
+	if (use_existing_media_path)
+		fullpath = get_existing_media_path (info);
+
 	if (fullpath) {
 		fd = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR, 0600);
 		if (fd < 0) {
@@ -1196,8 +1248,8 @@ get_fd_and_media_path(update_info *info, char **path)
 	} else {
 		/* fall back to creating a new file from scratch */
 		rc = asprintf(&directory,
-			      "%s/%s/fw",
-			      FWUP_EFI_BASE_DIR_NAME,
+			      "%s/EFI/%s/fw",
+			      esp_mount_dir_name,
 			      FWUP_EFI_DIR_NAME);
 		if (rc < 0) {
 			efi_error("asprintf directory failed");
@@ -1212,8 +1264,7 @@ get_fd_and_media_path(update_info *info, char **path)
 			}
 		}
 		rc = asprintf(&fullpath,
-			      "%s/%s/fw/fwupdate-XXXXXX.cap",
-			      FWUP_EFI_BASE_DIR_NAME,
+			      "%s/fwupdate-XXXXXX.cap",
 			      directory);
 		if (rc < 0) {
 			efi_error("asprintf fullpath failed");

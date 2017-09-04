@@ -102,6 +102,8 @@ int
 main(int argc, char *argv[]) {
 	int action = 0;
 	int force = 0;
+	int use_existing_media_path = 1;
+	char* esp_path = NULL;
 
 	const char *guidstr = NULL;
 	const char *filename = NULL;
@@ -159,6 +161,19 @@ main(int argc, char *argv[]) {
 		 .arg = &force,
 		 .val = 1,
 		 .descrip = _("Forces flash even if GUID isn't in ESRT.") },
+		{.longName = "esp-path",
+		 .shortName = 'p',
+		 .argInfo = POPT_ARG_STRING,
+		 .arg = &esp_path,
+		 .val = 0,
+		 .descrip = _("Change the ESP path (default to "FWUP_ESP_MOUNT_DIR_NAME")"),
+		 .argDescrip = "<esp-path>"},
+		{.longName = "dont-use-existing-media-path",
+		 .shortName = 'F',
+		 .argInfo = POPT_ARG_VAL,
+		 .arg = &use_existing_media_path,
+		 .val = 0,
+		 .descrip = _("Don't reuse the filename register for this GUID in the firmware (if it exist).") },
 		{.longName = "verbose",
 		 .shortName = 'v',
 		 .argInfo = POPT_ARG_VAL|POPT_ARGFLAG_OPTIONAL,
@@ -201,6 +216,9 @@ main(int argc, char *argv[]) {
 			poptPrintUsage(optcon, stderr, 0);
 			exit(1);
 		}
+
+		if (esp_path)
+			fwup_esp_mount_dir_name(esp_path);
 	}
 
 	if (rc < -1)
@@ -278,6 +296,7 @@ main(int argc, char *argv[]) {
 			if (fd < 0)
 				error(2, _("could not open \"%s\""), filename);
 
+			fwup_use_existing_media_path(use_existing_media_path);
 			rc = fwup_set_up_update(re, 0, fd);
 			if (rc < 0)
 				error(2, _("Could not set up firmware update"));
