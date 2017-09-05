@@ -266,4 +266,8 @@ typedef struct {
 	uint8_t pad2;
 } efi_time_t;
 
+#define CAPSULE_FLAGS_PERSIST_ACROSS_RESET    0x00010000
+#define CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE   0x00020000
+#define CAPSULE_FLAGS_INITIATE_RESET          0x00040000
+
 #endif /* LIBFW_UTIL_H */

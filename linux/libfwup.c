@@ -438,6 +438,7 @@ typedef struct fwup_resource_s
 typedef struct fwup_resource_iter_s {
 	DIR *dir;
 	int dirfd;
+	int add_ux_capsule;
 	fwup_resource re;
 } fwup_resource_iter;
 
@@ -446,6 +447,7 @@ fwup_resource_iter_create(fwup_resource_iter **iter)
 {
 	int error;
 	char *path;
+	uint32_t x, y;
 
 	if (!iter) {
 		efi_error("invalid iter");
@@ -476,6 +478,11 @@ fwup_resource_iter_create(fwup_resource_iter **iter)
 		efi_error("dirfd() failed");
 		goto err;
 	}
+
+	if (fwup_get_ux_capsule_info(&x, &y) < 0)
+		new->add_ux_capsule = false;
+	else
+		new->add_ux_capsule = true;
 
 	*iter = new;
 	return 0;
@@ -522,6 +529,35 @@ fwup_resource_iter_destroy(fwup_resource_iter **iterp)
 	return 0;
 }
 
+#define UX_CAPSULE_GUID EFI_GUID(0x3b8c8162,0x188c,0x46a4,0xaec9,0xbe,0x43,0xf1,0xd6,0x56,0x97)
+
+static fwup_resource fwup_ux_capsule = {
+	.esre.fw_type = FWUP_RESOURCE_TYPE_SYSTEM_FIRMWARE,
+	.esre.fw_version = 1,
+	.esre.lowest_supported_fw_version = 1,
+	.esre.capsule_flags = CAPSULE_FLAGS_PERSIST_ACROSS_RESET,
+	.esre.last_attempt_version = 1,
+	.esre.last_attempt_status = FWUP_LAST_ATTEMPT_STATUS_ERROR_UNSUCCESSFUL,
+	.info = NULL
+};
+
+static fwup_resource *
+make_ux_capsule_entry(void)
+{
+	int rc;
+
+	fwup_ux_capsule.esre.guid = UX_CAPSULE_GUID;
+
+	if (fwup_ux_capsule.info == NULL) {
+		rc = get_info(&fwup_ux_capsule.esre.guid, 0, &fwup_ux_capsule.info);
+		if (rc < 0) {
+			efi_error("get_info() failed");
+			return NULL;
+		}
+	}
+	return &fwup_ux_capsule;
+}
+
 int
 fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 {
@@ -542,6 +578,16 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 				efi_error("readdir failed");
 				return -1;
 			}
+			if (iter->add_ux_capsule) {
+				iter->add_ux_capsule = false;
+				*re = make_ux_capsule_entry();
+				if (*re)
+					return 1;
+			} else if (fwup_ux_capsule.info) {
+				free_info(fwup_ux_capsule.info);
+				fwup_ux_capsule.info = NULL;
+			}
+
 			return 0;
 		}
 		if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
