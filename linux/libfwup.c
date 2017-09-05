@@ -9,8 +9,8 @@
  */
 
 #include <dirent.h>
-#include <efiboot.h>
-#include <efivar.h>
+#include <efivar/efiboot.h>
+#include <efivar/efivar.h>
 #include <err.h>
 #include <errno.h>
 #include <inttypes.h>
