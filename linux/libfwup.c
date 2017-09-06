@@ -744,7 +744,7 @@ get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 		goto out;
 	}
 
-	rc = asprintf(&fwup_fs_path_tmpl, "%s/EFI/%s/shup",
+	rc = asprintf(&fwup_fs_path_tmpl, "%s/EFI/%s/fwup",
 		      esp_mountpoint, FWUP_EFI_DIR_NAME);
 	if (rc < 0) {
 		efi_error("asprintf failed");
