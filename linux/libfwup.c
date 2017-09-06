@@ -1182,6 +1182,7 @@ get_fd_and_media_path(update_info *info, char **path)
 	char *fullpath = NULL;
 	int fd = -1;
 	int rc;
+	bool make_new_path = false;
 
 	/* look for an existing variable that we've used before for this
 	 * update GUID, and reuse the filename so we don't wind up
@@ -1191,9 +1192,16 @@ get_fd_and_media_path(update_info *info, char **path)
 		fd = open(fullpath, O_CREAT|O_TRUNC|O_CLOEXEC|O_RDWR, 0600);
 		if (fd < 0) {
 			efi_error("open of %s failed", fullpath);
-			goto out;
+			if (errno == ENOENT)
+				make_new_path = true;
+			else
+				goto out;
 		}
 	} else {
+		make_new_path = true;
+	}
+
+	if (make_new_path) {
 		/* fall back to creating a new file from scratch */
 		rc = asprintf(&directory,
 			      "%s/%s/fw",
@@ -1212,8 +1220,7 @@ get_fd_and_media_path(update_info *info, char **path)
 			}
 		}
 		rc = asprintf(&fullpath,
-			      "%s/%s/fw/fwupdate-XXXXXX.cap",
-			      FWUP_EFI_BASE_DIR_NAME,
+			      "%s/fwupdate-XXXXXX.cap",
 			      directory);
 		if (rc < 0) {
 			efi_error("asprintf fullpath failed");
@@ -1224,6 +1231,7 @@ get_fd_and_media_path(update_info *info, char **path)
 			efi_error("mkostemps(%s) failed", fullpath);
 			goto out;
 		}
+		efi_error_clear();
 	}
 
 	/* success, so take ownership of the string */
