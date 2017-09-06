@@ -835,7 +835,7 @@ add_to_boot_order(uint16_t boot_entry)
 
 	rc = efi_set_variable(efi_guid_global, "BootOrder",
 			      (uint8_t *)new_boot_order, boot_order_size,
-			      attr, 0600);
+			      attr, 0644);
 	if (rc < 0)
 		efi_error("efi_set_variable() failed");
 
