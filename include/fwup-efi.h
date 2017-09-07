@@ -15,6 +15,16 @@
 
 #define UPDATE_INFO_VERSION	7
 
+typedef struct {
+	uint8_t version;
+	uint8_t checksum;
+	uint8_t image_type;
+	uint8_t reserved;
+	uint32_t mode;
+	uint32_t x_offset;
+	uint32_t y_offset;
+} ux_capsule_header_t;
+
 typedef struct update_info_s {
 	uint32_t update_info_version;
 

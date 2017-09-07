@@ -23,6 +23,8 @@
 EFI_GUID empty_guid = {0x0,0x0,0x0,{0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}};
 EFI_GUID fwupdate_guid =
 	{0x0abba7dc,0xe516,0x4167,{0xbb,0xf5,0x4d,0x9d,0x1c,0x73,0x94,0x16}};
+EFI_GUID ux_capsule_guid =
+	{0x3b8c8162,0x188c,0x46a4,{0xae,0xc9,0xbe,0x43,0xf1,0xd6,0x56,0x97}};
 
 #include "fwup-efi.h"
 
@@ -866,16 +868,153 @@ err:
 	return ret;
 }
 
+static EFI_STATUS
+get_gop_mode(UINT32 *mode, EFI_HANDLE loaded_image)
+{
+	EFI_HANDLE *handles, gop_handle;
+	UINTN num_handles, i;
+	EFI_STATUS status;
+	EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+	EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+	void *iface;
+
+	status = LibLocateHandle(ByProtocol, &gop_guid, NULL, &num_handles,
+				 &handles);
+	if (EFI_ERROR(status))
+		return status;
+
+	if (!handles || num_handles == 0)
+		return EFI_UNSUPPORTED;
+
+	for (i = 0; i < num_handles; i++) {
+		gop_handle = handles[i];
+
+		status = uefi_call_wrapper(BS->OpenProtocol, 6,
+					   gop_handle, &gop_guid, &iface,
+					   loaded_image, 0,
+					   EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+		if (EFI_ERROR(status))
+		    continue;
+
+		gop = (EFI_GRAPHICS_OUTPUT_PROTOCOL *)iface;
+
+		*mode = gop->Mode->Mode;
+		return EFI_SUCCESS;
+	}
+
+	return EFI_UNSUPPORTED;
+}
+
+static UINT32 csum(UINT8 *buf, UINTN size)
+{
+	UINT32 sum = 0;
+	UINTN i;
+	if (debugging)
+		Print(L"checksumming %d bytes at 0x%08x\n", size, buf);
+
+	for (i = 0; i < size; i++) {
+		sum += buf[i];
+		if (debugging)
+			Print(L"\rpos:%08lx csum:%08lu", buf+i, sum);
+	}
+	if (debugging)
+		Print(L"\n");
+
+	return sum;
+}
+
+static EFI_STATUS
+do_ux_csum(EFI_HANDLE loaded_image, UINT8 *buf, UINTN size)
+{
+	ux_capsule_header_t *payload_hdr;
+	EFI_CAPSULE_HEADER *capsule;
+	EFI_STATUS rc;
+	UINTN sum = 0;
+
+	UINT8 *current = buf;
+	UINTN left = size;
+
+	if (size < sizeof(*capsule)) {
+		if (debugging)
+			Print(L"Invalid capsule size %d\n", size);
+		return EFI_INVALID_PARAMETER;
+	}
+
+	capsule = (EFI_CAPSULE_HEADER *)buf;
+
+	if (debugging) {
+		hexdump(buf, size <= 0x40 ? size : 0x40);
+		Print(L"size: %lu\n", size);
+		Print(L"&HeaderSize: 0x%08lx\n", &capsule->HeaderSize);
+		Print(L"HeaderSize: %lu\n", capsule->HeaderSize);
+		Print(L"&CapsuleImageSize: 0x%08lx\n", &capsule->CapsuleImageSize);
+		Print(L"CapsuleImageSize: %lu\n", capsule->CapsuleImageSize);
+	}
+
+	if (size < capsule->HeaderSize) {
+		if (debugging)
+			Print(L"Invalid capsule header size %d\n", size);
+		return EFI_INVALID_PARAMETER;
+	}
+
+	sum += csum(current, capsule->HeaderSize);
+	current += capsule->HeaderSize;
+	left -= capsule->HeaderSize;
+
+	if (size < capsule->HeaderSize + capsule->CapsuleImageSize) {
+		if (debugging)
+			Print(L"Invalid capsule size %d\n", size);
+		return EFI_INVALID_PARAMETER;
+	}
+
+	payload_hdr = (ux_capsule_header_t *)(buf) + capsule->HeaderSize;
+	if (debugging) {
+		Print(L"&PayloadHeader: 0x%08lx\n", payload_hdr);
+		Print(L"PayloadHeader Size: %lu\n", sizeof (*payload_hdr));
+	}
+	rc = get_gop_mode(&payload_hdr->mode, loaded_image);
+	if (EFI_ERROR(rc))
+		return EFI_UNSUPPORTED;
+
+	payload_hdr->checksum = 0;
+	sum += csum(current, sizeof(*payload_hdr));
+	current += sizeof(*payload_hdr);
+	left -= sizeof(*payload_hdr);
+
+	sum += csum(current, left);
+	if (debugging)
+		Print(L"sum is 0x%02hhx; setting ->checksum to 0x%02hhx\n",
+		      sum & 0xff, (uint8_t)((int8_t)(0 - (sum & 0xff))));
+
+	payload_hdr->checksum = (uint8_t)((int8_t)(0 - sum));
+	if (debugging)
+		Print(L"checksum is set...\n");
+
+	return EFI_SUCCESS;
+}
+
+static int
+is_ux_capsule(EFI_GUID *guid)
+{
+	if (CompareMem(guid, &ux_capsule_guid,
+		       sizeof(ux_capsule_guid)) == 0)
+		return 1;
+	return 0;
+}
 
 static EFI_STATUS
 add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
-	    EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd_out)
+	    EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd_out, EFI_HANDLE loaded_image)
 {
 	EFI_STATUS rc;
 	EFI_FILE_HANDLE fh = NULL;
 	UINT8 *fbuf = NULL;
 	UINTN fsize = 0;
 	EFI_CAPSULE_HEADER *capsule;
+
+	UINTN cbd_len;
+	EFI_PHYSICAL_ADDRESS cbd_data;
+	EFI_CAPSULE_HEADER *cap_out;
 
 	rc = open_file((EFI_DEVICE_PATH *)update->info->dp_buf, &fh);
 	if (EFI_ERROR(rc))
@@ -910,13 +1049,14 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 			Print(L"updates guid: %g\n", &update->info->guid);
 			Print(L"File guid: %g\n", fbuf);
 		}
-		cbd_out->Length = fsize;
-		cbd_out->Union.DataBlock =
-			(EFI_PHYSICAL_ADDRESS)(UINTN)fbuf;
-		*capsule_out = (EFI_CAPSULE_HEADER *)fbuf;
-		(*capsule_out)->Flags |= update->info->capsule_flags |
-			CAPSULE_FLAGS_PERSIST_ACROSS_RESET |
-			CAPSULE_FLAGS_INITIATE_RESET;
+		cbd_len = fsize;
+		cbd_data = (EFI_PHYSICAL_ADDRESS)(UINTN)fbuf;
+		capsule = cap_out = (EFI_CAPSULE_HEADER *)fbuf;
+		if (!cap_out->Flags && !is_ux_capsule(&update->info->guid)) {
+			cap_out->Flags |= update->info->capsule_flags |
+					  CAPSULE_FLAGS_PERSIST_ACROSS_RESET |
+					  CAPSULE_FLAGS_INITIATE_RESET;
+		}
 	} else {
 		if (debugging) {
 			Print(L"Image does not have embedded header\n");
@@ -933,19 +1073,32 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 		}
 		capsule->CapsuleGuid = update->info->guid;
 		capsule->HeaderSize = sizeof (*capsule);
-		capsule->Flags = update->info->capsule_flags |
-			CAPSULE_FLAGS_PERSIST_ACROSS_RESET |
-			CAPSULE_FLAGS_INITIATE_RESET;
-		capsule->CapsuleImageSize = fsize + sizeof (*capsule);
+		if (is_ux_capsule(&update->info->guid)) {
+			capsule->Flags = update->info->capsule_flags |
+					 CAPSULE_FLAGS_PERSIST_ACROSS_RESET |
+					 CAPSULE_FLAGS_INITIATE_RESET;
+		}
+		capsule->CapsuleImageSize = fsize;
 
 		UINT8 *buffer = (UINT8 *)capsule + capsule->HeaderSize;
 		CopyMem(buffer, fbuf, fsize);
-		cbd_out->Length = capsule->CapsuleImageSize;
-		cbd_out->Union.DataBlock =
-			(EFI_PHYSICAL_ADDRESS)(UINTN)capsule;
-		*capsule_out = capsule;
+		cbd_len = capsule->HeaderSize + capsule->CapsuleImageSize;
+		cbd_data = (EFI_PHYSICAL_ADDRESS)(UINTN)capsule;
+		cap_out = capsule;
 		free(fbuf, fsize);
 	}
+
+	if (is_ux_capsule(&update->info->guid)) {
+		if (debugging)
+			Print(L"Checksumming ux capsule\n");
+		rc = do_ux_csum(loaded_image, (UINT8 *)capsule, cbd_len);
+		if (EFI_ERROR(rc))
+			return EFI_UNSUPPORTED;
+	}
+
+	cbd_out->Length = cbd_len;
+	cbd_out->Union.DataBlock = cbd_data;
+	*capsule_out = cap_out;
 
 	return EFI_SUCCESS;
 }
@@ -1103,7 +1256,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	 */
 	EFI_CAPSULE_HEADER *capsules[n_updates + 1];
 	EFI_CAPSULE_BLOCK_DESCRIPTOR *cbd_data;
-	UINTN i;
+	UINTN i, j;
 	rc = allocate((void **)&cbd_data,
 		      sizeof (EFI_CAPSULE_BLOCK_DESCRIPTOR)*(n_updates+1));
 	if (EFI_ERROR(rc)) {
@@ -1113,14 +1266,24 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 		Print(L"fwupdate: Could not allocate memory: %r.\n",rc);
 		return rc;
 	}
-	for (i = 0; i < n_updates; i++) {
-		rc = add_capsule(updates[i], &capsules[i], &cbd_data[i]);
+	for (i = 0, j = 0; i < n_updates; i++) {
+		if (debugging)
+			Print(L"Adding new capsule\n");
+		rc = add_capsule(updates[i], &capsules[j], &cbd_data[j],
+				 image);
 		if (EFI_ERROR(rc)) {
+			if (rc == EFI_UNSUPPORTED &&
+			    is_ux_capsule(&updates[i]->info->guid))
+				continue;
 			Print(L"fwupdate: Could not build update list: %r\n",
 			      rc);
 			return rc;
 		}
+		j++;
 	}
+	n_updates = j;
+	if (debugging)
+		Print(L"n_updates: %d\n", n_updates);
 
 	cbd_data[i].Length = 0;
 	cbd_data[i].Union.ContinuationPointer = 0;

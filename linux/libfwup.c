@@ -1404,6 +1404,170 @@ out:
 	return rc;
 }
 
+static int
+get_bmp_size(uint8_t *buf, size_t buf_size, int *height, int *width)
+{
+	uint32_t ui32;
+
+	if (buf_size < 26) {
+invalid:
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (memcmp(buf, "BM", 2) != 0)
+		goto invalid;
+
+	memcpy(&ui32, buf+10, 4);
+	if (ui32 < 26)
+		goto invalid;
+
+	memcpy(&ui32, buf+14, 4);
+	if (ui32 < 26 - 14)
+		goto invalid;
+
+	memcpy(width, buf+18, 4);
+	memcpy(height, buf+22, 4);
+
+	return 0;
+}
+
+#define fbdir "/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0"
+static int
+read_efifb_info(int *height, int *width)
+{
+	*height = get_value_from_file_at_dir(fbdir, "height");
+	*width = get_value_from_file_at_dir(fbdir, "width");
+
+	return 0;
+}
+
+typedef struct {
+	efi_guid_t guid;
+	uint32_t header_size;
+	uint32_t flags;
+	uint32_t capsule_image_size;
+} efi_capsule_header_t;
+
+static int
+write_ux_capsule_header(FILE *fin, FILE *fout)
+{
+	int rc = -1;
+	int bgrt_x, bgrt_y;
+	int bgrt_height, bgrt_width;
+	int screen_x, screen_y;
+	int height, width;
+	uint8_t *buf = NULL;
+	size_t buf_size = 0;
+	ux_capsule_header_t header;
+	size_t size;
+	int error;
+	long header_pos;
+	long image_pos;
+	long end_pos;
+	efi_capsule_header_t capsule_header = {
+		.flags = CAPSULE_FLAGS_PERSIST_ACROSS_RESET,
+		.guid = UX_CAPSULE_GUID,
+		.header_size = sizeof(efi_capsule_header_t),
+		.capsule_image_size = 0
+	};
+
+	bgrt_x = get_value_from_file_at_dir("/sys/firmware/acpi/bgrt",
+					    "xoffset");
+	if (bgrt_x < 0) {
+		rc = bgrt_x;
+		goto out;
+	}
+
+	bgrt_y = get_value_from_file_at_dir("/sys/firmware/acpi/bgrt",
+					    "yoffset");
+	if (bgrt_y < 0) {
+		rc = bgrt_y;
+		goto out;
+	}
+
+	rc = read_file_at_dir("/sys/firmware/acpi/bgrt", "image",
+			      &buf, &buf_size);
+	if (rc < 0)
+		return rc;
+
+	rc = get_bmp_size(buf, buf_size, &bgrt_height, &bgrt_width);
+	if (rc < 0)
+		goto out;
+
+	rc = read_efifb_info(&screen_x, &screen_y);
+	if (rc < 0)
+		goto out;
+
+	header_pos = ftell(fin);
+	buf_size = fread(buf, 1, 26, fin);
+	if (buf_size != 26) {
+		errno = EINVAL;
+		rc = -1;
+		goto out;
+	}
+	fseek(fin, header_pos, SEEK_SET);
+
+	rc = get_bmp_size(buf, buf_size, &height, &width);
+	if (rc < 0)
+		goto out;
+
+	memset(&header, '\0', sizeof(header));
+	header.version = 1;
+	header.image_type = 0;
+	header.reserved = 0;
+	header.x_offset = (screen_x / 2) - (width / 2);
+	header.y_offset = bgrt_y + bgrt_height;
+
+	header_pos = ftell(fout);
+
+	size = fwrite(&capsule_header, capsule_header.header_size, 1, fout);
+	if (size != 1) {
+		rc = -1;
+		goto out;
+	}
+	fflush(fout);
+	image_pos = ftell(fout);
+
+	size = fwrite(&header, sizeof(header), 1, fout);
+	if (size != 1) {
+		rc = -1;
+		goto out;
+	}
+	fflush(fout);
+
+	size = fcopy_file(fin, fout);
+	if (size == 0) {
+		rc = -1;
+		goto out;
+	}
+	fflush(fout);
+
+	end_pos = ftell(fout);
+	capsule_header.capsule_image_size =
+		end_pos - image_pos;
+
+	rc = fseek(fout, header_pos, SEEK_SET);
+	if (rc < 0)
+		goto out;
+
+	size = fwrite(&capsule_header, capsule_header.header_size, 1, fout);
+	if (size != 1) {
+		rc = -1;
+		goto out;
+	}
+	fflush(fout);
+	fseek(fout, end_pos, SEEK_SET);
+
+	rc = 0;
+out:
+	error = errno;
+	if (buf)
+		free(buf);
+	errno = error;
+	return rc;
+}
+
 /**
  * fwup_set_up_update
  * @re: A %fwup_resource.
@@ -1428,6 +1592,7 @@ fwup_set_up_update(fwup_resource *re,
 	update_info *info = NULL;
 	FILE *fin = NULL, *fout = NULL;
 	int error;
+	efi_guid_t ux_capsule_guid = UX_CAPSULE_GUID;
 
 	/* check parameters */
 	if (infd < 0) {
@@ -1450,9 +1615,9 @@ fwup_set_up_update(fwup_resource *re,
 	}
 
 	/* get destination */
+	rc = -1;
 	outfd = get_fd_and_media_path(info, &path);
 	if (outfd < 0) {
-		rc = -1;
 		goto out;
 	}
 
@@ -1464,43 +1629,15 @@ fwup_set_up_update(fwup_resource *re,
 	if (!fout)
 		goto out;
 
-	/* copy the input file to the new home */
-	while (1) {
-		int c;
-		int rc;
-
-		c = fgetc(fin);
-		if (c == EOF) {
-			if (feof(fin)) {
-				break;
-			} else if (ferror(fin)) {
-				efi_error("read failed");
-				rc = -1;
-				goto out;
-			} else {
-				efi_error("fgetc() == EOF but no error is set.");
-				errno = EINVAL;
-				rc = -1;
-				goto out;
-			}
-		}
-
-		rc = fputc(c, fout);
-		if (rc == EOF) {
-			if (feof(fout)) {
-				break;
-			} else if (ferror(fout)) {
-				efi_error("write failed");
-				rc = -1;
-				goto out;
-			} else {
-				efi_error("fputc() == EOF but no error is set.");
-				errno = EINVAL;
-				rc = -1;
-				goto out;
-			}
-		}
+	if (!efi_guid_cmp(&re->esre.guid, &ux_capsule_guid)) {
+		rc = write_ux_capsule_header(fin, fout);
+		if (rc < 0)
+			goto out;
 	}
+
+	rc = fcopy_file(fin, fout);
+	if (rc < 0)
+		goto out;
 
 	/* set efidp header */
 	rc = set_efidp_header(info, path);
@@ -1521,14 +1658,17 @@ fwup_set_up_update(fwup_resource *re,
 	rc = set_up_boot_next();
 	if (rc < 0)
 		goto out;
+
 out:
 	error = errno;
 	if (path)
 		free(path);
 	if (fin)
 		fclose(fin);
-	if (fout)
+	if (fout) {
+		fflush(fout);
 		fclose(fout);
+	}
 	free_info(info);
 	if (outfd >= 0) {
 		fsync(outfd);
@@ -1561,7 +1701,8 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 	int rc;
 	update_info *info = NULL;
 	int error;
-	off_t off = 0;
+	FILE *fin, *fout;
+	efi_guid_t ux_capsule_guid = UX_CAPSULE_GUID;
 
 	/* check parameters */
 	if (buf == NULL || sz == 0) {
@@ -1584,20 +1725,24 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 		goto out;
 	}
 
-	/* write the buf to a new file */
-	while (sz-off) {
-		ssize_t wsz;
-		wsz = write(fd, buf+off, sz-off);
-		if (wsz < 0 &&
-		    (errno == EAGAIN || errno == EINTR))
-			continue;
-		if (wsz < 0) {
-			rc = wsz;
-			efi_error("write failed");
+	rc = -1;
+	fin = fmemopen((void *)buf, sz, "r");
+	if (!fin)
+		goto out;
+
+	fout = fdopen(fd, "w");
+	if (!fout)
+		goto out;
+
+	if (!efi_guid_cmp(&re->esre.guid, &ux_capsule_guid)) {
+		rc = write_ux_capsule_header(fin, fout);
+		if (rc < 0)
 			goto out;
-		}
-		off += wsz;
 	}
+
+	rc = fcopy_file(fin, fout);
+	if (rc < 0)
+		goto out;
 
 	/* set efidp header */
 	rc = set_efidp_header(info, path);
@@ -1789,23 +1934,11 @@ check_bgrt_status(void)
 	return 0;
 }
 
-#define fbdir "/sys/bus/platform/drivers/efi-framebuffer/efi-framebuffer.0"
-static int
-read_efifb_info(int *depth, int *height, int *width, int *linelength)
-{
-	*depth = get_value_from_file_at_dir(fbdir, "depth");
-	*height = get_value_from_file_at_dir(fbdir, "height");
-	*width = get_value_from_file_at_dir(fbdir, "width");
-	*linelength = get_value_from_file_at_dir(fbdir, "linelength");
-
-	return 0;
-}
-
 int
 fwup_get_ux_capsule_info(uint32_t *screen_x_size, uint32_t *screen_y_size)
 {
 	static bool once = false;
-	int depth, height, width, stride;
+	int height, width;
 	int rc;
 
 	if (once == true) {
@@ -1824,7 +1957,7 @@ fwup_get_ux_capsule_info(uint32_t *screen_x_size, uint32_t *screen_y_size)
 	if (rc < 0)
 		return rc;
 
-	rc = read_efifb_info(&depth, &height, &width, &stride);
+	rc = read_efifb_info(&height, &width);
 	if (rc < 0)
 		return rc;
 
