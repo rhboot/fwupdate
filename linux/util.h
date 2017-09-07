@@ -46,7 +46,7 @@ extern int quiet;
 
 static inline int
 __attribute__((unused))
-read_file_at(int dfd, char *name, uint8_t **buf, size_t *bufsize)
+read_file_at(int dfd, const char *name, uint8_t **buf, size_t *bufsize)
 {
 	int saved_errno;
 	uint8_t *p;
@@ -116,6 +116,86 @@ err:
 
 	errno = saved_errno;
 	return -1;
+}
+
+static size_t
+__attribute__((unused))
+fcopy_file(FILE *fin, FILE *fout)
+{
+	int ret = 0;
+
+	/* copy the input file to the new home */
+	while (1) {
+		int c;
+		int rc;
+
+		c = fgetc(fin);
+		if (c == EOF) {
+			if (feof(fin)) {
+				break;
+			} else if (ferror(fin)) {
+				efi_error("read failed");
+				ret = 0;
+				goto out;
+			} else {
+				efi_error("fgetc() == EOF but no error is set.");
+				errno = EINVAL;
+				ret = 0;
+				goto out;
+			}
+		}
+
+		rc = fputc(c, fout);
+		if (rc == EOF) {
+			if (feof(fout)) {
+				break;
+			} else if (ferror(fout)) {
+				efi_error("write failed");
+				ret = 0;
+				goto out;
+			} else {
+				efi_error("fputc() == EOF but no error is set.");
+				errno = EINVAL;
+				ret = 0;
+				goto out;
+			}
+		} else {
+			ret += 1;
+		}
+	}
+
+out:
+	return ret;
+}
+
+static int
+__attribute__((unused))
+read_file_at_dir(const char *dirname, const char *filename,
+		 uint8_t **buf, size_t *buf_size)
+{
+	DIR *dir;
+	int dfd;
+	int rc;
+	int error;
+
+	dir = opendir(dirname);
+	if (!dir)
+		return -1;
+
+	dfd = dirfd(dir);
+	if (dfd < 0) {
+		error = errno;
+		closedir(dir);
+		errno = error;
+		return -1;
+	}
+
+	rc = read_file_at(dfd, filename, buf, buf_size);
+	error = errno;
+	close(dfd);
+	closedir(dir);
+	errno = error;
+	return rc;
 }
 
 #define onstack(buf, len) ({						\
