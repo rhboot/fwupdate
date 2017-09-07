@@ -81,7 +81,7 @@ static int n_arches_64 = sizeof(arch_names_64) / sizeof(arch_names_64[0]);
 		_ret;						\
 	})
 
-static char *esp_mountpoint;
+static char *esp_mountpoint = FWUP_ESP_MOUNTPOINT;
 
 /**
  * fwup_set_esp_mountpoint:
