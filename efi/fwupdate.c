@@ -13,6 +13,10 @@
 
 #include "hexdump.h"
 
+#ifndef DEBUGDIR
+#define DEBUGDIR L"/usr/lib/debug"
+#endif
+
 #define efidp_header EFI_DEVICE_PATH
 #define efi_guid_t EFI_GUID
 
