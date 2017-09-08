@@ -389,9 +389,14 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 		 * If it's not one of our state variables, keep going.
 		 */
 		if (CompareMem(&vendor_guid, &fwupdate_guid,
-			       sizeof (vendor_guid))) {
+			       sizeof (vendor_guid)))
 			continue;
-		}
+
+		/*
+		 * Don't delete our debugging settings.
+		 */
+		if (StrCmp(variable_name, L"FWUPDATE_VERBOSE") == 0)
+			continue;
 
 		UINTN vns = StrLen(variable_name);
 		CHAR16 vn[vns + 1];
