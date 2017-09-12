@@ -529,8 +529,6 @@ fwup_resource_iter_destroy(fwup_resource_iter **iterp)
 	return 0;
 }
 
-#define UX_CAPSULE_GUID EFI_GUID(0x3b8c8162,0x188c,0x46a4,0xaec9,0xbe,0x43,0xf1,0xd6,0x56,0x97)
-
 static fwup_resource fwup_ux_capsule = {
 	.esre.fw_type = FWUP_RESOURCE_TYPE_SYSTEM_FIRMWARE,
 	.esre.fw_version = 1,
@@ -545,8 +543,7 @@ static fwup_resource *
 make_ux_capsule_entry(void)
 {
 	int rc;
-
-	fwup_ux_capsule.esre.guid = UX_CAPSULE_GUID;
+	fwup_ux_capsule.esre.guid = efi_guid_ux_capsule;
 
 	if (fwup_ux_capsule.info == NULL) {
 		rc = get_info(&fwup_ux_capsule.esre.guid, 0, &fwup_ux_capsule.info);
@@ -1467,7 +1464,7 @@ write_ux_capsule_header(FILE *fin, FILE *fout)
 	long end_pos;
 	efi_capsule_header_t capsule_header = {
 		.flags = CAPSULE_FLAGS_PERSIST_ACROSS_RESET,
-		.guid = UX_CAPSULE_GUID,
+		.guid = efi_guid_ux_capsule,
 		.header_size = sizeof(efi_capsule_header_t),
 		.capsule_image_size = 0
 	};
@@ -1592,7 +1589,6 @@ fwup_set_up_update(fwup_resource *re,
 	update_info *info = NULL;
 	FILE *fin = NULL, *fout = NULL;
 	int error;
-	efi_guid_t ux_capsule_guid = UX_CAPSULE_GUID;
 
 	/* check parameters */
 	if (infd < 0) {
@@ -1629,7 +1625,7 @@ fwup_set_up_update(fwup_resource *re,
 	if (!fout)
 		goto out;
 
-	if (!efi_guid_cmp(&re->esre.guid, &ux_capsule_guid)) {
+	if (!efi_guid_cmp(&re->esre.guid, &efi_guid_ux_capsule)) {
 		rc = write_ux_capsule_header(fin, fout);
 		if (rc < 0)
 			goto out;
@@ -1702,7 +1698,6 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 	update_info *info = NULL;
 	int error;
 	FILE *fin, *fout;
-	efi_guid_t ux_capsule_guid = UX_CAPSULE_GUID;
 
 	/* check parameters */
 	if (buf == NULL || sz == 0) {
@@ -1734,7 +1729,7 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 	if (!fout)
 		goto out;
 
-	if (!efi_guid_cmp(&re->esre.guid, &ux_capsule_guid)) {
+	if (!efi_guid_cmp(&re->esre.guid, &efi_guid_ux_capsule)) {
 		rc = write_ux_capsule_header(fin, fout);
 		if (rc < 0)
 			goto out;
