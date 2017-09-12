@@ -1,5 +1,7 @@
-%global efivar_version 31-1
-%global efibootmgr_version 15-1
+%global efivar_version 30-1
+%global efibootmgr_version 13-1
+%global gnuefi_version 3.0.5-11
+%undefine _debuginfo_subpackages
 
 Name:           fwupdate
 Version:        @@VERSION@@
@@ -9,21 +11,29 @@ License:        GPLv2+
 URL:            https://github.com/rhinstaller/fwupdate
 Requires:       %{name}-libs%{?_isa} = %{version}-%{release}
 BuildRequires:  efivar-devel >= %{efivar_version}
-BuildRequires:  gnu-efi gnu-efi-devel
+BuildRequires:  gnu-efi >= %{gnu_efi_version}
+BuildRequires:  gnu-efi-devel >= %{gnu_efi_version}
 BuildRequires:  pesign
 BuildRequires:  elfutils popt-devel git gettext pkgconfig
 BuildRequires:  systemd
-%ifarch x86_64 %{ix86}
+BuildRequires:  libabigail
+%ifarch x86_64
 BuildRequires: libsmbios-devel
 %endif
-ExclusiveArch:  x86_64 %{ix86} aarch64
+ExclusiveArch:  x86_64 aarch64
 Source0:        https://github.com/rhinstaller/fwupdate/releases/download/%{name}-%{version}/%{name}-%{version}.tar.bz2
+Source1:        find-debuginfo-efi.sh
+
+%global __os_install_post %{expand:\
+  %{?__debug_package:%{__debug_install_post}} \
+  %{SOURCE1} \
+  %{__arch_install_post} \
+  %{__os_install_post} \
+  %{nil}}%{nil}
 
 %ifarch x86_64
 %global efiarch x64
-%endif
-%ifarch %{ix86}
-%global efiarch ia32
+%global efialtarch ia32
 %endif
 %ifarch aarch64
 %global efiarch aa64
@@ -37,7 +47,9 @@ fwupdate provides a simple command line interface to the UEFI firmware updates.
 
 %package libs
 Summary: Library to manage UEFI firmware updates
+%ifnarch %{ix86}
 Requires: shim
+%endif
 Requires: %{name}-efi = %{version}-%{release}
 
 %description libs
@@ -58,28 +70,75 @@ Requires: %{name}-libs = %{version}-%{release}
 %description efi
 UEFI binaries used by libfwup.
 
+%package efi-debuginfo
+Summary: debuginfo for UEFI binaries used by libfwup
+Requires: %{name}-efi = %{version}-%{release}
+AutoReq: 0
+AutoProv: 1
+
+%description efi-debuginfo
+debuginfo for UEFI binaries used by libfwup.
+
 %prep
 %setup -q -n %{name}-%{version}
 git init
 git config user.email "%{name}-owner@fedoraproject.org"
 git config user.name "Fedora Ninjas"
 git add .
+mkdir build-%{efiarch}
+%ifarch x86_64
+mkdir build-%{efialtarch}
+%endif
 git commit -a -q -m "%{version} baseline."
 git am %{patches} </dev/null
 git config --unset user.email
 git config --unset user.name
+git config fwupdate.efidir %{efidir}
 
 %build
-make OPT_FLAGS="$RPM_OPT_FLAGS" libdir=%{_libdir} bindir=%{_bindir} \
+cd build-%{efiarch}
+make TOPDIR=.. -f ../Makefile OPT_FLAGS="$RPM_OPT_FLAGS" \
+     libdir=%{_libdir} bindir=%{_bindir} \
      EFIDIR=%{efidir} %{?_smp_mflags}
+mv -v efi/fwup%{efiarch}.efi efi/fwup%{efiarch}.unsigned.efi
+%pesign -s -i efi/fwup%{efiarch}.unsigned.efi -o efi/fwup%{efiarch}.efi
+cd ..
+
+%ifarch x86_64
+cd build-%{efialtarch}
+setarch linux32 -B make TOPDIR=.. -f ../Makefile ARCH=%{efialtarch} \
+                        OPT_FLAGS="$RPM_OPT_FLAGS" \
+                        libdir=%{_libdir} bindir=%{_bindir} \
+                        EFIDIR=%{efidir} %{?_smp_mflags}
+mv -v efi/fwup%{efialtarch}.efi efi/fwup%{efialtarch}.unsigned.efi
+%pesign -s -i efi/fwup%{efialtarch}.unsigned.efi -o efi/fwup%{efialtarch}.efi
+cd ..
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%make_install EFIDIR=%{efidir} RPMARCH=%{_arch} RELEASE=%{RELEASE} \
+cd build-%{efiarch}
+%make_install TOPDIR=.. -f ../Makefile \
+              EFIDIR=%{efidir} RPMARCH=%{_arch} RELEASE=%{RELEASE} \
               libdir=%{_libdir} bindir=%{_bindir} mandir=%{_mandir} \
               localedir=%{_datadir}/locale/ includedir=%{_includedir} \
               libexecdir=%{_libexecdir} datadir=%{_datadir} \
               sharedstatedir=%{_sharedstatedir}
+cd ..
+
+%ifarch x86_64
+cd build-%{efialtarch}
+setarch linux32 -B %make_install ARCH=%{efialtarch} TOPDIR=.. -f ../Makefile \
+                                 EFIDIR=%{efidir} RPMARCH=%{_arch} \
+                                 RELEASE=%{RELEASE} libdir=%{_libdir} \
+                                 bindir=%{_bindir} mandir=%{_mandir} \
+                                 localedir=%{_datadir}/locale/ \
+                                 includedir=%{_includedir} \
+                                 libexecdir=%{_libexecdir} \
+                                 datadir=%{_datadir} \
+                                 sharedstatedir=%{_sharedstatedir}
+cd ..
+%endif
 
 %post libs
 /sbin/ldconfig
@@ -131,6 +190,12 @@ make abicheck
 %dir /boot/efi/EFI/%{efidir}/
 %dir /boot/efi/EFI/%{efidir}/fw/
 /boot/efi/EFI/%{efidir}/fwup%{efiarch}.efi
+%ifarch x86_64
+/boot/efi/EFI/%{efidir}/fwup%{efialtarch}.efi
+%endif
+
+%files efi-debuginfo -f debugfiles-efi.list
+%defattr(-,root,root)
 
 %changelog
 * Mon Mar 06 2017 Peter Jones <pjones@redhat.com> - 9-1
