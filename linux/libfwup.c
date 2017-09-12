@@ -448,6 +448,7 @@ fwup_resource_iter_create(fwup_resource_iter **iter)
 	int error;
 	char *path;
 	uint32_t x, y;
+	char *env;
 
 	if (!iter) {
 		efi_error("invalid iter");
@@ -479,9 +480,9 @@ fwup_resource_iter_create(fwup_resource_iter **iter)
 		goto err;
 	}
 
-	if (fwup_get_ux_capsule_info(&x, &y) < 0)
-		new->add_ux_capsule = false;
-	else
+	new->add_ux_capsule = false;
+	env = getenv("LIBFWUP_ADD_UX_CAPSULE");
+	if (env && !strcmp(env, "1") && fwup_get_ux_capsule_info(&x, &y) >= 0)
 		new->add_ux_capsule = true;
 
 	*iter = new;
