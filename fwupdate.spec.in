@@ -92,6 +92,11 @@ rm -rf $RPM_BUILD_ROOT
 /sbin/ldconfig
 %systemd_postun_with_restart pesign.service
 
+%check
+%ifarch x86_64
+make abicheck
+%endif
+
 %files
 %defattr(-,root,root,-)
 %{!?_licensedir:%global license %%doc}

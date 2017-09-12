@@ -23,11 +23,7 @@ MAN3TARGETS = libfwup.h.3 \
 
 MANSECTIONS = 1 3
 
-all :
-
-clean :
-
-test :
+all clean test abidw abicheck :
 
 mandirs :
 	$(INSTALL) -d -m 755 $(DESTDIR)$(mandir)/man1/

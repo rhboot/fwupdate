@@ -1,0 +1,9 @@
+[suppress_function]
+  soname_regexp = ^libfwup\\.so\\.[[:digit:]]+
+  symbol_name_regexp = fwup_[[:alnum:]_]+
+  change_kind = added-function
+
+[suppress_variable]
+  soname_regexp = ^libfwup\\.so\\.[[:digit:]]+
+  symbol_name_regexp = fwup_[[:alnum:]_]+
+  change_kind = added-variable

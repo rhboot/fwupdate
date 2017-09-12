@@ -12,7 +12,7 @@ include $(TOP)/Make.defaults
 include $(TOP)/Make.coverity
 SUBDIRS ?= efi linux docs include
 
-all clean install : | check_efidir_error
+all abidw abicheck clean install : | check_efidir_error
 	@set -e ; for x in $(SUBDIRS) ; do \
 		if [ ! -d $${x} ]; then \
 			install -m 0755 -d $${x} ; \
@@ -22,34 +22,39 @@ all clean install : | check_efidir_error
 			-C $$x/ -f $(TOP)/$$x/Makefile $@ ; \
 	done
 
+GITTAG = $(shell bash -c "echo $$(($(VERSION) + 1))")
+
 fwupdate.spec : | Makefile
 fwupdate.spec : $(TOP)/fwupdate.spec.in
 	@sed -e "s,@@VERSION@@,$(VERSION),g" $< > $@
 
-GITTAG = $(VERSION)
+test-archive: abicheck fwupdate.spec
+	@rm -rf /tmp/fwupdate-$(GITTAG) /tmp/fwupdate-$(GITTAG)-tmp
+	@mkdir -p /tmp/fwupdate-$(GITTAG)-tmp
+	@git archive --format=tar $(shell git branch | awk '/^*/ { print $$2 }') | ( cd /tmp/fwupdate-$(GITTAG)-tmp/ ; tar x )
+	@git diff | ( cd /tmp/fwupdate-$(GITTAG)-tmp/ ; patch -s -p1 -b -z .gitdiff )
+	@mv /tmp/fwupdate-$(GITTAG)-tmp/ /tmp/fwupdate-$(GITTAG)/
+	@cp fwupdate.spec /tmp/fwupdate-$(GITTAG)/
+	@dir=$$PWD; cd /tmp; tar -c --bzip2 -f $$dir/fwupdate-$(GITTAG).tar.bz2 fwupdate-$(GITTAG)
+	@rm -rf /tmp/fwupdate-$(GITTAG)
+	@echo "The archive is in fwupdate-$(GITTAG).tar.bz2"
 
-test-archive: fwupdate.spec
-	@rm -rf /tmp/fwupdate-$(VERSION) /tmp/fwupdate-$(VERSION)-tmp
-	@mkdir -p /tmp/fwupdate-$(VERSION)-tmp
-	@git archive --format=tar $(shell git branch | awk '/^*/ { print $$2 }') | ( cd /tmp/fwupdate-$(VERSION)-tmp/ ; tar x )
-	@git diff | ( cd /tmp/fwupdate-$(VERSION)-tmp/ ; patch -s -p1 -b -z .gitdiff )
-	@mv /tmp/fwupdate-$(VERSION)-tmp/ /tmp/fwupdate-$(VERSION)/
-	@cp fwupdate.spec /tmp/fwupdate-$(VERSION)/
-	@dir=$$PWD; cd /tmp; tar -c --bzip2 -f $$dir/fwupdate-$(VERSION).tar.bz2 fwupdate-$(VERSION)
-	@rm -rf /tmp/fwupdate-$(VERSION)
-	@echo "The archive is in fwupdate-$(VERSION).tar.bz2"
+bumpver:
+	@echo VERSION=$(GITTAG) > Make.version
+	@git add Make.version
+	git commit -m "Bump version to $(GITTAG)" -s
 
 tag:
 	git tag -s $(GITTAG) refs/heads/master
 
-archive: tag fwupdate.spec
-	@rm -rf /tmp/fwupdate-$(VERSION) /tmp/fwupdate-$(VERSION)-tmp
-	@mkdir -p /tmp/fwupdate-$(VERSION)-tmp
-	@git archive --format=tar $(GITTAG) | ( cd /tmp/fwupdate-$(VERSION)-tmp/ ; tar x )
-	@mv /tmp/fwupdate-$(VERSION)-tmp/ /tmp/fwupdate-$(VERSION)/
-	@cp fwupdate.spec /tmp/fwupdate-$(VERSION)/
-	@dir=$$PWD; cd /tmp; tar -c --bzip2 -f $$dir/fwupdate-$(VERSION).tar.bz2 fwupdate-$(VERSION)
-	@rm -rf /tmp/fwupdate-$(VERSION)
-	@echo "The archive is in fwupdate-$(VERSION).tar.bz2"
+archive: abicheck abidw bumpver tag fwupdate.spec
+	@rm -rf /tmp/fwupdate-$(GITTAG) /tmp/fwupdate-$(GITTAG)-tmp
+	@mkdir -p /tmp/fwupdate-$(GITTAG)-tmp
+	@git archive --format=tar $(GITTAG) | ( cd /tmp/fwupdate-$(GITTAG)-tmp/ ; tar x )
+	@mv /tmp/fwupdate-$(GITTAG)-tmp/ /tmp/fwupdate-$(GITTAG)/
+	@cp fwupdate.spec /tmp/fwupdate-$(GITTAG)/
+	@dir=$$PWD; cd /tmp; tar -c --bzip2 -f $$dir/fwupdate-$(GITTAG).tar.bz2 fwupdate-$(GITTAG)
+	@rm -rf /tmp/fwupdate-$(GITTAG)
+	@echo "The archive is in fwupdate-$(GITTAG).tar.bz2"
 
 .PHONY: $(SUBDIRS)

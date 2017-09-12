@@ -7,7 +7,7 @@ include $(TOP)/Make.version
 include $(TOP)/Make.defaults
 VPATH	= $(TOP)/include
 
-all clean dep :
+all clean dep abidw abicheck :
 
 install :
 	$(INSTALL) -d -m 755 $(DESTDIR)$(DEBUGSOURCE)/fwupdate-$(VERSION)$(DASHRELEASE)$(DOTARCH)/include

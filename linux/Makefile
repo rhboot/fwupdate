@@ -7,6 +7,7 @@ TOP     := $(abspath ..)
 endif
 include $(TOP)/Make.version
 include $(TOP)/Make.defaults
+include $(TOP)/Make.rules
 VPATH	= $(TOP)/linux
 
 LIB_LIBS= pthread
@@ -63,6 +64,11 @@ include-dir :
 libfwup.c : | include/fwup.h
 include/fwup.h : | include/fwup-version.h
 include/fwup-version.h : | include-dir
+
+abidw : $(patsubst %.so,%.abixml,$(LIBTARGETS))
+	git add $^
+
+abicheck : $(patsubst %.so,%.abicheck,$(LIBTARGETS))
 
 % : %.o
 	$(CC) $(BUILDFLAGS) -o $@ $(patsubst lib%.so,-l%,$^) $(BIN_CCLDFLAGS)

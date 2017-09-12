@@ -67,6 +67,8 @@ TARGETS = fakeesrt2.efi fakeesrt.efi dumpesrt.efi $(FWUP).efi mkvar.efi dumpf.ef
 
 all : $(TARGETS)
 
+abidw abicheck :
+
 .SECONDARY: $(foreach target,$(TARGETS),$(target).debug \
 					$(target).build-id \
 					$(target).so \
