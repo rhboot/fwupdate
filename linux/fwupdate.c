@@ -73,7 +73,7 @@ print_system_resources(void)
 			str_type = "UEFI Driver";
 			break;
 		default:
-			str_type = "";
+			str_type = EMPTY;
 			break;
 		}
 
