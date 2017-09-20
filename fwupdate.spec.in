@@ -1,6 +1,6 @@
-%global efivar_version 30-1
+%global efivar_version 32-1
 %global efibootmgr_version 13-1
-%global gnuefi_version 3.0.5-11
+%global gnu_efi_version 3.0.5-11
 %undefine _debuginfo_subpackages
 
 Name:           fwupdate
