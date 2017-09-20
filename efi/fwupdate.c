@@ -1078,7 +1078,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 					 CAPSULE_FLAGS_PERSIST_ACROSS_RESET |
 					 CAPSULE_FLAGS_INITIATE_RESET;
 		}
-		capsule->CapsuleImageSize = fsize;
+		capsule->CapsuleImageSize = fsize + sizeof (*capsule);
 
 		UINT8 *buffer = (UINT8 *)capsule + capsule->HeaderSize;
 		CopyMem(buffer, fbuf, fsize);

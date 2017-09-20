@@ -1461,12 +1461,10 @@ write_ux_capsule_header(FILE *fin, FILE *fout)
 	size_t size;
 	int error;
 	long header_pos;
-	long image_pos;
-	long end_pos;
 	efi_capsule_header_t capsule_header = {
 		.flags = CAPSULE_FLAGS_PERSIST_ACROSS_RESET,
 		.guid = efi_guid_ux_capsule,
-		.header_size = sizeof(efi_capsule_header_t),
+		.header_size = sizeof(efi_capsule_header_t) + sizeof(header),
 		.capsule_image_size = 0
 	};
 
@@ -1499,16 +1497,13 @@ write_ux_capsule_header(FILE *fin, FILE *fout)
 
 	header_pos = ftell(fin);
 	buf_size = fread(buf, 1, 26, fin);
-	if (buf_size != 26) {
-		errno = EINVAL;
-		rc = -1;
-		goto out;
-	}
 	fseek(fin, header_pos, SEEK_SET);
 
 	rc = get_bmp_size(buf, buf_size, &height, &width);
 	if (rc < 0)
 		goto out;
+
+	capsule_header.capsule_image_size = buf_size;
 
 	memset(&header, '\0', sizeof(header));
 	header.version = 1;
@@ -1524,8 +1519,6 @@ write_ux_capsule_header(FILE *fin, FILE *fout)
 		rc = -1;
 		goto out;
 	}
-	fflush(fout);
-	image_pos = ftell(fout);
 
 	size = fwrite(&header, sizeof(header), 1, fout);
 	if (size != 1) {
@@ -1540,22 +1533,6 @@ write_ux_capsule_header(FILE *fin, FILE *fout)
 		goto out;
 	}
 	fflush(fout);
-
-	end_pos = ftell(fout);
-	capsule_header.capsule_image_size =
-		end_pos - image_pos;
-
-	rc = fseek(fout, header_pos, SEEK_SET);
-	if (rc < 0)
-		goto out;
-
-	size = fwrite(&capsule_header, capsule_header.header_size, 1, fout);
-	if (size != 1) {
-		rc = -1;
-		goto out;
-	}
-	fflush(fout);
-	fseek(fout, end_pos, SEEK_SET);
 
 	rc = 0;
 out:
