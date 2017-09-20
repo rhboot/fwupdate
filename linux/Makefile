@@ -5,7 +5,6 @@ TOP     := $(abspath $(TOPDIR))
 else
 TOP     := $(abspath ..)
 endif
-include $(TOP)/Make.version
 include $(TOP)/Make.defaults
 include $(TOP)/Make.rules
 VPATH	= $(TOP)/linux

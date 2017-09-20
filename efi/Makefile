@@ -5,8 +5,8 @@ TOP     := $(abspath $(TOPDIR))
 else
 TOP     := $(abspath ..)
 endif
-include $(TOP)/Make.version
 include $(TOP)/Make.defaults
+include $(TOP)/Make.rules
 VPATH	= $(TOP)/efi
 
 CFLAGS	?= -Og -g3 -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \

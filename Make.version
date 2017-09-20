@@ -1,6 +1,1 @@
-VERSION = 9
-ifneq ($(origin RELEASE),undefined)
-DASHRELEASE	?= -$(RELEASE)
-else
-DASHRELEASE	?=
-endif
+VERSION=9

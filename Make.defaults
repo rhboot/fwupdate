@@ -1,3 +1,10 @@
+include $(TOP)/Make.version
+ifneq ($(origin RELEASE),undefined)
+DASHRELEASE    ?= -$(RELEASE)
+else
+DASHRELEASE    ?=
+endif
+
 NAME		= fwupdate
 COMMIT_ID	= $(shell git log -1 --pretty=%H 2>/dev/null || echo master)
 INSTALL 	?= install

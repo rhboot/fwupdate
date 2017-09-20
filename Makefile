@@ -6,9 +6,8 @@ else
 TOP	= $(abspath $(shell pwd))
 endif
 
-include $(TOP)/Make.version
-include $(TOP)/Make.rules
 include $(TOP)/Make.defaults
+include $(TOP)/Make.rules
 include $(TOP)/Make.coverity
 SUBDIRS ?= efi linux docs include
 
