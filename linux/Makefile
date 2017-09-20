@@ -56,13 +56,13 @@ all : $(TARGETS)
 fwupdate : libfwup.so
 
 include-dir :
-	if [ ! -d linux/include ]; then \
-		$(INSTALL) -d -m 755 linux/include ; \
+	if [ ! -d include ]; then \
+		$(INSTALL) -d -m 755 include ; \
 	fi
 
-libfwup.c : | linux/include/fwup.h
-linux/include/fwup.h : | linux/include/fwup-version.h
-linux/include/fwup-version.h : | include-dir
+libfwup.c : | include/fwup.h
+include/fwup.h : | include/fwup-version.h
+include/fwup-version.h : | include-dir
 
 abidw : $(patsubst %.so,%.abixml,$(LIBTARGETS))
 	git add $^
