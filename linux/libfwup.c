@@ -1275,7 +1275,6 @@ fwup_use_existing_media_path(int use_existing_media_path_)
 static int
 get_fd_and_media_path(update_info *info, char **path)
 {
-	struct stat st;
 	char *directory = NULL;
 	char *fullpath = NULL;
 	int fd = -1;
@@ -1311,13 +1310,10 @@ get_fd_and_media_path(update_info *info, char **path)
 			efi_error("asprintf directory failed");
 			return fd;
 		}
-		if (stat(directory, &st) != 0 ||
-		    (st.st_mode & S_IFDIR) == 0) {
-			rc = mkdir(directory, 0775);
-			if (rc < 0) {
-				efi_error("failed to make %s", directory);
-				goto out;
-			}
+		rc = mkdir(directory, 0775);
+		if (rc < 0 && errno != EEXIST) {
+			efi_error("failed to make %s", directory);
+			goto out;
 		}
 		rc = asprintf(&fullpath,
 			      "%s/fwupdate-XXXXXX.cap",
@@ -1496,8 +1492,15 @@ write_ux_capsule_header(FILE *fin, FILE *fout)
 		goto out;
 
 	header_pos = ftell(fin);
+	if (header_pos < 0)
+		goto out;
 	buf_size = fread(buf, 1, 26, fin);
-	fseek(fin, header_pos, SEEK_SET);
+	if (buf_size < 26)
+		goto out;
+
+	header_pos = fseek(fin, header_pos, SEEK_SET);
+	if (header_pos < 0)
+		goto out;
 
 	rc = get_bmp_size(buf, buf_size, &height, &width);
 	if (rc < 0)
@@ -1675,7 +1678,7 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 	int rc;
 	update_info *info = NULL;
 	int error;
-	FILE *fin, *fout;
+	FILE *fin = NULL, *fout = NULL;
 
 	/* check parameters */
 	if (buf == NULL || sz == 0) {
@@ -1739,6 +1742,10 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 out:
 	error = errno;
 	free_info(info);
+	if (fout)
+		fclose(fout);
+	if (fin)
+		fclose(fin);
 	if (fd >= 0)
 		close(fd);
 	errno = error;
