@@ -1073,7 +1073,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 		}
 		capsule->CapsuleGuid = update->info->guid;
 		capsule->HeaderSize = sizeof (*capsule);
-		if (is_ux_capsule(&update->info->guid)) {
+		if (!is_ux_capsule(&update->info->guid)) {
 			capsule->Flags = update->info->capsule_flags |
 					 CAPSULE_FLAGS_PERSIST_ACROSS_RESET |
 					 CAPSULE_FLAGS_INITIATE_RESET;
