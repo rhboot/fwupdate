@@ -1033,6 +1033,10 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	 * Unfortunately there's not a good way to do this, so we're just
 	 * checking if the capsule has the fw_class guid at the right place.
 	 */
+	if (debugging) {
+		Print(L"updates guid: %g\n", &update->info->guid);
+		Print(L"File guid: %g\n", fbuf);
+	}
 	if ((guid_cmp(&update->info->guid, (efi_guid_t *)fbuf) ||
 	     is_fmp_capsule((efi_guid_t *)fbuf)) &&
 	    /*
@@ -1047,8 +1051,6 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	    fsize != 40) {
 		if (debugging) {
 			Print(L"Image has capsule image embedded\n");
-			Print(L"updates guid: %g\n", &update->info->guid);
-			Print(L"File guid: %g\n", fbuf);
 		}
 		cbd_len = fsize;
 		cbd_data = (EFI_PHYSICAL_ADDRESS)(UINTN)fbuf;
