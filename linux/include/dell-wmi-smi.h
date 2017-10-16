@@ -11,42 +11,73 @@
 #ifndef _DELL_WMI_SMI_H_
 #define _DELL_WMI_SMI_H_
 
+#include <linux/version.h>
 #include <sys/ioctl.h>
 
-#define DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED 0x0461
-#define DELL_CAPSULE_FIRMWARE_UPDATES_DISABLED 0x0462
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+#include <linux/wmi.h>
+#else
 
-#define DELL_CLASS_READ_TOKEN 0
-#define DELL_SELECT_READ_TOKEN 0
-#define DELL_CLASS_WRITE_TOKEN 1
-#define DELL_SELECT_WRITE_TOKEN 0
+#include <linux/ioctl.h>
+#include <linux/types.h>
 
-#define DELL_CLASS_ADMIN_PROP 10
-#define DELL_SELECT_ADMIN_PROP 3
+/* WMI bus will filter all WMI vendor driver requests through this IOC */
+#define WMI_IOC 'W'
+
+/* This structure may be modified by the firmware when we enter
+ * system management mode through SMM, hence the volatiles
+ */
+struct calling_interface_buffer {
+	__u16 cmd_class;
+	__u16 cmd_select;
+	__volatile__ __u32 input[4];
+	__volatile__ __u32 output[4];
+} __attribute__((packed));
+
+struct dell_wmi_extensions {
+	__u32 argattrib;
+	__u32 blength;
+	__u8 data[];
+} __attribute__((packed));
+
+struct dell_wmi_smbios_buffer {
+	__u64 length;
+	struct calling_interface_buffer std;
+	struct dell_wmi_extensions	ext;
+} __attribute__((packed));
+
+/* Whitelisted smbios class/select commands */
+#define CLASS_TOKEN_READ	0
+#define CLASS_TOKEN_WRITE	1
+#define SELECT_TOKEN_STD	0
+#define SELECT_TOKEN_BAT	1
+#define SELECT_TOKEN_AC		2
+#define CLASS_FLASH_INTERFACE	7
+#define SELECT_FLASH_INTERFACE	3
+#define CLASS_ADMIN_PROP	10
+#define SELECT_ADMIN_PROP	3
+#define CLASS_INFO		17
+#define SELECT_RFKILL		11
+#define SELECT_APP_REGISTRATION	3
+#define SELECT_DOCK		22
+
+/* whitelisted tokens */
+#define CAPSULE_EN_TOKEN	0x0461
+#define CAPSULE_DIS_TOKEN	0x0462
+#define WSMT_EN_TOKEN		0x04EC
+#define WSMT_DIS_TOKEN		0x04ED
+
+/* Dell SMBIOS calling IOCTL command used by dell-smbios-wmi */
+#define DELL_WMI_SMBIOS_CMD	_IOWR(WMI_IOC, 0, struct dell_wmi_smbios_buffer)
+
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(4,15,0) */
+
+/* these aren't defined upstream but used in fwupdate */
 #define DELL_ADMIN_MASK 0xF
 #define DELL_ADMIN_INSTALLED 0
 
-struct calling_interface_buffer {
-	uint16_t class;
-	uint16_t select;
-	volatile uint32_t input[4];
-	volatile uint32_t output[4];
-};
-
-struct wmi_calling_interface_buffer {
-	struct calling_interface_buffer smi;
-	uint32_t argattrib;
-	uint32_t blength;
-	uint8_t data[32724];
-};
-
+/* device files to interact with over wmi */
 #define DELL_WMI_CHAR "/dev/wmi/dell-smbios"
-#define TOKENS_SYSFS "/sys/bus/wmi/devices/A80593CE-A997-11DA-B012-B622A1EF5492/tokens"
+#define TOKENS_SYSFS "/sys/devices/platform/dell-smbios.0/tokens"
 
-#define DELL_WMI_SMBIOS_IOC			'D'
-/* run SMBIOS calling interface command
- * note - 32k is too big for size, so this can not be encoded in macro properly
- */
-#define DELL_WMI_SMBIOS_CALL_CMD  	_IOWR(DELL_WMI_SMBIOS_IOC, 0, uint8_t)
-
-#endif
+#endif /* _DELL_WMI_SMI_H_ */
