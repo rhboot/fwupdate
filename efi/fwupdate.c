@@ -1054,9 +1054,13 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 		cbd_data = (EFI_PHYSICAL_ADDRESS)(UINTN)fbuf;
 		capsule = cap_out = (EFI_CAPSULE_HEADER *)fbuf;
 		if (!cap_out->Flags && !is_ux_capsule(&update->info->guid)) {
+#if defined(__aarch64__)
+			cap_out->Flags |= update->info->capsule_flags;
+#else
 			cap_out->Flags |= update->info->capsule_flags |
 					  CAPSULE_FLAGS_PERSIST_ACROSS_RESET |
 					  CAPSULE_FLAGS_INITIATE_RESET;
+#endif
 		}
 	} else {
 		if (debugging) {
