@@ -25,6 +25,8 @@ EFI_GUID fwupdate_guid =
 	{0x0abba7dc,0xe516,0x4167,{0xbb,0xf5,0x4d,0x9d,0x1c,0x73,0x94,0x16}};
 EFI_GUID ux_capsule_guid =
 	{0x3b8c8162,0x188c,0x46a4,{0xae,0xc9,0xbe,0x43,0xf1,0xd6,0x56,0x97}};
+EFI_GUID fmp_capsule_guid =
+	{0x6dcbd5ed,0xe82d,0x4c44,{0xbd,0xa1,0x71,0x94,0x19,0x9a,0xd9,0x2a}};
 
 #include "fwup-efi.h"
 
@@ -999,6 +1001,7 @@ do_ux_csum(EFI_HANDLE loaded_image, UINT8 *buf, UINTN size)
 }
 
 #define is_ux_capsule(guid) (guid_cmp(guid, &ux_capsule_guid) == 0)
+#define is_fmp_capsule(guid) (guid_cmp(guid, &fmp_capsule_guid) == 0)
 
 static EFI_STATUS
 add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
@@ -1031,6 +1034,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	 * checking if the capsule has the fw_class guid at the right place.
 	 */
 	if (guid_cmp(&update->info->guid, (efi_guid_t *)fbuf) &&
+	    !is_fmp_capsule((efi_guid_t *)fbuf) &&
 	    /*
 	     * We're ignoring things that are 40 bytes here, because that's
 	     * the size of the variables used in the test code I wrote for
