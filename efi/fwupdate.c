@@ -109,6 +109,12 @@ free(void *addr, UINTN size)
 	return rc;
 }
 
+static inline int
+guid_cmp(efi_guid_t *a, efi_guid_t *b)
+{
+	return CompareMem(a, b, sizeof (*a));
+}
+
 EFI_STATUS
 read_file(EFI_FILE_HANDLE fh, UINT8 **buf_out, UINTN *buf_size_out)
 {
@@ -390,8 +396,7 @@ find_updates(UINTN *n_updates_out, update_table ***updates_out)
 		/*
 		 * If it's not one of our state variables, keep going.
 		 */
-		if (CompareMem(&vendor_guid, &fwupdate_guid,
-			       sizeof (vendor_guid)))
+		if (guid_cmp(&vendor_guid, &fwupdate_guid))
 			continue;
 
 		/*
@@ -993,14 +998,7 @@ do_ux_csum(EFI_HANDLE loaded_image, UINT8 *buf, UINTN size)
 	return EFI_SUCCESS;
 }
 
-static int
-is_ux_capsule(EFI_GUID *guid)
-{
-	if (CompareMem(guid, &ux_capsule_guid,
-		       sizeof(ux_capsule_guid)) == 0)
-		return 1;
-	return 0;
-}
+#define is_ux_capsule(guid) (guid_cmp(guid, &ux_capsule_guid) == 0)
 
 static EFI_STATUS
 add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
@@ -1032,8 +1030,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	 * Unfortunately there's not a good way to do this, so we're just
 	 * checking if the capsule has the fw_class guid at the right place.
 	 */
-	if (CompareMem(&update->info->guid, fbuf,
-			sizeof (update->info->guid)) == 0 &&
+	if (guid_cmp(&update->info->guid, (efi_guid_t *)fbuf) &&
 	    /*
 	     * We're ignoring things that are 40 bytes here, because that's
 	     * the size of the variables used in the test code I wrote for
