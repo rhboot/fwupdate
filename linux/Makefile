@@ -93,7 +93,7 @@ abicheck : $(patsubst %.so,%.abicheck,$(LIBTARGETS))
 	sed -e "s,@@VERSION@@,$(VERSION),g" \
 		-e "s,@@FWUP_MAJOR_VERSION@@,$(MAJOR_VERSION),g" \
 		-e "s,@@FWUP_MINOR_VERSION@@,$(MINOR_VERSION),g" \
-		-e "s,@@SHAREDSTATEDIR@@,$(statedir),g" \
+		-e "s,@@SHAREDSTATEDIR@@,$(sharedstatedir),g" \
 		-e "s,@@ESPMOUNTPOINT@@,$(ESPMOUNTPOINT),g" \
 		-e "s,@@EFIDIR@@,$(EFIDIR),g" \
 		-e "s,@@LIBDIR@@,$(libdir),g" \
