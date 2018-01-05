@@ -1035,7 +1035,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 		Print(L"updates guid: %g\n", &update->info->guid);
 		Print(L"File guid: %g\n", fbuf);
 	}
-	if ((guid_cmp(&update->info->guid, (efi_guid_t *)fbuf) ||
+	if ((guid_cmp(&update->info->guid, (efi_guid_t *)fbuf) == 0 ||
 	     is_fmp_capsule((efi_guid_t *)fbuf)) &&
 	    /*
 	     * We're ignoring things that are 40 bytes here, because that's
