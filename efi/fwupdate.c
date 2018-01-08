@@ -27,6 +27,7 @@ EFI_GUID ux_capsule_guid =
 	{0x3b8c8162,0x188c,0x46a4,{0xae,0xc9,0xbe,0x43,0xf1,0xd6,0x56,0x97}};
 EFI_GUID fmp_capsule_guid =
 	{0x6dcbd5ed,0xe82d,0x4c44,{0xbd,0xa1,0x71,0x94,0x19,0x9a,0xd9,0x2a}};
+EFI_GUID global_variable_guid = EFI_GLOBAL_VARIABLE;
 
 #include "fwup-efi.h"
 
@@ -813,7 +814,8 @@ delete_boot_entry(void)
 
 		/* check if the variable name is Boot#### */
 		UINTN vns = StrLen(variable_name);
-		if (vns == 8 && CompareMem(variable_name, L"Boot", 8) == 0) {
+		if (!guid_cmp(&vendor_guid, &global_variable_guid)
+		    && vns == 8 && CompareMem(variable_name, L"Boot", 8) == 0) {
 			UINTN info_size = 0;
 			UINT32 attributes = 0;
 			void *info_ptr = NULL;
