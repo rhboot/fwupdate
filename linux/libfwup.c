@@ -1130,6 +1130,7 @@ set_up_boot_next(void)
 	char *shim_fs_path = NULL;
 	char *fwup_fs_path = NULL;
 	char *fwup_esp_path = NULL;
+	char *fwup_option = NULL;
 	int use_fwup_path = 0;
 
 	char *label = NULL;
@@ -1165,7 +1166,10 @@ set_up_boot_next(void)
 	}
 
 	if (!use_fwup_path) {
-		loader_str = utf8_to_ucs2((uint8_t *)fwup_esp_path, -1);
+		fwup_option = alloca(strlen(fwup_esp_path) + 2);
+		fwup_option[0] = ' ';
+		strcpy(fwup_option + 1, fwup_esp_path);
+		loader_str = utf8_to_ucs2((uint8_t *)fwup_option, -1);
 		loader_sz = ucs2len(loader_str, -1) * 2;
 		if (loader_sz)
 			loader_sz += 2;
