@@ -820,9 +820,10 @@ delete_boot_entry(void)
 			UINT32 attributes = 0;
 			void *info_ptr = NULL;
 			CHAR16 *load_op_description = NULL;
+			CHAR16 target[] = L"Linux-Firmware-Updater";
 
-			rc = read_variable(variable_name, vendor_guid, &info_ptr,
-				&info_size, &attributes);
+			rc = read_variable(variable_name, vendor_guid,
+					   &info_ptr, &info_size, &attributes);
 			if (EFI_ERROR(rc)) {
 				ret = rc;
 				goto err;
@@ -832,48 +833,43 @@ delete_boot_entry(void)
 			 * check if the boot path created by fwupdate,
 			 * check with EFI_LOAD_OPTION decription
 			 */
-			load_op_description = (CHAR16 *)((UINT8 *)info_ptr +
-				sizeof(UINT32) + sizeof(UINT16));
+			load_op_description = (CHAR16 *)
+					((UINT8 *)info_ptr
+					 + sizeof(UINT32)
+					 + sizeof(UINT16));
 
-			if (CompareMem(load_op_description,
-					L"Linux-Firmware-Updater",
-					sizeof (L"Linux-Firmware-Updater") - 2)
-					 == 0) {
-				rc = delete_variable(variable_name, vendor_guid,
-						attributes);
-
-				if (EFI_ERROR(rc)) {
-					Print(L"fail to delete Linux-Firmware-"
-						L"Updater boot path.\n");
-					FreePool(info_ptr);
-					ret = rc;
-					goto out;
-				}
-
+			if (CompareMem(load_op_description, target,
+				       sizeof(target) - 2) == 0) {
 				/* delete the boot path from BootOrder list */
 				rc = delete_boot_order(variable_name,
-								vendor_guid);
-
+						       vendor_guid);
 				if (EFI_ERROR(rc)) {
-					Print(L"fail to delete the boot path "
-						L"from BootOrder boot path.\n");
+					Print(L"Failed to delete the Linux-Firmware-Updater boot entry from BootOrder.\n");
 					FreePool(info_ptr);
 					ret = rc;
-					goto out;
+					goto err;
 				}
+
+				rc = delete_variable(variable_name,
+						     vendor_guid, attributes);
+				if (EFI_ERROR(rc)) {
+					Print(L"Failed to delete the Linux-Firmware-Updater boot entry.\n");
+					FreePool(info_ptr);
+					ret = rc;
+					goto err;
+				}
+
+				FreePool(info_ptr);
+				break;
 			}
 
 			FreePool(info_ptr);
 		}
 	}
 
-out:
-	FreePool(variable_name);
-	return EFI_SUCCESS;
-
+	ret = EFI_SUCCESS;
 err:
 	FreePool(variable_name);
-
 	return ret;
 }
 
