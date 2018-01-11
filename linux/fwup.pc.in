@@ -6,5 +6,5 @@ includedir=/usr/include
 Name: fwup
 Description: Library for deployment of UEFI firmware updates.
 Version: @@VERSION@@
-Requires: efivar >= 30
+Requires: efivar >= 33
 Libs: -L${libdir} -lfwup
