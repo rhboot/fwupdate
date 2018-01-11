@@ -603,7 +603,7 @@ err:
 			      | EFI_VARIABLE_BOOTSERVICE_ACCESS
 			      | EFI_VARIABLE_RUNTIME_ACCESS;
 	rc = efi_set_variable(varguid, varname, (uint8_t *)info2,
-			      is, attributes, 0600);
+			      is, attributes, 0644);
 	error = errno;
 	if (rc < 0)
 		efi_error("efi_set_variable(%s) failed", varname);
@@ -1293,7 +1293,7 @@ do_next:
 	if (found) {
 		efi_loadopt_attr_set(loadopt, LOAD_OPTION_ACTIVE);
 		rc = efi_set_variable(*guid, name, var_data,
-				      var_data_size, attr, 0600);
+				      var_data_size, attr, 0644);
 		free(var_data);
 		if (rc < 0) {
 			efi_error("could not set boot variable active");
@@ -1323,7 +1323,7 @@ do_next:
 				      EFI_VARIABLE_NON_VOLATILE |
 				      EFI_VARIABLE_BOOTSERVICE_ACCESS |
 				      EFI_VARIABLE_RUNTIME_ACCESS,
-				      0600);
+				      0644);
 		if (rc < 0) {
 			efi_error("could not set boot variable");
 			goto out;
@@ -1343,7 +1343,7 @@ do_next:
 			      EFI_VARIABLE_NON_VOLATILE |
 			      EFI_VARIABLE_BOOTSERVICE_ACCESS |
 			      EFI_VARIABLE_RUNTIME_ACCESS,
-			      0600);
+			      0644);
 	if (rc < 0)
 		efi_error("could not set BootNext");
 	else
