@@ -93,6 +93,7 @@ print_system_resources(void)
 #define ACTION_SUPPORTED	0x04
 #define ACTION_INFO		0x08
 #define ACTION_ENABLE		0x10
+#define ACTION_VERSION		0x20
 
 int
 main(int argc, char *argv[]) {
@@ -145,6 +146,13 @@ main(int argc, char *argv[]) {
 		 .arg = &action,
 		 .val = ACTION_ENABLE,
 		 .descrip = _("Enable firmware update support on supported systems (will require a reboot)") },
+		{.longName = "version",
+		 .shortName = '\0',
+		 .argInfo = POPT_ARG_VAL|POPT_ARGFLAG_OPTIONAL,
+		 .arg = &action,
+		 .val = ACTION_VERSION,
+		 .descrip = _("Display version"),
+		},
 		{.longName = "quiet",
 		 .shortName = 'q',
 		 .argInfo = POPT_ARG_VAL,
@@ -326,6 +334,9 @@ main(int argc, char *argv[]) {
 				_("Firmware updates will be enabled after the system is rebooted."));
 			return 0;
 		}
+	} else if (action & ACTION_VERSION) {
+		qprintf("fwupdate version: %d\n", LIBFWUP_VERSION);
+		return 0;
 	}
 
 	return 0;
