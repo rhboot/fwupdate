@@ -5,6 +5,7 @@
 *.so
 *.o
 *.a
+*.E
 *.pc
 *.spec
 *.tar.*
