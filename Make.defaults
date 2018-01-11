@@ -7,7 +7,7 @@ endif
 
 NAME		= fwupdate
 COMMIT_ID	= $(shell git log -1 --pretty=%H 2>/dev/null || echo master)
-INSTALL 	?= install
+INSTALL		?= install
 MAKE		?= make
 PKG_CONFIG	?= $(CROSS_COMPILE)pkg-config
 CC		= $(CROSS_COMPILE)gcc
@@ -48,7 +48,7 @@ pcdir		?= $(libdir)/pkgconfig
 mandir		?= $(prefix)share/man
 includedir	?= $(prefix)include
 bindir		?= $(prefix)bin
-datadir 	?= $(prefix)share
+datadir		?= $(prefix)share
 localedir	?= $(datadir)/locale
 libexecdir	?= $(prefix)libexec
 libdatadir	?= $(prefix)lib
