@@ -45,8 +45,6 @@ set_variable(CHAR16 *name, EFI_GUID guid, VOID *data, UINTN size,
 	     UINT32 attrs);
 
 static int debugging;
-static CHAR16 *debug_log;
-static UINTN debug_log_size;
 
 #define SECONDS 1000000
 
@@ -78,50 +76,42 @@ debug_print(const char *func, const char *file, const int line,
 {
 	va_list args0, args1;
 	CHAR16 *out0, *out1;
-	CHAR16 *new_debug_log = NULL;
-	UINTN new_debug_log_size = 0;
 	UINT32 attrs = EFI_VARIABLE_NON_VOLATILE |
 		       EFI_VARIABLE_BOOTSERVICE_ACCESS |
 		       EFI_VARIABLE_RUNTIME_ACCESS;
 	CHAR16 *name = L"FWUPDATE_DEBUG_LOG";
+	static int once = 1;
 
 	va_start(args0, fmt);
 	out0 = VPoolPrint(fmt, args0);
+	va_end(args0);
 	if (!out0) {
-err:
 		if (debugging) {
 			va_start(args1, fmt);
 			VPrint(fmt, args1);
 			va_end(args1);
-			va_end(args0);
 		}
+		Print(L"fwupdate: Allocation for debug log failed!\n");
 		return debugging;
 	}
-	out1 = PoolPrint(L"%a:%d:%a(): %s", file, line, func, out0);
-	if (!out1)
-		goto err;
-	va_end(args0);
-	FreePool(out0);
-
 	if (debugging)
-		Print(L"%s", out1);
-
-	new_debug_log_size = debug_log_size + StrSize(out1);
-	if (debug_log)
-		new_debug_log = ReallocatePool(debug_log, debug_log_size,
-					       new_debug_log_size);
-	else
-		new_debug_log = AllocatePool(new_debug_log_size);
-	if (!new_debug_log) {
-		FreePool(out1);
+		Print(L"%s", out0);
+	out1 = PoolPrint(L"%a:%d:%a(): %s", file, line, func, out0);
+	FreePool(out0);
+	if (!out1) {
+		Print(L"fwupdate: Allocation for debug log failed!\n");
 		return debugging;
 	}
-	StrCat(new_debug_log, out1);
-	debug_log = new_debug_log;
-	debug_log_size = new_debug_log_size;
 
-	delete_variable(name, fwupdate_guid, attrs);
-	set_variable(name, fwupdate_guid, debug_log, debug_log_size, attrs);
+	if (once) {
+		once = 0;
+		delete_variable(name, fwupdate_guid, attrs);
+	} else {
+		attrs |= EFI_VARIABLE_APPEND_WRITE;
+	}
+	set_variable(name, fwupdate_guid, out1, StrSize(out1) - sizeof (CHAR16), attrs);
+
+	FreePool(out1);
 
 	return debugging;
 }
