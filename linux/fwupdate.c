@@ -24,6 +24,8 @@
 #include "util.h"
 #include "error.h"
 
+#define FWUPDATE_GUID EFI_GUID(0x0abba7dc,0xe516,0x4167,0xbbf5,0x4d,0x9d,0x1c,0x73,0x94,0x16)
+
 int verbose = 0;
 int quiet = 0;
 
@@ -88,6 +90,38 @@ print_system_resources(void)
 	return 0;
 }
 
+static void
+set_debug_flag(int8_t set_debug)
+{
+	int rc;
+	uint8_t *data;
+	size_t size;
+	uint32_t attributes;
+	const char *name = "FWUPDATE_VERBOSE";
+	efi_guid_t fwupdate_guid = FWUPDATE_GUID;
+
+	if (set_debug == -1)
+		return;
+
+	rc = efi_get_variable(fwupdate_guid, name, &data, &size, &attributes);
+	if (rc >= 0) {
+		if (size == 1 && *(int *)data == set_debug)
+			return;
+		efi_del_variable(fwupdate_guid, name);
+	}
+
+	if (set_debug <= 0)
+		return;
+
+	attributes = EFI_VARIABLE_NON_VOLATILE |
+		     EFI_VARIABLE_BOOTSERVICE_ACCESS |
+		     EFI_VARIABLE_RUNTIME_ACCESS;
+
+	efi_set_variable(fwupdate_guid, name,
+			 (uint8_t *)&set_debug, sizeof(set_debug),
+			 attributes, 0644);
+}
+
 #define ACTION_APPLY		0x01
 #define ACTION_LIST		0x02
 #define ACTION_SUPPORTED	0x04
@@ -99,6 +133,7 @@ int
 main(int argc, char *argv[]) {
 	int action = 0;
 	int force = 0;
+	int set_debug = 0;
 	int use_existing_media_path = 1;
 	char *esp_path = FWUP_ESP_MOUNTPOINT;
 
@@ -178,6 +213,20 @@ main(int argc, char *argv[]) {
 		 .arg = &use_existing_media_path,
 		 .val = 0,
 		 .descrip = _("Don't reuse the filename for this GUID from previous updates") },
+		{.longName = "set-debug",
+		 .shortName = 'd',
+		 .argInfo = POPT_ARG_VAL|POPT_ARGFLAG_OPTIONAL,
+		 .arg = &set_debug,
+		 .val = 1,
+		 .descrip = _("Set the debugging flag during update"),
+		},
+		{.longName = "unset-debug",
+		 .shortName = 'D',
+		 .argInfo = POPT_ARG_VAL|POPT_ARGFLAG_OPTIONAL,
+		 .arg = &set_debug,
+		 .val = 0,
+		 .descrip = _("Set the debugging flag during update"),
+		},
 		{.longName = "verbose",
 		 .shortName = 'v',
 		 .argInfo = POPT_ARG_VAL|POPT_ARGFLAG_OPTIONAL,
@@ -203,6 +252,8 @@ main(int argc, char *argv[]) {
 		;
 
 	fwup_set_esp_mountpoint(esp_path);
+
+	set_debug_flag(set_debug);
 
 	if (action & ACTION_APPLY) {
 		guidstr = poptGetArg(optcon);
@@ -232,7 +283,7 @@ main(int argc, char *argv[]) {
 		errorx(3, _("invalid argument: \"%s\""),
 			poptPeekArg(optcon));
 
-	if (!action) {
+	if (!action && set_debug == -1) {
 		warningx(_("no action specified"));
 		poptPrintUsage(optcon, stderr, 0);
 		exit(4);

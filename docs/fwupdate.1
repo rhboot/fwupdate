@@ -21,6 +21,9 @@ Show the information of firmware update status
 \fB\-e\fR, \fB\-\-enable\fR
 Enable firmware update support on supported systems (will require a reboot)
 .TP
+\fB\-d\fR | \fB\-D\fR, \fB\-\-set\-debug\fR | \fB\-\-unset\-debug\fR
+Set or unset the persistent debugging verbosity flag used when running updates.  This state is persisent until changed.
+.TP
 \fB\-q\fR, \fB\-\-quiet\fR
 Work quietly
 .TP
@@ -33,7 +36,7 @@ Directory where the ESP (EFI System Partition) is currently mounted\&. By defaul
 \fB\-F\fR, \fB\-\-dont-use-existing-media-path\fR
 By default when you apply a firmware update, \fBfwupdate\fR check the current EFI firmware <guid> and recorded file path (use \fB--info\fR to get those informations)\&. If the current EFI firmware <guid> is the same as the update, \fBfwupdate\fR will try to use the same recorded file path\&. This can be a problem if, for exemple, you want to change the \fBESP subdirectory\fR[1] used by \fBfwupdate\fR\&.
 .sp
-This option make \fBfwupdate\fR behave as if there weren't any recorded file path.
+This option makes \fBfwupdate\fR behave as if there wasn't any recorded file path.
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR
 Be more verbose on errors
