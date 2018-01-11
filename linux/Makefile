@@ -90,7 +90,7 @@ abicheck : $(patsubst %.so,%.abicheck,$(LIBTARGETS))
 	$(CC) $(BUILDFLAGS) -fPIC -c -o $@ $^
 
 % : %.in
-	sed -e "s,@@VERSION@@,$(VERSION),g" \
+	sed -e "s,@@FWUP_VERSION@@,$(VERSION),g" \
 		-e "s,@@FWUP_MAJOR_VERSION@@,$(MAJOR_VERSION),g" \
 		-e "s,@@FWUP_MINOR_VERSION@@,$(MINOR_VERSION),g" \
 		-e "s,@@SHAREDSTATEDIR@@,$(sharedstatedir),g" \
