@@ -136,7 +136,7 @@ dump_log(void)
 			printf("No debug log found\n");
 			return;
 		}
-		error(1, "Could not get debug log\n");
+		error(1, "Could not get debug log");
 	}
 
 	printf("%s", utf8);
