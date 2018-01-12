@@ -23,6 +23,7 @@
 #include <fwup.h>
 #include "util.h"
 #include "error.h"
+#include "ucs2.h"
 
 #define FWUPDATE_GUID EFI_GUID(0x0abba7dc,0xe516,0x4167,0xbbf5,0x4d,0x9d,0x1c,0x73,0x94,0x16)
 
@@ -122,12 +123,33 @@ set_debug_flag(int8_t set_debug)
 			 attributes, 0644);
 }
 
+static void
+dump_log(void)
+{
+	int rc;
+	char *utf8 = NULL;
+	size_t size = 0;
+
+	rc = fwup_get_debug_log(&utf8, &size);
+	if (rc < 0) {
+		if (rc == ENOENT) {
+			printf("No debug log found\n");
+			return;
+		}
+		error(1, "Could not get debug log\n");
+	}
+
+	printf("%s", utf8);
+	free(utf8);
+}
+
 #define ACTION_APPLY		0x01
 #define ACTION_LIST		0x02
 #define ACTION_SUPPORTED	0x04
 #define ACTION_INFO		0x08
 #define ACTION_ENABLE		0x10
 #define ACTION_VERSION		0x20
+#define ACTION_SHOW_LOG		0x40
 
 int
 main(int argc, char *argv[]) {
@@ -162,6 +184,13 @@ main(int argc, char *argv[]) {
 		 .arg = &action,
 		 .val = ACTION_LIST,
 		 .descrip = _("List supported firmware updates") },
+		{.longName = "log",
+		 .shortName = 'L',
+		 .argInfo = POPT_ARG_VAL|POPT_ARGFLAG_OR,
+		 .arg = &action,
+		 .val = ACTION_SHOW_LOG,
+		 .descrip = _("Show the debug log from the last attempted update"),
+		},
 		{.longName = "supported",
 		 .shortName = 's',
 		 .argInfo = POPT_ARG_VAL|POPT_ARGFLAG_OR,
@@ -254,6 +283,9 @@ main(int argc, char *argv[]) {
 	fwup_set_esp_mountpoint(esp_path);
 
 	set_debug_flag(set_debug);
+
+	if (action & ACTION_SHOW_LOG)
+		dump_log();
 
 	if (action & ACTION_APPLY) {
 		guidstr = poptGetArg(optcon);

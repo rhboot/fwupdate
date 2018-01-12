@@ -2142,3 +2142,38 @@ fwup_get_ux_capsule_info(uint32_t *screen_x_size, uint32_t *screen_y_size)
 
 	return 0;
 }
+
+int
+fwup_get_debug_log(char **utf8, size_t *size)
+{
+	int rc;
+	efi_guid_t fwupdate_guid = FWUPDATE_GUID;
+	uint16_t *data;
+	size_t vsize;
+	uint32_t attributes;
+	char *udata;
+	int error;
+
+	if (!utf8 || !size) {
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
+	rc = efi_get_variable(fwupdate_guid, "FWUPDATE_DEBUG_LOG",
+			      (uint8_t **)&data, &vsize, &attributes);
+	if (rc < 0)
+		return rc;
+
+	udata = ucs2_to_utf8(data, (vsize >> 1));
+	error = errno;
+	free(data);
+	errno = error;
+	if (!udata) {
+		rc = -1;
+		return rc;
+	}
+
+	*utf8 = udata;
+	*size = vsize >> 1;
+	return 0;
+}

@@ -31,6 +31,9 @@ libfwup - library to support management of system firmware updates
 	uint32_t *\fIstatus\fB, time_t *\fIwhen\fB);\fR\p
  \- operate on an individual firmware entry
 
+\fBint \fRfwup_get_debug_log\fB(char **\fIutf8\fB, size_t *\fIsize\fB);\fR\p
+ \- show the debug log from the last update attempt
+
 \fBvoid \fRfwup_use_existing_media_path\fB(int \fIuse_existing_media_path\fB);\fR\p
  \- instruct fwupdate on whether to reuse old capsule filenames on the ESP.
 
@@ -93,6 +96,10 @@ updated to.
 .ta \nZu
 	uint32_t *\fIstatus\fB, time_t *\fIwhen\fB);\fR\p
 Get the status for the last attempt to update firmware resource \fIre\fR.
+
+\fBint \fRfwup_get_debug_log\fB(char **\fIutf8\fB, size_t *\fIsize\fB);\fR\p
+Get the debug log from the last update attempt.  This allocates a buffer
+which the caller must free.
 
 \fBvoid \fRfwup_print_update_info\fB(void);\fR\p
 Print the information of firmware update status.
