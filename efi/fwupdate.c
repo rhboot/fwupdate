@@ -1042,10 +1042,13 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	rc = read_file(fh, &fbuf, &fsize);
 	if (EFI_ERROR(rc))
 		return rc;
-	dprint(L"Read file\n");
 
 	uefi_call_wrapper(fh->Close, 1, fh);
-	dprint(L"Closed file\n");
+
+	dprint(L"Read file; %u bytes\n", fsize);
+	dprint(L"Checksum is %u\n", csum(fbuf, fsize));
+	dprint(L"updates guid: %g\n", &update->info->guid);
+	dprint(L"File guid: %g\n", fbuf);
 
 	/*
 	 * See if it has the capsule header, and if not, add one.
@@ -1053,8 +1056,6 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	 * Unfortunately there's not a good way to do this, so we're just
 	 * checking if the capsule has the fw_class guid at the right place.
 	 */
-	dprint(L"updates guid: %g\n", &update->info->guid);
-	dprint(L"File guid: %g\n", fbuf);
 	if ((guid_cmp(&update->info->guid, (efi_guid_t *)fbuf) == 0 ||
 	     is_fmp_capsule((efi_guid_t *)fbuf)) &&
 	    /*
