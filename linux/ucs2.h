@@ -13,12 +13,12 @@ __attribute__((__unused__))
 ucs2_to_utf8(const uint16_t *chars, size_t max)
 {
 	size_t i, j;
-	char *ret = alloca(max * 6 + 1);
+	char *ret = alloca(max * 3 + 1); /* would be s/3/6 if this were UCS-4 */
 	if (!ret)
 		return NULL;
-	memset(ret, 0, max * 6 +1);
+	memset(ret, 0, max * 3 +1); /* would be s/3/6 if this were UCS-4 */
 
-	for (i=0, j=0; chars[i] && i < max; i++,j++) {
+	for (i=0, j=0; i < max && chars[i]; i++,j++) {
 		if (chars[i] <= 0x7f) {
 			ret[j] = chars[i];
 		} else if (chars[i] > 0x7f && chars[i] <= 0x7ff) {
