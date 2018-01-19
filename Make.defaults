@@ -22,6 +22,9 @@ prefix		:= $(abspath $(prefix))/
 ARCH		= $(shell $(CC) -dumpmachine | cut -f1 -d- | sed s,i[3456789]86,ia32,)
 ifeq ($(ARCH),x86_64)
   LIBDIR	?= $(prefix)lib64
+  ifeq "$(wildcard $(LIBDIR) )" ""
+    LIBDIR	= $(prefix)lib/x86_64-linux-gnu
+  endif
 endif
 ifeq ($(ARCH),ia32)
   LIBDIR	?= $(prefix)lib
@@ -43,6 +46,9 @@ DOTARCH		?= .$(RPMARCH)
 endif
 
 GNUEFIDIR	?= $(LIBDIR)/gnuefi
+ifeq "$(wildcard $(GNUEFIDIR) )" ""
+	GNUEFIDIR = $(prefix)lib
+endif
 libdir		?= $(LIBDIR)
 pcdir		?= $(libdir)/pkgconfig
 mandir		?= $(prefix)share/man
@@ -51,6 +57,9 @@ bindir		?= $(prefix)bin
 datadir		?= $(prefix)share
 localedir	?= $(datadir)/locale
 libexecdir	?= $(prefix)libexec
+ifeq "$(wildcard $(libexecdir) )" ""
+	libexecdir = $(prefix)lib
+endif
 libdatadir	?= $(prefix)lib
 sharedstatedir	?= /var/lib
 
