@@ -1646,7 +1646,7 @@ write_ux_capsule_header(FILE *fin, FILE *fout)
 	efi_capsule_header_t capsule_header = {
 		.flags = CAPSULE_FLAGS_PERSIST_ACROSS_RESET,
 		.guid = efi_guid_ux_capsule,
-		.header_size = sizeof(efi_capsule_header_t) + sizeof(header),
+		.header_size = sizeof(efi_capsule_header_t),
 		.capsule_image_size = 0
 	};
 
