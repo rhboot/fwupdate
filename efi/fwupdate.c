@@ -948,9 +948,11 @@ static UINT32 csum(UINT8 *buf, UINTN size)
 
 	for (i = 0; i < size; i++) {
 		sum += buf[i];
-		dprint(L"\rpos:%08lx csum:%08lu", buf+i, sum);
+		if (debugging)
+			Print(L"\rpos:%08lx csum:%d", buf+i, sum);
 	}
-	dprint(L"\n");
+	if (debugging)
+		Print(L"\n");
 
 	return sum;
 }
@@ -1045,8 +1047,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 
 	uefi_call_wrapper(fh->Close, 1, fh);
 
-	dprint(L"Read file; %u bytes\n", fsize);
-	dprint(L"Checksum is %u\n", csum(fbuf, fsize));
+	dprint(L"Read file; %d bytes\n", fsize);
 	dprint(L"updates guid: %g\n", &update->info->guid);
 	dprint(L"File guid: %g\n", fbuf);
 
