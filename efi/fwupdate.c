@@ -72,7 +72,7 @@ static int debugging;
 
 int
 debug_print(const char *func, const char *file, const int line,
-	    const CHAR16 *fmt, ...)
+	    CHAR16 *fmt, ...)
 {
 	va_list args0, args1;
 	CHAR16 *out0, *out1;
