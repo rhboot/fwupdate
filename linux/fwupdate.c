@@ -109,6 +109,7 @@ set_debug_flag(int8_t set_debug)
 		if (size == 1 && *(int *)data == set_debug)
 			return;
 		efi_del_variable(fwupdate_guid, name);
+		printf("Disabled fwupdate debugging\n");
 	}
 
 	if (set_debug <= 0)
@@ -121,6 +122,7 @@ set_debug_flag(int8_t set_debug)
 	efi_set_variable(fwupdate_guid, name,
 			 (uint8_t *)&set_debug, sizeof(set_debug),
 			 attributes, 0644);
+	printf("Enabled fwupdate debugging\n");
 }
 
 static void
