@@ -976,11 +976,11 @@ do_ux_csum(EFI_HANDLE loaded_image, UINT8 *buf, UINTN size)
 	if (debugging)
 		hexdump(buf, size <= 0x40 ? size : 0x40);
 
-	dprint(L"size: %lu\n", size);
+	dprint(L"size: %d\n", size);
 	dprint(L"&HeaderSize: 0x%08lx\n", &capsule->HeaderSize);
-	dprint(L"HeaderSize: %lu\n", capsule->HeaderSize);
+	dprint(L"HeaderSize: %d\n", capsule->HeaderSize);
 	dprint(L"&CapsuleImageSize: 0x%08lx\n", &capsule->CapsuleImageSize);
-	dprint(L"CapsuleImageSize: %lu\n", capsule->CapsuleImageSize);
+	dprint(L"CapsuleImageSize: %d\n", capsule->CapsuleImageSize);
 
 	if (size < capsule->HeaderSize) {
 		dprint(L"Invalid capsule header size %d\n", size);
@@ -998,7 +998,7 @@ do_ux_csum(EFI_HANDLE loaded_image, UINT8 *buf, UINTN size)
 
 	payload_hdr = (ux_capsule_header_t *)(buf) + capsule->HeaderSize;
 	dprint(L"&PayloadHeader: 0x%08lx\n", payload_hdr);
-	dprint(L"PayloadHeader Size: %lu\n", sizeof (*payload_hdr));
+	dprint(L"PayloadHeader Size: %d\n", sizeof (*payload_hdr));
 	rc = get_gop_mode(&payload_hdr->mode, loaded_image);
 	if (EFI_ERROR(rc))
 		return EFI_UNSUPPORTED;
