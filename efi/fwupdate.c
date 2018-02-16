@@ -993,11 +993,6 @@ do_ux_csum(EFI_HANDLE loaded_image, UINT8 *buf, UINTN size)
 	current += capsule->HeaderSize;
 	left -= capsule->HeaderSize;
 
-	if (size < capsule->HeaderSize + capsule->CapsuleImageSize) {
-		dprint(L"Invalid capsule size %d\n", size);
-		return EFI_INVALID_PARAMETER;
-	}
-
 	payload_hdr = (ux_capsule_header_t *)(buf) + capsule->HeaderSize;
 	dprint(L"&PayloadHeader: 0x%08lx\n", payload_hdr);
 	dprint(L"PayloadHeader Size: %d\n", sizeof (*payload_hdr));
