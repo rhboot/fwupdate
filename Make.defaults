@@ -18,22 +18,23 @@ XGETTEXT	= xgettext
 ABIDIFF		:= abidiff
 ABIDW		:= abidw
 prefix		?= /usr/
-prefix		:= $(abspath $(prefix))/
+prefix		:= $(abspath $(prefix))
+exec_prefix		?= $(prefix)
 ARCH		= $(shell $(CC) -dumpmachine | cut -f1 -d- | sed s,i[3456789]86,ia32,)
 ifeq ($(ARCH),x86_64)
-  LIBDIR	?= $(prefix)lib64
+  LIBDIR	?= $(exec_prefix)/lib64
   ifeq "$(wildcard $(LIBDIR) )" ""
-    LIBDIR	= $(prefix)lib/x86_64-linux-gnu
+    LIBDIR	= $(exec_prefix)/lib/x86_64-linux-gnu
   endif
 endif
 ifeq ($(ARCH),ia32)
-  LIBDIR	?= $(prefix)lib
+  LIBDIR	?= $(exec_prefix)/lib
 endif
 ifeq ($(ARCH),aarch64)
-  LIBDIR	?= $(prefix)lib64
+  LIBDIR	?= $(exec_prefix)/lib64
 endif
 ifeq ($(ARCH),arm)
-  LIBDIR	?= $(prefix)lib
+  LIBDIR	?= $(exec_prefix)/lib
 endif
 LIBDIR		?= unknown
 ifeq ($(LIBDIR),unknown)
@@ -47,20 +48,20 @@ endif
 
 GNUEFIDIR	?= $(LIBDIR)/gnuefi
 ifeq "$(wildcard $(GNUEFIDIR) )" ""
-	GNUEFIDIR = $(prefix)lib
+	GNUEFIDIR = $(prefix)/lib
 endif
 libdir		?= $(LIBDIR)
 pcdir		?= $(libdir)/pkgconfig
-mandir		?= $(prefix)share/man
-includedir	?= $(prefix)include
-bindir		?= $(prefix)bin
-datadir		?= $(prefix)share
+mandir		?= $(prefix)/share/man
+includedir	?= $(prefix)/include
+bindir		?= $(exec_prefix)/bin
+datadir		?= $(prefix)/share
 localedir	?= $(datadir)/locale
-libexecdir	?= $(prefix)libexec
+libexecdir	?= $(exec_prefix)/libexec
 ifeq "$(wildcard $(libexecdir) )" ""
-	libexecdir = $(prefix)lib
+	libexecdir = $(exec_prefix)/lib
 endif
-libdatadir	?= $(prefix)lib
+libdatadir	?= $(exec_prefix)/lib
 sharedstatedir	?= /var/lib
 
 EFIDIR		?= $(shell x=$$(which --skip-alias --skip-functions git 2>/dev/null) ; [ -n "$$x" ] && git config --get fwupdate.efidir)
@@ -72,8 +73,8 @@ ifeq ($(ESPMOUNTPOINT),)
 	ESPMOUNTPOINT = "/boot/efi"
 endif
 
-DEBUGINFO	?= $(prefix)lib/debug
-DEBUGSOURCE	?= $(prefix)src/debug
+DEBUGINFO	?= $(exec_prefix)/lib/debug
+DEBUGSOURCE	?= $(prefix)/src/debug
 TARGETDIR	?= $(ESPMOUNTPOINT)/EFI/$(EFIDIR)
 
 .PHONY: check_efidir_error

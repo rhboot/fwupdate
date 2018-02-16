@@ -93,16 +93,19 @@ abicheck : $(patsubst %.so,%.abicheck,$(LIBTARGETS))
 	sed -e "s,@@FWUP_VERSION@@,$(VERSION),g" \
 		-e "s,@@FWUP_MAJOR_VERSION@@,$(MAJOR_VERSION),g" \
 		-e "s,@@FWUP_MINOR_VERSION@@,$(MINOR_VERSION),g" \
+		-e "s,@@PREFIX@@,$(prefix),g" \
+		-e "s,@@EXEC_PREFIX@@,$(exec_prefix),g" \
 		-e "s,@@SHAREDSTATEDIR@@,$(sharedstatedir),g" \
 		-e "s,@@ESPMOUNTPOINT@@,$(ESPMOUNTPOINT),g" \
 		-e "s,@@EFIDIR@@,$(EFIDIR),g" \
 		-e "s,@@LIBDIR@@,$(libdir),g" \
 		-e "s,@@LIBEXECDIR@@,$(libexecdir),g" \
+		-e "s,@@INCLUDEDIR@@,$(includedir),g" \
 		$< > $@
 
 tester : tester.c
-	$(CC) -Wall -Werror -ggdb -L. -I./include -I/usr/include/efivar \
-		-lefivar -lfwup -o $@ $^
+	$(CC) -Wall -Werror -ggdb -L. -I./include $(shell $(PKG_CONFIG) --cflags efivar) \
+		$(shell $(PKG_CONFIG) --libs efivar) -lfwup -o $@ $^
 
 test : tester
 	LD_LIBRARY_PATH=$(shell pwd) ./tester
@@ -134,6 +137,6 @@ install : check_efidir_error all
 	$(INSTALL) -d -m 755 $(DESTDIR)$(libdatadir)/systemd/system
 	$(INSTALL) -m 644 cleanup.service \
 		$(DESTDIR)$(libdatadir)/systemd/system/fwupdate-cleanup.service
-	$(INSTALL) -d -m 755 $(DESTDIR)/usr/share/bash-completion/completions/
+	$(INSTALL) -d -m 755 $(DESTDIR)$(datadir)/bash-completion/completions/
 	$(INSTALL) -m 755 $(VPATH)/bash-completion \
-		$(DESTDIR)/usr/share/bash-completion/completions/fwupdate
+		$(DESTDIR)$(datadir)/bash-completion/completions/fwupdate

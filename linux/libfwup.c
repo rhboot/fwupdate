@@ -35,7 +35,7 @@ static int verbose;
 
 #include <dell-wmi-smi.h>
 #ifdef FWUPDATE_HAVE_LIBSMBIOS__
-#include </usr/include/smbios_c/token.h>
+#include <smbios_c/token.h>
 #include <smbios_c/smi.h>
 #endif
 
