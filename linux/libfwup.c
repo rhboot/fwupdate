@@ -666,10 +666,10 @@ fwup_resource_iter_create(fwup_resource_iter **iter)
 		goto err;
 	}
 
-	new->add_ux_capsule = false;
+	new->add_ux_capsule = true;
 	env = getenv("LIBFWUP_ADD_UX_CAPSULE");
-	if (env && !strcmp(env, "1") && fwup_get_ux_capsule_info(&x, &y) >= 0)
-		new->add_ux_capsule = true;
+	if (env && !strcmp(env, "0") && fwup_get_ux_capsule_info(&x, &y) >= 0)
+		new->add_ux_capsule = false;
 
 	*iter = new;
 	return 0;
