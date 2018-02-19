@@ -1684,15 +1684,22 @@ write_ux_capsule_header(FILE *fin, FILE *fout)
 	if (buf_size < 26)
 		goto out;
 
-	header_pos = fseek(fin, header_pos, SEEK_SET);
-	if (header_pos < 0)
-		goto out;
-
 	rc = get_bmp_size(buf, buf_size, &height, &width);
 	if (rc < 0)
 		goto out;
 
-	capsule_header.capsule_image_size = buf_size;
+	rc = fseek(fin, 0, SEEK_END);
+	if (rc < 0)
+		goto out;
+
+	capsule_header.capsule_image_size =	\
+		ftell(fin) +
+		sizeof(efi_capsule_header_t) +
+		sizeof(header);
+
+	rc = fseek(fin, header_pos, SEEK_SET);
+	if (rc < 0)
+		goto out;
 
 	memset(&header, '\0', sizeof(header));
 	header.version = 1;
@@ -1700,8 +1707,6 @@ write_ux_capsule_header(FILE *fin, FILE *fout)
 	header.reserved = 0;
 	header.x_offset = (screen_x / 2) - (width / 2);
 	header.y_offset = bgrt_y + bgrt_height;
-
-	header_pos = ftell(fout);
 
 	size = fwrite(&capsule_header, capsule_header.header_size, 1, fout);
 	if (size != 1) {
