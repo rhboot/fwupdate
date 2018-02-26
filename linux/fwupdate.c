@@ -157,7 +157,7 @@ int
 main(int argc, char *argv[]) {
 	int action = 0;
 	int force = 0;
-	int set_debug = 0;
+	int set_debug = -1;
 	int use_existing_media_path = 1;
 	char *esp_path = FWUP_ESP_MOUNTPOINT;
 
