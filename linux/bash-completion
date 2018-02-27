@@ -5,7 +5,7 @@ _fwupdate()
 	local cur=${COMP_WORDS[COMP_CWORD]}
 
 	if [[ "$cur" == -* ]]; then
-		COMPREPLY=( $( compgen -W "-a -l" -- "$cur" ) )
+		COMPREPLY=( $( compgen -W "-a -l -d --set-debug -D --unset-debug" -- "$cur" ) )
 		return 0
 	fi
 
