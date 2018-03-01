@@ -5,6 +5,6 @@ includedir=@@INCLUDEDIR@@
 
 Name: fwup
 Description: Library for deployment of UEFI firmware updates.
-Version: @@VERSION@@
+Version: @@FWUP_VERSION@@
 Requires: efivar >= 33
 Libs: -L${libdir} -lfwup
