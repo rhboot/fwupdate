@@ -90,6 +90,19 @@ fwup_set_esp_mountpoint(char *path)
 	esp_mountpoint = path;
 }
 
+/**
+ * fwup_get_esp_mountpoint:
+ *
+ * Returns the path to the ESP mountpoint
+ *
+ * @returns: pointer to a string
+ */
+const char *
+fwup_get_esp_mountpoint(void)
+{
+	return esp_mountpoint;
+}
+
 static int
 efidp_end_entire(efidp_header *dp)
 {

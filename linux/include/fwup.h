@@ -48,6 +48,7 @@ extern int fwup_resource_iter_destroy(fwup_resource_iter **iter);
 
 extern void fwup_use_existing_media_path(int);
 extern void fwup_set_esp_mountpoint(char *path);
+const char *fwup_get_esp_mountpoint(void);
 
 extern int fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd);
 extern int fwup_set_up_update_with_buf(fwup_resource *re, uint64_t hw_inst,
