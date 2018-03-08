@@ -15,6 +15,11 @@
 
 #define UPDATE_INFO_VERSION	7
 
+#ifdef _EFI_INCLUDE_
+#define efidp_header EFI_DEVICE_PATH
+#define efi_guid_t EFI_GUID
+#endif /* _EFI_INCLUDE_ */
+
 typedef struct {
 	uint8_t version;
 	uint8_t checksum;

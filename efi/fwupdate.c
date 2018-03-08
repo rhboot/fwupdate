@@ -11,14 +11,13 @@
 #include <efi.h>
 #include <efilib.h>
 
+#include "fwup-efi.h"
 #include "hexdump.h"
 
 #ifndef DEBUGDIR
 #define DEBUGDIR L"/usr/lib/debug"
 #endif
 
-#define efidp_header EFI_DEVICE_PATH
-#define efi_guid_t EFI_GUID
 
 EFI_GUID empty_guid = {0x0,0x0,0x0,{0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}};
 EFI_GUID fwupdate_guid =
@@ -29,7 +28,6 @@ EFI_GUID fmp_capsule_guid =
 	{0x6dcbd5ed,0xe82d,0x4c44,{0xbd,0xa1,0x71,0x94,0x19,0x9a,0xd9,0x2a}};
 EFI_GUID global_variable_guid = EFI_GLOBAL_VARIABLE;
 
-#include "fwup-efi.h"
 
 typedef struct update_table_s {
 	CHAR16 *name;
