@@ -326,20 +326,20 @@ main(int argc, char *argv[]) {
 
 	if (action & ACTION_SUPPORTED) {
 		rc = fwup_supported();
-		if (rc == 0) {
+		if (rc == FWUP_SUPPORTED_STATUS_UNSUPPORTED) {
 			qprintf("%s\n",
 			  _("Firmware updates are not supported on this machine."));
 			return 1;
-		} else if (rc == 1) {
+		} else if (rc == FWUP_SUPPORTED_STATUS_UNLOCKED) {
 			qprintf("%s\n",
 			  _("Firmware updates are supported on this machine."));
 			return 0;
-		} else if (rc == 2) {
+		} else if (rc == FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK) {
 			qprintf("%s\n%s\n",
 			  _("Firmware updates are supported on this machine."),
 			  _("Support is currently disabled."));
 			return 2;
-		} else if (rc == 3) {
+		} else if (rc == FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK_NEXT_BOOT) {
 			qprintf("%s\n%s\n",
 			  _("Firmware updates are supported on this machine."),
 			  _("Support will be enabled on the next reboot."));
