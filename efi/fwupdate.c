@@ -14,10 +14,6 @@
 #include "fwup-efi.h"
 #include "hexdump.h"
 
-#ifndef DEBUGDIR
-#define DEBUGDIR L"/usr/lib/debug"
-#endif
-
 #define UNUSED __attribute__((__unused__))
 
 EFI_GUID empty_guid = {0x0,0x0,0x0,{0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}};

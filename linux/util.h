@@ -10,10 +10,6 @@
 #ifndef LIBFW_UTIL_H
 #define LIBFW_UTIL_H
 
-#ifndef LOCALEDIR
-#define LOCALEDIR "/usr/share/locale"
-#endif
-
 #include <errno.h>
 #include <fcntl.h>
 #include <libintl.h>
@@ -27,14 +23,6 @@
 #define C_(Context,String) dgettext (Context,String)
 #define NC_(Context, String) (String)
 #define EMPTY ""
-
-#ifndef FWUP_ESP_MOUNTPOINT
-#define FWUP_ESP_MOUNTPOINT "/boot/efi"
-#endif
-
-#ifndef FWUP_EFI_DIR_NAME
-#define FWUP_EFI_DIR_NAME "fixme"
-#endif
 
 extern int quiet;
 
