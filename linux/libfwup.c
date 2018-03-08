@@ -310,7 +310,7 @@ admin_password_present()
 			ret = -3;
 			goto wmi_admin_cleanup;
 		}
-		ret = 2;
+		ret = FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK;
 wmi_admin_cleanup:
 		free_buffer(ioctl_buffer);
 		return ret;
@@ -324,7 +324,7 @@ wmi_admin_cleanup:
 		return -2;
 	if (out[0] != 0 || (out[1] & DELL_ADMIN_MASK) == DELL_ADMIN_INSTALLED)
 		return -3;
-	return 2;
+	return FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK;
 
 #else
 	return -1;
@@ -352,7 +352,7 @@ fwup_esrt_disabled(void)
 	if (ret < 0) {
 		ret = query_token(CAPSULE_EN_TOKEN);
 		if (ret > 0)
-			return 3;
+			return FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK_NEXT_BOOT;
 		return -2;
 	}
 	return admin_password_present();
@@ -375,7 +375,7 @@ fwup_enable_esrt(void)
 	rc = fwup_supported();
 
 	/* can't enable or already enabled */
-	if (rc != 2) {
+	if (rc != FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK) {
 		efi_error("fwup_supported() returned %d", rc);
 		return rc;
 	}
@@ -414,15 +414,15 @@ fwup_supported(void)
 		rc = fwup_esrt_disabled();
 		if (rc < 0) {
 			efi_error("ESRT cannot be enabled");
-			return 0;
+			return FWUP_SUPPORTED_STATUS_UNSUPPORTED;
 		}
 		return rc;
 	}
 	if (buf.st_nlink < 3) {
 		efi_error("ESRT has no entries.");
-		return 0;
+		return FWUP_SUPPORTED_STATUS_UNSUPPORTED;
 	}
-	return 1;
+	return FWUP_SUPPORTED_STATUS_UNLOCKED;
 }
 
 typedef struct esre_s {

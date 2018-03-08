@@ -23,6 +23,11 @@ extern int fwup_supported(void);
 extern int fwup_esrt_disabled(void);
 extern int fwup_enable_esrt(void);
 
+#define FWUP_SUPPORTED_STATUS_UNSUPPORTED			0
+#define FWUP_SUPPORTED_STATUS_UNLOCKED				1
+#define FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK			2
+#define FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK_NEXT_BOOT	3
+
 #define FWUP_RESOURCE_TYPE_UNKNOWN		0
 #define FWUP_RESOURCE_TYPE_SYSTEM_FIRMWARE	1
 #define FWUP_RESOURCE_TYPE_DEVICE_FIRMWARE	2
