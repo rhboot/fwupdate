@@ -11,6 +11,8 @@
 #include <efi.h>
 #include <efilib.h>
 
+#include <stdbool.h>
+
 #include "fwup-efi.h"
 #include "hexdump.h"
 
@@ -82,7 +84,7 @@ debug_print(const char *func, const char *file, const int line,
 		       EFI_VARIABLE_BOOTSERVICE_ACCESS |
 		       EFI_VARIABLE_RUNTIME_ACCESS;
 	CHAR16 *name = L"FWUPDATE_DEBUG_LOG";
-	static int once = 1;
+	static bool once = true;
 
 	va_start(args0, fmt);
 	out0 = VPoolPrint(fmt, args0);
@@ -107,7 +109,7 @@ debug_print(const char *func, const char *file, const int line,
 	}
 
 	if (once) {
-		once = 0;
+		once = false;
 		delete_variable(name, fwupdate_guid, attrs);
 	} else {
 		attrs |= EFI_VARIABLE_APPEND_WRITE;
