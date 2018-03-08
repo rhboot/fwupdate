@@ -18,6 +18,7 @@
 #define DEBUGDIR L"/usr/lib/debug"
 #endif
 
+#define UNUSED __attribute__((__unused__))
 
 EFI_GUID empty_guid = {0x0,0x0,0x0,{0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}};
 EFI_GUID fwupdate_guid =
@@ -1197,7 +1198,7 @@ debug_hook(void)
 	EFI_STATUS efi_status;
 	UINT32 attributes;
 	register volatile int x = 0;
-	extern char _text, _data;
+	extern char _text UNUSED, _data UNUSED;
 
 	/*
 	 * If SHIM_DEBUG is set, we're going to assume shim has done whatever
