@@ -445,8 +445,6 @@ free_info(update_info *info)
 	}
 }
 
-#define FWUPDATE_GUID EFI_GUID(0x0abba7dc,0xe516,0x4167,0xbbf5,0x4d,0x9d,0x1c,0x73,0x94,0x16)
-
 static int
 get_info(efi_guid_t *guid, uint64_t hw_inst, update_info **info)
 {

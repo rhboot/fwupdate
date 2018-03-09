@@ -43,6 +43,8 @@ extern int fwup_enable_esrt(void);
 #define FWUP_LAST_ATTEMPT_STATUS_ERROR_PWR_EVT_AC		0x00000006
 #define FWUP_LAST_ATTEMPT_STATUS_ERROR_PWR_EVT_BATT		0x00000007
 
+#define FWUPDATE_GUID EFI_GUID(0x0abba7dc,0xe516,0x4167,0xbbf5,0x4d,0x9d,0x1c,0x73,0x94,0x16)
+
 typedef struct fwup_resource_s fwup_resource;
 typedef struct fwup_resource_iter_s fwup_resource_iter;
 
