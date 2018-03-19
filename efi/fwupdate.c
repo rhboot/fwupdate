@@ -1104,7 +1104,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 
 		UINT8 *buffer = (UINT8 *)capsule + capsule->HeaderSize;
 		CopyMem(buffer, fbuf, fsize);
-		cbd_len = capsule->HeaderSize + capsule->CapsuleImageSize;
+		cbd_len = capsule->CapsuleImageSize;
 		cbd_data = (EFI_PHYSICAL_ADDRESS)(UINTN)capsule;
 		cap_out = capsule;
 		free(fbuf, fsize);
