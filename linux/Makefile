@@ -47,7 +47,7 @@ INCTARGETS=include/fwup-version.h $(VPATH)/include/fwup.h
 LIBTARGETS=libfwup.so
 PCTARGETS=fwup.pc
 POTARGETS = fwupdate.po libfwup.po
-TARGETS=$(BINTARGETS) $(INCTARGETS) $(foreach x,$(LIBTARGETS),$(x) $(x).1 $(x).1.$(VERSION)) $(PCTARGETS) $(POTARGETS) libfwup.so cleanup.service cleanup
+TARGETS=$(BINTARGETS) $(INCTARGETS) $(foreach x,$(LIBTARGETS),$(patsubst %.so,%.map,$(x)) $(x).1.$(VERSION) $(x).1 $(x)) $(PCTARGETS) $(POTARGETS) cleanup.service cleanup
 
 .SUFFIXES:
 
@@ -72,10 +72,11 @@ abicheck : $(patsubst %.so,%.abicheck,$(LIBTARGETS))
 % : %.o
 	$(CC) $(BUILDFLAGS) -o $@ $(patsubst lib%.so,-l%,$^) $(BIN_CCLDFLAGS)
 
-%.so.1.$(VERSION) : %.o
+%.so.1.$(VERSION) : %.o | %.map
 	$(CC) $(BUILDFLAGS) \
 		-Wl,-soname,$(patsubst %.o,%.so.1,$<) \
-		-o $@ $^ $(LIB_CCLDFLAGS)
+		-Wl,--version-script=$(patsubst %.o,%.map,$<) \
+		-o $@ $< $(LIB_CCLDFLAGS)
 
 %.so.1 : %.so.1.$(VERSION)
 	ln -sf $< $@
@@ -112,7 +113,7 @@ test : tester
 
 clean :
 	@rm -vf $(BINTARGETS) $(LIBTARGETS) $(PCTARGETS) $(POTARGETS) *.o
-	@rm -vf libfwup.so*
+	@rm -vf libfwup.so* *.map
 	@rm -vf cleanup.service cleanup
 	@rm -vf include/fwup-version.h
 

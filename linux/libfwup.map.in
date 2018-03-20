@@ -1,0 +1,27 @@
+libfwup.so.1 {
+	global: fwup_clear_status;
+		fwup_enable_esrt;
+		fwup_esrt_disabled;
+		fwup_get_attempt_status;
+		fwup_get_debug_log;
+		fwup_get_esp_mountpoint;
+		fwup_get_fw_type;
+		fwup_get_fw_version;
+		fwup_get_guid;
+		fwup_get_last_attempt_info;
+		fwup_get_lowest_supported_fw_version;
+		fwup_get_ux_capsule_info;
+		fwup_last_attempt_status_to_string;
+		fwup_print_update_info;
+		fwup_resource_iter_create;
+		fwup_resource_iter_destroy;
+		fwup_resource_iter_next;
+		fwup_set_esp_mountpoint;
+		fwup_set_guid;
+		fwup_set_guid_force;
+		fwup_set_up_update;
+		fwup_set_up_update_with_buf;
+		fwup_supported;
+		fwup_use_existing_media_path;
+	local:	*;
+};
