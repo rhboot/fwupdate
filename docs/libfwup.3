@@ -53,6 +53,9 @@ libfwup - library to support management of system firmware updates
 \fBvoid \fRfwup_set_esp_mountpoint\fB(char *\fIpath\fB);\fR\p
  \- Override detection of the mountpoint for the ESP directory
 
+\fBconst char *\fRfwup_get_esp_mountpoint\fB(void);\fR\p
+ \- Get the current mountpoint for the ESP directory
+
 \fBint \fRfwup_get_ux_capsule_info\fB(\kZuint32_t *\fIscreen_x_size\fB,
 .tz \nZu
 	uint32_t *\fIscreen_y_size\fB);\fR\p
