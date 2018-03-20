@@ -14,6 +14,7 @@
 #include <dirent.h>
 #include <efivar.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <sys/types.h>
 #include <time.h>
 
@@ -51,6 +52,8 @@ extern int fwup_resource_iter_next(fwup_resource_iter *iter,
 extern int fwup_resource_iter_create(fwup_resource_iter **iter);
 extern int fwup_resource_iter_destroy(fwup_resource_iter **iter);
 
+extern void fwup_resource_free(fwup_resource *re);
+
 extern void fwup_use_existing_media_path(int);
 extern void fwup_set_esp_mountpoint(char *path);
 const char *fwup_get_esp_mountpoint(void);
@@ -58,6 +61,8 @@ const char *fwup_get_esp_mountpoint(void);
 extern int fwup_set_up_update(fwup_resource *re, uint64_t hw_inst, int infd);
 extern int fwup_set_up_update_with_buf(fwup_resource *re, uint64_t hw_inst,
 				       const void *buf, size_t sz);
+extern int fwup_set_guid_forced(fwup_resource_iter *iter, fwup_resource **re,
+				const efi_guid_t *guid, bool force);
 extern int fwup_set_guid(fwup_resource_iter *iter, fwup_resource **re,
 			 const efi_guid_t *guid);
 extern int fwup_clear_status(fwup_resource *re);

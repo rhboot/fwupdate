@@ -373,7 +373,7 @@ main(int argc, char *argv[]) {
 		}
 
 		if (!tmpguid && force) {
-			rc = fwup_set_guid(iter, &re, &guid);
+			rc = fwup_set_guid_forced(iter, &re, &guid, force);
 			if (rc < 0)
 				error(2, _("Error configuring GUID"));
 			tmpguid = &guid;
@@ -389,7 +389,11 @@ main(int argc, char *argv[]) {
 			if (rc < 0)
 				error(2, _("Could not set up firmware update"));
 
-			fwup_resource_iter_destroy(&iter);
+			fwup_resource_free(re);
+
+			if (iter)
+				fwup_resource_iter_destroy(&iter);
+
 			exit(0);
 		}
 		errorx(2, _("firmware resource not found"));

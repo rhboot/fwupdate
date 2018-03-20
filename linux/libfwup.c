@@ -631,6 +631,7 @@ static int32_t fwup_screen_ysize;
 typedef struct fwup_resource_s
 {
 	esre esre;
+	bool allocated; /* was this allocated *without* a fwup_resource_iter? */
 	update_info *info;
 } fwup_resource;
 
@@ -700,12 +701,29 @@ err:
 static void
 clear_res(fwup_resource *res)
 {
-	if (res->info) {
-		if (res->info->dp_ptr)
-			free(res->info->dp_ptr);
-		free(res->info);
+	if (res) {
+		bool allocated = res->allocated;
+		if (res->info) {
+			if (res->info->dp_ptr)
+				free(res->info->dp_ptr);
+			free(res->info);
+		}
+		memset(res, 0, sizeof (*res));
+		res->allocated = allocated;
 	}
-	memset(res, 0, sizeof (*res));
+}
+
+void
+fwup_resource_free(fwup_resource *res)
+{
+	if (!res)
+		return;
+
+	if (res->allocated != true)
+		return;
+
+	memset(res, '\0', sizeof(*res));
+	free(res);
 }
 
 int
@@ -828,19 +846,44 @@ fwup_resource_iter_next(fwup_resource_iter *iter, fwup_resource **re)
 }
 
 int
-fwup_set_guid(fwup_resource_iter *iter, fwup_resource **re,
-	      const efi_guid_t *guid)
+fwup_set_guid_forced(fwup_resource_iter *iter, fwup_resource **re,
+		     const efi_guid_t *guid, bool force)
 {
 	fwup_resource *res;
-	if (!iter || !re) {
-		efi_error("invalid %s", iter ? "resource" : "iter");
+
+	errno = 0;
+	if (!iter && (!re && !force)) {
+		efi_error("invalid argument '%s'", iter ? "iter" : "re");
 		errno = EINVAL;
 		return -1;
 	}
-	res = &iter->re;
-	res->esre.guid = *guid;
-	*re = res;
+	if (iter) {
+		res = &iter->re;
+		res->esre.guid = *guid;
+		*re = res;
+	} else if (force) {
+		res = calloc(1, sizeof (*res));
+		if (!res) {
+			efi_error("couldn't allocate resource");
+			errno = ENOMEM;
+			return -1;
+		}
+		res->esre.guid = *guid;
+		res->allocated = true;
+		*re = res;
+	} else {
+		efi_error("No such guid");
+		errno = ENOENT;
+		return -1;
+	}
 	return 1;
+}
+
+int
+fwup_set_guid(fwup_resource_iter *iter, fwup_resource **re,
+	      const efi_guid_t *guid)
+{
+	return fwup_set_guid_forced(iter, re, guid, false);
 }
 
 int

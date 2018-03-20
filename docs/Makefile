@@ -14,8 +14,11 @@ MAN3TARGETS = libfwup.h.3 \
 	      fwup_resource_iter_next.3 \
 	      fwup_resource_iter_create.3 \
 	      fwup_resource_iter_destroy.3 \
+	      fwup_resource_free.3 \
 	      fwup_set_up_update.3 \
 	      fwup_clear_status.3 \
+	      fwup_set_guid.3 \
+	      fwup_set_guid_forced.3 \
 	      fwup_get_guid.3 \
 	      fwup_get_fw_version.3 \
 	      fwup_get_lowest_supported_version.3 \

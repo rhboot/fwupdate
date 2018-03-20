@@ -18,6 +18,19 @@ libfwup - library to support management of system firmware updates
 \fBint \fRfwup_resource_iter_destroy\fB(fwup_resource_iter **\fIiter\fB);\fR\p
  \- iterate the list of updateable firmware images
 
+\fBint \fRfwup_set_guid\fB(\kZfwup_resource_iter *\fIiter\fB, fwup_resource **\fIre\fB,
+.ta \nZu
+	const efi_guid_t *\fIguid\fB);\fR\p
+ \- manually set a guid for update
+
+\fBint \fRfwup_set_guid_forced\fB(\kZfwup_resource_iter *\fIiter\fB, fwup_resource **\fIre\fB,
+.ta \nZu
+	const efi_guid_t *\fIguid\fB, bool \fIforce\fB);\fR\p
+ \- manually set a guid for update (with a force option)
+
+\fBvoid \fRfwup_resource_free\fB(fwup_resource *\fIre\fB);\fR\p
+ \- free resource allocated by \fRfwup_set_guid_forced\fB()\fR
+
 \fBint \fRfwup_set_up_update\fB(fwup_resource *\fIre\fB, uint64_t \fIhw_inst\fB, int \fIinfd\fB);\fR\p
 \fBint \fRfwup_clear_status\fB(fwup_resource *\fIre\fB);\fR\p
 \fBint \fRfwup_get_guid\fB(fwup_resource *\fIre\fB, efi_guid_t **\fIguid\fB);\fR\p

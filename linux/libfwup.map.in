@@ -25,3 +25,8 @@ libfwup.so.1 {
 		fwup_use_existing_media_path;
 	local:	*;
 };
+
+LIBFWUP_1.11 {
+	global: fwup_set_guid_forced;
+		fwup_resource_free;
+} libfwup.so.1;
