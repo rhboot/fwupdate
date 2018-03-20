@@ -48,6 +48,13 @@ static int debugging;
 
 #define SECONDS 1000000
 
+static VOID
+msleep(unsigned long msecs)
+{
+	gBS->Stall(msecs);
+}
+
+
 /*
  * I'm not actually sure when these appear, but they're present in the
  * version in front of me.
@@ -90,6 +97,7 @@ debug_print(const char *func, const char *file, const int line,
 			va_start(args1, fmt);
 			VPrint(fmt, args1);
 			va_end(args1);
+			msleep(200000);
 		}
 		Print(L"fwupdate: Allocation for debug log failed!\n");
 		return debugging;
