@@ -1819,6 +1819,12 @@ fwup_set_up_update(fwup_resource *re,
 	int error;
 
 	/* check parameters */
+	if (!re) {
+		efi_error("invalid resource");
+		errno = EINVAL;
+		return -1;
+	}
+
 	if (infd < 0) {
 		efi_error("invalid file descriptor");
 		errno = EINVAL;
@@ -1922,29 +1928,35 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 {
 	char *path = NULL;
 	int fd = -1;
-	int rc;
+	int rc = -1;
 	update_info *info = NULL;
 	int error;
 	FILE *fin = NULL, *fout = NULL;
 
 	/* check parameters */
+	if (!re) {
+		efi_error("invalid resource");
+		errno = EINVAL;
+		return -1;
+	}
+
 	if (buf == NULL || sz == 0) {
-		efi_error("buf invalid.");
-		rc = -1;
+		efi_error("invalid %s", buf == NULL ? "buffer" : "size");
+		errno = EINVAL;
 		goto out;
 	}
 
 	/* get device */
 	rc = get_info(&re->esre.guid, 0, &info);
 	if (rc < 0) {
-		efi_error("get_info failed.");
+		efi_error("get_info() failed.");
 		goto out;
 	}
 
 	/* get destination */
 	fd = get_fd_and_media_path(info, &path);
 	if (fd < 0) {
-		rc = -1;
+		efi_error("get_fd_and_media_path() failed");
 		goto out;
 	}
 
@@ -1986,6 +1998,8 @@ fwup_set_up_update_with_buf(fwup_resource *re,
 	rc = set_up_boot_next();
 	if (rc < 0)
 		goto out;
+
+	rc = 0;
 out:
 	error = errno;
 	free_info(info);
