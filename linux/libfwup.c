@@ -1705,7 +1705,7 @@ write_ux_capsule_header(FILE *fin, FILE *fout)
 	if (rc < 0)
 		goto out;
 
-	capsule_header.capsule_image_size =	\
+	capsule_header.capsule_image_size =
 		ftell(fin) +
 		sizeof(efi_capsule_header_t) +
 		sizeof(header);
