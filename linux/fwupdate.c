@@ -80,7 +80,7 @@ print_system_resources(void)
 			break;
 		}
 
-		printf(_("%s type, %s version %d can be updated to any version above %d\n"),
+		printf(_("%s type, %s version %u can be updated to any version above %d\n"),
 			str_type , id_guid, vers, lowest-1);
 		free(id_guid);
 	}
