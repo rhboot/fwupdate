@@ -127,9 +127,16 @@ static int
 wmi_call_ioctl(struct dell_wmi_smbios_buffer *buffer)
 {
 	int fd, ret;
+	int error;
+
 	fd = open(DELL_WMI_CHAR, O_NONBLOCK);
+	if (fd < 0)
+		return fd;
+
 	ret = ioctl(fd, DELL_WMI_SMBIOS_CMD, buffer);
+	error = errno;
 	close(fd);
+	errno = error;
 	return ret;
 }
 
