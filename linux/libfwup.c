@@ -509,7 +509,6 @@ alloc_err:
 		ssize_t sz;
 		sz = efidp_make_end_entire((uint8_t *)local->dp_ptr, 1024);
 		if (sz < 0) {
-			rc = sz;
 			efi_error("efidp_make_end_entire() failed");
 			goto alloc_err;
 		}
@@ -1055,13 +1054,13 @@ get_paths(char **shim_fs_path, char **fwup_fs_path, char **fwup_esp_path)
 	*fwup_fs_path = NULL;
 	*fwup_esp_path = NULL;
 
-	i = find_matching_file(shim_fs_path_tmpl, ".efi", arch_names,
-			       n_arches, &shim_fs_path_tmp);
+	find_matching_file(shim_fs_path_tmpl, ".efi", arch_names,
+			   n_arches, &shim_fs_path_tmp);
 
 	i = find_matching_file(fwup_fs_path_tmpl, ".efi", arch_names,
-				       n_arches, &fwup_fs_path_tmp);
+			       n_arches, &fwup_fs_path_tmp);
 	if (i < 0) {
-		efi_error("could not find shim or fwup on ESP");
+		efi_error("could not find fwup on ESP");
 		errno = ENOENT;
 		ret = i;
 		goto out;
@@ -1123,7 +1122,6 @@ add_to_boot_order(uint16_t boot_entry)
 				   &boot_order_size);
 	if (rc == ENOENT) {
 		boot_order_size = 0;
-		rc = 0;
 		efi_error_clear();
 	} else if (rc < 0) {
 		efi_error("efi_get_variable_size() failed");
