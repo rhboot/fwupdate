@@ -9,6 +9,7 @@ endif
 include $(TOP)/Make.defaults
 include $(TOP)/Make.rules
 include $(TOP)/Make.coverity
+include $(TOP)/Make.scan-build
 SUBDIRS ?= efi linux docs include
 
 all abidw abicheck clean install : | check_efidir_error

@@ -22,6 +22,7 @@ CCLDFLAGS	?= -nostdlib -Wl,--warn-common \
 	-Wl,-shared -Wl,-Bsymbolic -L$(LIBDIR) -L$(GNUEFIDIR) \
 	-Wl,--build-id=sha1 -Wl,--hash-style=sysv \
 	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
+CLANG_BUGS	= $(if $(findstring gcc,$(CC)),-maccumulate-outgoing-args,)
 
 define objcopy_version =
   $(OBJCOPY) --version |
@@ -37,14 +38,14 @@ FWUP = fwupdate
 ifeq ($(ARCH),x86_64)
 	FORMAT = --target efi-app-$(ARCH)
 	BUILDFLAGS += -mno-mmx -mno-sse -mno-red-zone -nostdinc \
-		-maccumulate-outgoing-args -DEFI_FUNCTION_WRAPPER \
+		$(CLANG_BUGS) -DEFI_FUNCTION_WRAPPER \
 		-DGNU_EFI_USE_MS_ABI -I$(shell $(CC) -print-file-name=include)
 	FWUP = fwupx64
 endif
 ifeq ($(ARCH),ia32)
 	FORMAT = --target efi-app-$(ARCH)
 	BUILDFLAGS += -mno-mmx -mno-sse -mno-red-zone -nostdinc \
-		-maccumulate-outgoing-args -m32 \
+		$(CLANG_BUGS) -m32 \
 		-I$(shell $(CC) -print-file-name=include)
 	FWUP = fwupia32
 endif
