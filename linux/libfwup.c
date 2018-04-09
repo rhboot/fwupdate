@@ -141,7 +141,7 @@ wmi_read_buffer_size(uint64_t *buffer_size)
 	f = fopen(DELL_WMI_CHAR, "rb");
 	if (!f)
 		return -EINVAL;
-	fread(buffer_size, sizeof(__u64), 1, f);
+	fread(buffer_size, sizeof(uint64_t), 1, f);
 	fclose(f);
 	return 1;
 }

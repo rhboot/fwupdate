@@ -28,22 +28,22 @@
  * system management mode through SMM, hence the volatiles
  */
 struct calling_interface_buffer {
-	__u16 cmd_class;
-	__u16 cmd_select;
-	__volatile__ __u32 input[4];
-	__volatile__ __u32 output[4];
+	uint16_t cmd_class;
+	uint16_t cmd_select;
+	__volatile__ uint32_t input[4];
+	__volatile__ uint32_t output[4];
 } __attribute__((packed));
 
 struct dell_wmi_extensions {
-	__u32 argattrib;
-	__u32 blength;
-	__u8 data[];
+	uint32_t argattrib;
+	uint32_t blength;
+	uint8_t data[];
 } __attribute__((packed));
 
 struct dell_wmi_smbios_buffer {
-	__u64 length;
+	uint64_t length;
 	struct calling_interface_buffer std;
-	struct dell_wmi_extensions	ext;
+	struct dell_wmi_extensions ext;
 } __attribute__((packed));
 
 /* Whitelisted smbios class/select commands */
