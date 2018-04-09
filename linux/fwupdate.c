@@ -55,7 +55,7 @@ print_system_resources(void)
 		fwup_get_guid(re, &guid);
 		rc = efi_guid_to_id_guid(guid, &id_guid);
 		if (rc < 0) {
-			efi_error("efi_guid_to_id_guid failed");
+			efi_error(_("%s failed."), "efi_guid_to_id_guid");
 			return -1;
 		}
 
@@ -109,7 +109,7 @@ set_debug_flag(int8_t set_debug)
 		if (size == 1 && *(int *)data == set_debug)
 			return;
 		efi_del_variable(fwupdate_guid, name);
-		printf("Disabled fwupdate debugging\n");
+		printf(_("Disabled fwupdate debugging\n"));
 	}
 
 	if (set_debug <= 0)
@@ -122,7 +122,7 @@ set_debug_flag(int8_t set_debug)
 	efi_set_variable(fwupdate_guid, name,
 			 (uint8_t *)&set_debug, sizeof(set_debug),
 			 attributes, 0644);
-	printf("Enabled fwupdate debugging\n");
+	printf(_("Enabled fwupdate debugging\n"));
 }
 
 static void
@@ -135,10 +135,10 @@ dump_log(void)
 	rc = fwup_get_debug_log(&utf8, &size);
 	if (rc < 0) {
 		if (rc == ENOENT) {
-			printf("No debug log found\n");
+			printf(_("No debug log found\n"));
 			return;
 		}
-		error(1, "Could not get debug log");
+		error(1, _("Could not get debug log"));
 	}
 
 	printf("%s", utf8);
@@ -276,8 +276,8 @@ main(int argc, char *argv[]) {
 	int rc;
 	rc = poptReadDefaultConfig(optcon, 0);
 	if (rc < 0 && !(rc == POPT_ERROR_ERRNO && errno == ENOENT))
-		errorx(1, _("poptReadDefaultConfig failed: %s: %s"),
-			poptBadOption(optcon, 0), poptStrerror(rc));
+		errorx(1, _("%s failed: %s: %s"), "poptReadDefaultConfig",
+		       poptBadOption(optcon, 0), poptStrerror(rc));
 
 	while ((rc = poptGetNextOpt(optcon)) > 0)
 		;
@@ -302,8 +302,7 @@ main(int argc, char *argv[]) {
 
 		filename = poptGetArg(optcon);
 		if (!filename) {
-				warningx(_("missing argument: %s"),
-				      "filename.cap");
+			warningx(_("missing argument: %s"), "<filename.cap>");
 			poptPrintUsage(optcon, stderr, 0);
 			exit(1);
 		}
