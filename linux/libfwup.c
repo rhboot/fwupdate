@@ -14,6 +14,7 @@
 #include <err.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -147,117 +148,116 @@ wmi_read_buffer_size(uint64_t *buffer_size)
 
 	f = fopen(DELL_WMI_CHAR, "rb");
 	if (!f)
-		return -EINVAL;
+		return -1;
 	fread(buffer_size, sizeof(uint64_t), 1, f);
 	fclose(f);
-	return 1;
+	return 0;
 }
 
 static int
-wmi_find_token(uint16_t token, uint16_t *location, uint16_t *value)
+wmi_find_token(uint16_t token, uint32_t *location, uint32_t *value)
 {
-	char location_sysfs[60];
-	char value_sysfs[57];
-	char buf[4096];
-	FILE *f;
-	int ret;
+	char value_sysfs[sizeof("ffff_value")];
+	char location_sysfs[sizeof("ffff_location")];
 
-	ret = sprintf(value_sysfs, "%s/%04x_value", TOKENS_SYSFS, token);
-	if (ret < 0) {
-		printf("sprintf value failed\n");
-		return -2;
-	}
-	f = fopen(value_sysfs, "rb");
-	if (!f) {
-		printf("failed to open %s\n", value_sysfs);
-		return -2;
-	}
-	fread(buf, 1, 4096, f);
-	fclose(f);
-	*value = (__u16) strtol(buf, NULL, 16);
+	sprintf(value_sysfs, "%04hhx_value", token);
+	sprintf(location_sysfs, "%04hhx_location", token);
 
-	ret = sprintf(location_sysfs, "%s/%04x_location", TOKENS_SYSFS, token);
-	if (ret < 0) {
-		printf("sprintf location failed\n");
-		return -1;
-	}
-	f = fopen(location_sysfs, "rb");
-	if (!f) {
-		printf("failed to open %s\n", location_sysfs);
-		return -2;
-	}
-	fread(buf, 1, 4096, f);
-	fclose(f);
-	*location = (__u16) strtol(buf, NULL, 16);
+	*value = get_value_from_file_at_dir(TOKENS_SYSFS, value_sysfs);
+	*location = get_value_from_file_at_dir(TOKENS_SYSFS, location_sysfs);
 
 	if (*location)
-		return 1;
-	return -2;
+		return 0;
+
+	return -1;
 }
 
 static int
-prepare_buffer(struct dell_wmi_smbios_buffer **buffer)
+prepare_buffer_real(struct dell_wmi_smbios_buffer **buffer,
+		    uint16_t class, uint16_t select, unsigned int count, ...)
 {
-	uint64_t buffer_size;
+	uint64_t buffer_size = 0;
 	int ret;
+	va_list ap;
+
+	if (count > 4) {
+		errno = EINVAL;
+		return -errno;
+	}
+
 	ret = wmi_read_buffer_size(&buffer_size);
-	if (!ret)
-		return -ENODEV;
+	if (ret < 0 || buffer_size < 1) {
+		errno = ENODEV;
+		return -errno;
+	}
+
 	*buffer = malloc(buffer_size);
-	if (!buffer)
-		return -ENOMEM;
+	if (!buffer) {
+		errno = ENOMEM;
+		return -errno;
+	}
+
 	(*buffer)->length = buffer_size;
-	return 1;
+	(*buffer)->std.cmd_class = class;
+	(*buffer)->std.cmd_select = select;
+	va_start(ap, count);
+	for (unsigned int i = 0; i < count; i++) {
+		uint32_t arg = va_arg(ap, uint32_t);
+		(*buffer)->std.input[i] = arg;
+	}
+	va_end(ap);
+	return 0;
 }
 
-static void
-free_buffer(struct dell_wmi_smbios_buffer *ioctl_buffer)
-{
-	free(ioctl_buffer);
-}
+#define prepare_buffer(buffer, class, select, count, ...)		\
+	({								\
+		int ret_;						\
+		ret_ = prepare_buffer_real(buffer, class, select,	\
+					   count, ##__VA_ARGS__);	\
+		if (ret_ >= 0)						\
+			*(buffer) = onstack(*(buffer),			\
+					    (*(buffer))->length);	\
+		ret_;							\
+	 })
 
 static int
-wmi_token_is_active(uint16_t *location, uint16_t *cmpvalue)
+wmi_token_is_active(uint32_t *location, uint32_t *cmpvalue)
 {
 	struct dell_wmi_smbios_buffer *ioctl_buffer;
 	int ret;
 
-	ret = prepare_buffer(&ioctl_buffer);
-	if (!ret)
+	ret = prepare_buffer(&ioctl_buffer, CLASS_TOKEN_READ,
+			     SELECT_TOKEN_STD, 1, *location);
+	if (ret < 0)
 		return ret;
-	ioctl_buffer->std.cmd_class = CLASS_TOKEN_READ;
-	ioctl_buffer->std.cmd_select = SELECT_TOKEN_STD;
-	ioctl_buffer->std.input[0] = *location;
-	ret = wmi_call_ioctl(ioctl_buffer);
-	if (ret != 0|| ioctl_buffer->std.output[0] != 0)
-		goto token_active_out;
-	ret = (ioctl_buffer->std.output[1] == *cmpvalue);
 
-token_active_out:
-	free_buffer(ioctl_buffer);
-	return ret;
+	ret = wmi_call_ioctl(ioctl_buffer);
+	if (ret < 0 || ioctl_buffer->std.output[0] != 0)
+		return ret;
+
+	return (ioctl_buffer->std.output[1] == *cmpvalue);
 }
 
 static int
 query_token(uint16_t token)
 {
 	if (wmi_supported()) {
-		uint16_t location;
-		uint16_t cmpvalue;
+		uint32_t location = 0;
+		uint32_t cmpvalue = 0;
+
 		/* locate token */
-		if (!wmi_find_token(token, &location, &cmpvalue))
+		if (wmi_find_token(token, &location, &cmpvalue) < 0)
 			return -1;
+
 		/* query actual token status */
-		if (wmi_token_is_active(&location, &cmpvalue))
-			return 1;
-		return -1;
+		return wmi_token_is_active(&location, &cmpvalue);
 	}
 #ifdef FWUPDATE_HAVE_LIBSMBIOS__
 	if (!token_is_bool(token))
 		return -1;
-	if (token_is_active(token))
+
+	if (token_is_active(token) > 0)
 		return 1;
-	return -1;
 #endif
 	return -1;
 }
@@ -268,35 +268,31 @@ activate_token(uint16_t token)
 	int ret;
 	if (wmi_supported()) {
 		struct dell_wmi_smbios_buffer *ioctl_buffer;
-		uint16_t location;
-		uint16_t cmpvalue;
+		uint32_t location;
+		uint32_t cmpvalue;
 
 		/* locate token */
-		if (!wmi_find_token(token, &location, &cmpvalue))
+		if (wmi_find_token(token, &location, &cmpvalue) < 0)
 			return -1;
 
-
-		ret = prepare_buffer(&ioctl_buffer);
-		if (!ret)
+		ret = prepare_buffer(&ioctl_buffer, CLASS_TOKEN_WRITE,
+				     SELECT_TOKEN_STD, 2, location, 1);
+		if (ret < 0)
 			return ret;
-		ioctl_buffer->std.cmd_class = CLASS_TOKEN_WRITE;
-		ioctl_buffer->std.cmd_select = SELECT_TOKEN_STD;
-		ioctl_buffer->std.input[0] = location;
-		ioctl_buffer->std.input[1] = 1;
+
 		ret = wmi_call_ioctl(ioctl_buffer);
-		free_buffer(ioctl_buffer);
 		return ret;
 	}
 #ifdef FWUPDATE_HAVE_LIBSMBIOS__
 	token_activate(token);
 	ret = token_is_active(token);
-	if (!ret) {
+	if (ret < 0) {
 		efi_error("%d activation failed", token);
-		return -3;
+		return FWUPDATE_ADMIN_PASSWORD_SET;
 	}
-	return 2;
+	return FWUPDATE_ESRT_DISABLED;
 #else
-	return -1;
+	return FWUPDATE_NO_TOKENS_FOUND;
 #endif
 }
 
@@ -304,37 +300,37 @@ static int
 admin_password_present()
 {
 	int ret;
+
 	if (wmi_supported()) {
 		struct dell_wmi_smbios_buffer *ioctl_buffer;
-		ret = prepare_buffer(&ioctl_buffer);
-		if (!ret)
+		ret = prepare_buffer(&ioctl_buffer, CLASS_ADMIN_PROP,
+				     SELECT_ADMIN_PROP, 0);
+		if (ret < 0)
 			return ret;
-		ioctl_buffer->std.cmd_class = CLASS_ADMIN_PROP;
-		ioctl_buffer->std.cmd_select = SELECT_ADMIN_PROP;
+
 		ret = wmi_call_ioctl(ioctl_buffer);
+		if (ret < 0)
+			return ret;
+
 		if (ioctl_buffer->std.output[0] != 0 ||
-		   (ioctl_buffer->std.output[1] & DELL_ADMIN_MASK) == DELL_ADMIN_INSTALLED) {
-			ret = -3;
-			goto wmi_admin_cleanup;
-		}
-		ret = FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK;
-wmi_admin_cleanup:
-		free_buffer(ioctl_buffer);
-		return ret;
+		   (ioctl_buffer->std.output[1] & DELL_ADMIN_MASK) == DELL_ADMIN_INSTALLED)
+			return FWUPDATE_ADMIN_PASSWORD_SET;
+
+		return FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK;
 	}
 #ifdef FWUPDATE_HAVE_LIBSMBIOS__
-	uint32_t args[4] = { 0, }
-	, out[4] = {
-	0,};
+	uint32_t args[4] = { 0, }, out[4] = { 0, };
+
 	if (dell_simple_ci_smi(CLASS_ADMIN_PROP,
 			       SELECT_ADMIN_PROP, args, out))
-		return -2;
-	if (out[0] != 0 || (out[1] & DELL_ADMIN_MASK) == DELL_ADMIN_INSTALLED)
-		return -3;
-	return FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK;
+		return FWUPDATE_LIBSMBIOS_FAILURE;
 
+	if (out[0] != 0 || (out[1] & DELL_ADMIN_MASK) == DELL_ADMIN_INSTALLED)
+		return FWUPDATE_ADMIN_PASSWORD_SET;
+
+	return FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK;
 #else
-	return -1;
+	return FWUPDATE_NO_TOKENS_FOUND;
 #endif
 
 }
@@ -360,7 +356,7 @@ fwup_esrt_disabled(void)
 		ret = query_token(CAPSULE_EN_TOKEN);
 		if (ret > 0)
 			return FWUP_SUPPORTED_STATUS_LOCKED_CAN_UNLOCK_NEXT_BOOT;
-		return -2;
+		return FWUPDATE_LIBSMBIOS_FAILURE;
 	}
 	return admin_password_present();
 }
@@ -391,11 +387,11 @@ fwup_enable_esrt(void)
 	if (!rc) {
 		efi_error
 		    ("DELL_CAPSULE_FIRMWARE_UPDATES_ENABLED is unsupported");
-		return -1;
+		return FWUPDATE_LIBSMBIOS_FAILURE;
 	}
 	activate_token(CAPSULE_EN_TOKEN);
 
-	return 2;
+	return FWUPDATE_ESRT_DISABLED;
 }
 
 /*

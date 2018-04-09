@@ -80,4 +80,12 @@ struct dell_wmi_smbios_buffer {
 #define DELL_WMI_CHAR "/dev/wmi/dell-smbios"
 #define TOKENS_SYSFS "/sys/devices/platform/dell-smbios.0/tokens"
 
+/* error codes */
+#define FWUPDATE_NO_TOKENS_FOUND	-1
+#define FWUPDATE_LIBSMBIOS_FAILURE	-2
+#define FWUPDATE_ADMIN_PASSWORD_SET	-3
+#define FWUPDATE_ESRT_DISABLED		2
+#define FWUPDATE_ESRT_ENABLED		3
+
+
 #endif /* _DELL_WMI_SMI_H_ */
