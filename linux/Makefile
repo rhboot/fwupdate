@@ -60,6 +60,7 @@ include-dir :
 		$(INSTALL) -d -m 755 include ; \
 	fi
 
+fwupdate.c : | include/fwup.h
 libfwup.c : | include/fwup.h
 include/fwup.h : | include/fwup-version.h
 include/fwup-version.h : | include-dir
