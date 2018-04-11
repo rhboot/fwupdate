@@ -38,12 +38,10 @@ install : | mandirs
 install : | $(foreach x, $(MAN1TARGETS), $(DESTDIR)$(mandir)/man1/$(x))
 install : | $(foreach x, $(MAN3TARGETS), $(DESTDIR)$(mandir)/man3/$(x))
 
-$(DESTDIR)$(mandir)/man1/%.1 : | mandirs
-$(DESTDIR)$(mandir)/man1/%.1 : %.1
+$(DESTDIR)$(mandir)/man1/%.1 : %.1 | mandirs
 	$(INSTALL) -m 644 $< $@
 
-$(DESTDIR)$(mandir)/man3/%.3 : | mandirs
-$(DESTDIR)$(mandir)/man3/%.3 : %.3
+$(DESTDIR)$(mandir)/man3/%.3 : %.3 | mandirs
 	$(INSTALL) -m 644 $< $@
 
 .PHONY: all clean test install mandirs
