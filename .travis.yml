@@ -1,0 +1,17 @@
+language: c
+cache: ccache
+branches:
+  except:
+    - travis
+
+matrix:
+ include:
+   - os: linux
+     dist: trusty
+     services: docker
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker pull vathpela/efi-ci-rawhide:v0 ; fi
+
+script:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run vathpela/efi-ci-rawhide:v0 /bin/sh -c "cd /root/ && ./build.sh --branch $TRAVIS_BRANCH --repo \"$TRAVIS_REPO_SLUG\" --remote \"$TRAVIS_PULL_REQUEST_SLUG\" --pr-sha \"$TRAVIS_PULL_REQUEST_SHA\" --subject fwupdate " ; fi
