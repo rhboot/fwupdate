@@ -187,6 +187,8 @@ prepare_buffer_real(struct dell_wmi_smbios_buffer **buffer,
 	uint64_t buffer_size = 0;
 	int ret;
 	va_list ap;
+	long pagesize = sysconf(_SC_PAGESIZE);
+	uint64_t limit = align(sizeof(**buffer) + pagesize, pagesize);
 
 	if (count > 4 || !buffer) {
 		errno = EINVAL;
@@ -196,6 +198,11 @@ prepare_buffer_real(struct dell_wmi_smbios_buffer **buffer,
 	ret = wmi_read_buffer_size(&buffer_size);
 	if (ret < 0 || buffer_size < 1) {
 		errno = ENODEV;
+		return -errno;
+	}
+
+	if (buffer_size > limit) {
+		errno = EINVAL;
 		return -errno;
 	}
 

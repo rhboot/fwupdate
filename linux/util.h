@@ -350,4 +350,6 @@ typedef struct {
 #define CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE   0x00020000
 #define CAPSULE_FLAGS_INITIATE_RESET          0x00040000
 
+#define align(val, align) (((val) + (align) -1 ) & (- (align)))
+
 #endif /* LIBFW_UTIL_H */
