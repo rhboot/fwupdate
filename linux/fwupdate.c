@@ -119,10 +119,13 @@ set_debug_flag(int8_t set_debug)
 		     EFI_VARIABLE_BOOTSERVICE_ACCESS |
 		     EFI_VARIABLE_RUNTIME_ACCESS;
 
-	efi_set_variable(fwupdate_guid, name,
-			 (uint8_t *)&set_debug, sizeof(set_debug),
-			 attributes, 0644);
-	printf(_("Enabled fwupdate debugging\n"));
+	rc = efi_set_variable(fwupdate_guid, name,
+			      (uint8_t *)&set_debug, sizeof(set_debug),
+			      attributes, 0644);
+	if (rc < 0)
+		printf(_("Could not enable fwupdate debugging\n"));
+	else
+		printf(_("Enabled fwupdate debugging\n"));
 }
 
 static void
@@ -134,7 +137,7 @@ dump_log(void)
 
 	rc = fwup_get_debug_log(&utf8, &size);
 	if (rc < 0) {
-		if (rc == ENOENT) {
+		if (errno == ENOENT) {
 			printf(_("No debug log found\n"));
 			return;
 		}

@@ -147,12 +147,18 @@ static int
 wmi_read_buffer_size(uint64_t *buffer_size)
 {
 	FILE *f;
+	size_t read;
+	int error;
 
 	f = fopen(DELL_WMI_CHAR, "rb");
 	if (!f)
 		return -1;
-	fread(buffer_size, sizeof(uint64_t), 1, f);
+	read = fread(buffer_size, sizeof(uint64_t), 1, f);
+	error = errno;
 	fclose(f);
+	errno = error;
+	if (read != 1)
+		return -1;
 	return 0;
 }
 
@@ -182,7 +188,7 @@ prepare_buffer_real(struct dell_wmi_smbios_buffer **buffer,
 	int ret;
 	va_list ap;
 
-	if (count > 4) {
+	if (count > 4 || !buffer) {
 		errno = EINVAL;
 		return -errno;
 	}
@@ -194,7 +200,7 @@ prepare_buffer_real(struct dell_wmi_smbios_buffer **buffer,
 	}
 
 	*buffer = malloc(buffer_size);
-	if (!buffer) {
+	if (!*buffer) {
 		errno = ENOMEM;
 		return -errno;
 	}
@@ -854,7 +860,12 @@ fwup_set_guid_forced(fwup_resource_iter *iter, fwup_resource **re,
 	fwup_resource *res;
 
 	errno = 0;
-	if (!iter && (!re && !force)) {
+	if (!re) {
+		efi_error("invalid argument 're'");
+		errno = EINVAL;
+		return -1;
+	}
+	if (!iter && (!*re && !force)) {
 		efi_error("invalid argument '%s'", iter ? "iter" : "re");
 		errno = EINVAL;
 		return -1;
