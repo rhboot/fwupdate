@@ -8,6 +8,8 @@
  * Author: Peter Jones <pjones@redhat.com>
  */
 
+#include "fix_coverity.h"
+
 #include <dirent.h>
 #include <efivar/efiboot.h>
 #include <efivar/efivar.h>
