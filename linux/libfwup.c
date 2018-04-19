@@ -188,7 +188,8 @@ prepare_buffer_real(struct dell_wmi_smbios_buffer **buffer,
 	int ret;
 	va_list ap;
 	long pagesize = sysconf(_SC_PAGESIZE);
-	uint64_t limit = align(sizeof(**buffer) + pagesize, pagesize);
+	/* the biggest known value provided by any system today */
+	uint64_t limit = 32768;
 
 	if (count > 4 || !buffer) {
 		errno = EINVAL;
