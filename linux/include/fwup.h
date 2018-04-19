@@ -23,6 +23,7 @@
 extern int fwup_supported(void);
 extern int fwup_esrt_disabled(void);
 extern int fwup_enable_esrt(void);
+extern int fwup_version(void);
 
 #define FWUP_SUPPORTED_STATUS_UNSUPPORTED			0
 #define FWUP_SUPPORTED_STATUS_UNLOCKED				1

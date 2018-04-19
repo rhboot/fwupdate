@@ -2273,3 +2273,18 @@ fwup_get_debug_log(char **utf8, size_t *size)
 	*size = vsize >> 1;
 	return 0;
 }
+
+/**
+ * fwup_version
+ *
+ * Returns the installed runtime version of libfwupdate
+ *
+ * Returns: integer version
+ *
+ * Since: 12
+ */
+int
+fwup_version(void)
+{
+	return LIBFWUP_VERSION;
+}
