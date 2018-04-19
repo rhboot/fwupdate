@@ -51,7 +51,7 @@ static int debugging;
 static VOID
 msleep(unsigned long msecs)
 {
-	gBS->Stall(msecs);
+	BS->Stall(msecs);
 }
 
 
