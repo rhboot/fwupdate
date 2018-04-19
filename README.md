@@ -49,7 +49,7 @@ Set the EFI subdirectory directory that EFI binaries are installed into.
 ```
 # git config fwupdate.efidir $DIRECTORY
 ```
-This usually refers to the OS distributor.  For example on Ubuntu it's set to *ubuntu*
+This usually refers to the OS distributor.  If not configured it will default to the value defined for `ID` in `/etc/os-release` or `/usr/lib/os-release`.
 
 Run the build command
 ```
