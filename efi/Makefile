@@ -23,6 +23,10 @@ CCLDFLAGS	?= -nostdlib -Wl,--warn-common \
 	-Wl,--build-id=sha1 -Wl,--hash-style=sysv \
 	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
 CLANG_BUGS	= $(if $(findstring gcc,$(CC)),-maccumulate-outgoing-args,)
+LIBGCC=$(shell $(CC) -print-libgcc-file-name)
+ifeq ($(ARCH),arm)
+LIBGCC+=" $(shell $(CC) -print-libgcc-file-name | sed 's/\.a$/_eh.a/')"
+endif
 
 define objcopy_version =
   $(OBJCOPY) --version |
@@ -106,7 +110,7 @@ endif
 
 %.so : %.o
 	$(CC) $(CCLDFLAGS) -o $@ $^ -lefi -lgnuefi \
-		$(shell $(CC) -print-libgcc-file-name) \
+		$(LIBGCC) \
 		-T elf_$(ARCH)_efi.lds
 
 %.o : %.c
