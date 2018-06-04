@@ -88,6 +88,6 @@ Applying a payload:
 
 Enable firmware updates on supported Dell systems (if compiled with libsmbios):
 ```
-# fwupate --enable
+# fwupdate --enable
 ```
 
