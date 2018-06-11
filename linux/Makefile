@@ -34,6 +34,7 @@ endif
 BUILDFLAGS := $(CFLAGS) -Wall -Wextra -Werror -Wno-error=cpp \
 	-Wno-unused-result -Wno-unused-function \
 	-Wsign-compare -Werror=sign-compare \
+	-Wno-error=missing-field-initializers -Wno-missing-field-initializers \
 	-fshort-wchar --std=gnu11 \
 	-DLOCALEDIR=\"$(localedir)\" -D_GNU_SOURCE \
 	-DFWUP_EFI_DIR_NAME=\"$(EFIDIR)\"  \
