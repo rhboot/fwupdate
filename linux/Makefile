@@ -65,10 +65,17 @@ libfwup.c : | include/fwup.h
 include/fwup.h : | include/fwup-version.h
 include/fwup-version.h : | include-dir
 
-abidw : $(patsubst %.so,%.abixml,$(LIBTARGETS))
-	git add $^
-
+abicheck : | clean $(LIBTARGETS)
 abicheck : $(patsubst %.so,%.abicheck,$(LIBTARGETS))
+
+abiclean :
+	@rm -vf $(patsubst %.so,%.abixml,$(LIBTARGETS))
+
+abixml : | $(LIBTARGETS)
+abixml : $(patsubst %.so,%.abixml,$(LIBTARGETS))
+
+abiupdate : abixml
+	git add $(patsubst %.so,%.abixml,$(LIBTARGETS))
 
 % : %.o
 	$(CC) $(BUILDFLAGS) -o $@ $(patsubst lib%.so,-l%,$^) $(BIN_CCLDFLAGS)

@@ -12,7 +12,7 @@ include $(TOP)/Make.coverity
 include $(TOP)/Make.scan-build
 SUBDIRS ?= efi linux docs include
 
-all abidw abicheck clean install : | check_efidir_error
+all abicheck clean install : | check_efidir_error
 	@set -e ; for x in $(SUBDIRS) ; do \
 		if [ ! -d $${x} ]; then \
 			install -m 0755 -d $${x} ; \
@@ -21,6 +21,10 @@ all abidw abicheck clean install : | check_efidir_error
 			LIBDIR=$(LIBDIR) bindir=$(bindir) mandir=$(mandir) \
 			-C $$x/ -f $(TOP)/$$x/Makefile $@ ; \
 	done
+
+abiupdate :
+	$(MAKE) clean all
+	$(MAKE) -C linux TOPDIR=$(TOP) abiclean abiupdate
 
 GITTAG = $(shell bash -c "echo $$(($(VERSION) + 1))")
 
@@ -47,7 +51,7 @@ bumpver:
 tag:
 	git tag -s $(GITTAG) refs/heads/master
 
-archive: abicheck abidw bumpver tag fwupdate.spec
+archive: abicheck abiupdate bumpver tag fwupdate.spec
 	@rm -rf /tmp/fwupdate-$(GITTAG) /tmp/fwupdate-$(GITTAG)-tmp
 	@mkdir -p /tmp/fwupdate-$(GITTAG)-tmp
 	@git archive --format=tar $(GITTAG) | ( cd /tmp/fwupdate-$(GITTAG)-tmp/ ; tar x )
@@ -57,4 +61,4 @@ archive: abicheck abidw bumpver tag fwupdate.spec
 	@rm -rf /tmp/fwupdate-$(GITTAG)
 	@echo "The archive is in fwupdate-$(GITTAG).tar.bz2"
 
-.PHONY: $(SUBDIRS)
+.PHONY: $(SUBDIRS) abiupdate

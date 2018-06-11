@@ -5,6 +5,7 @@ endef
 
 %.abixml : %.so
 	$(ABIDW) --headers-dir $(TOP)/linux/include/ --out-file $@ $^
+	@sed -i -s 's,$(TOPDIR)/,,g' $@
 
 %.abicheck : %.so
 	$(ABIDIFF) \
