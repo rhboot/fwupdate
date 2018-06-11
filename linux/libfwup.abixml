@@ -33,71 +33,71 @@
     <elf-symbol name='fwup_supported' version='libfwup.so.1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
     <elf-symbol name='fwup_use_existing_media_path' version='libfwup.so.1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
   </elf-function-symbols>
-  <abi-instr version='1.0' address-size='64' path='libfwup.c' comp-dir-path='/home/pjones/devel/github.com/fwupdate/master/linux' language='LANG_C99'>
+  <abi-instr version='1.0' address-size='64' path='libfwup.c' comp-dir-path='linux' language='LANG_C99'>
     <type-decl name='int' size-in-bits='32' id='type-id-1'/>
     <type-decl name='char' size-in-bits='8' id='type-id-2'/>
     <pointer-type-def type-id='type-id-2' size-in-bits='64' id='type-id-3'/>
     <pointer-type-def type-id='type-id-3' size-in-bits='64' id='type-id-4'/>
     <type-decl name='unsigned long int' size-in-bits='64' id='type-id-5'/>
-    <typedef-decl name='size_t' type-id='type-id-5' filepath='/usr/lib/gcc/x86_64-redhat-linux/7/include/stddef.h' line='216' column='1' id='type-id-6'/>
+    <typedef-decl name='size_t' type-id='type-id-5' filepath='/usr/lib/gcc/x86_64-redhat-linux/8/include/stddef.h' line='216' column='1' id='type-id-6'/>
     <pointer-type-def type-id='type-id-6' size-in-bits='64' id='type-id-7'/>
-    <function-decl name='fwup_get_debug_log' mangled-name='fwup_get_debug_log' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='2222' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_debug_log@@libfwup.so.1'>
-      <parameter type-id='type-id-4' name='utf8' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='2222' column='1'/>
-      <parameter type-id='type-id-7' name='size' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='2222' column='1'/>
+    <function-decl name='fwup_get_debug_log' mangled-name='fwup_get_debug_log' filepath='linux/libfwup.c' line='2222' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_debug_log@@libfwup.so.1'>
+      <parameter type-id='type-id-4' name='utf8' filepath='linux/libfwup.c' line='2222' column='1'/>
+      <parameter type-id='type-id-7' name='size' filepath='linux/libfwup.c' line='2222' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
     <type-decl name='unsigned int' size-in-bits='32' id='type-id-8'/>
     <typedef-decl name='__uint32_t' type-id='type-id-8' filepath='/usr/include/bits/types.h' line='41' column='1' id='type-id-9'/>
     <typedef-decl name='uint32_t' type-id='type-id-9' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' id='type-id-10'/>
     <pointer-type-def type-id='type-id-10' size-in-bits='64' id='type-id-11'/>
-    <function-decl name='fwup_get_ux_capsule_info' mangled-name='fwup_get_ux_capsule_info' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='2179' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_ux_capsule_info@@libfwup.so.1'>
-      <parameter type-id='type-id-11' name='screen_x_size' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='2179' column='1'/>
-      <parameter type-id='type-id-11' name='screen_y_size' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='2179' column='1'/>
+    <function-decl name='fwup_get_ux_capsule_info' mangled-name='fwup_get_ux_capsule_info' filepath='linux/libfwup.c' line='2179' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_ux_capsule_info@@libfwup.so.1'>
+      <parameter type-id='type-id-11' name='screen_x_size' filepath='linux/libfwup.c' line='2179' column='1'/>
+      <parameter type-id='type-id-11' name='screen_y_size' filepath='linux/libfwup.c' line='2179' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_print_update_info' mangled-name='fwup_print_update_info' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='2057' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_print_update_info@@libfwup.so.1'>
+    <function-decl name='fwup_print_update_info' mangled-name='fwup_print_update_info' filepath='linux/libfwup.c' line='2057' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_print_update_info@@libfwup.so.1'>
       <return type-id='type-id-1'/>
     </function-decl>
     <qualified-type-def type-id='type-id-2' const='yes' id='type-id-12'/>
     <pointer-type-def type-id='type-id-12' size-in-bits='64' id='type-id-13'/>
     <typedef-decl name='__uint64_t' type-id='type-id-5' filepath='/usr/include/bits/types.h' line='44' column='1' id='type-id-14'/>
     <typedef-decl name='uint64_t' type-id='type-id-14' filepath='/usr/include/bits/stdint-uintn.h' line='27' column='1' id='type-id-15'/>
-    <function-decl name='fwup_last_attempt_status_to_string' mangled-name='fwup_last_attempt_status_to_string' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='2027' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_last_attempt_status_to_string@@libfwup.so.1'>
-      <parameter type-id='type-id-15' name='status' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='2027' column='1'/>
+    <function-decl name='fwup_last_attempt_status_to_string' mangled-name='fwup_last_attempt_status_to_string' filepath='linux/libfwup.c' line='2027' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_last_attempt_status_to_string@@libfwup.so.1'>
+      <parameter type-id='type-id-15' name='status' filepath='linux/libfwup.c' line='2027' column='1'/>
       <return type-id='type-id-13'/>
     </function-decl>
-    <class-decl name='fwup_resource_s' size-in-bits='448' is-struct='yes' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='631' column='1' id='type-id-16'>
+    <class-decl name='fwup_resource_s' size-in-bits='448' is-struct='yes' visibility='default' filepath='linux/libfwup.c' line='631' column='1' id='type-id-16'>
       <data-member access='public' layout-offset-in-bits='0'>
-        <var-decl name='esre' type-id='type-id-17' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='633' column='1'/>
+        <var-decl name='esre' type-id='type-id-17' visibility='default' filepath='linux/libfwup.c' line='633' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='320'>
-        <var-decl name='allocated' type-id='type-id-18' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='634' column='1'/>
+        <var-decl name='allocated' type-id='type-id-18' visibility='default' filepath='linux/libfwup.c' line='634' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='384'>
-        <var-decl name='info' type-id='type-id-19' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='635' column='1'/>
+        <var-decl name='info' type-id='type-id-19' visibility='default' filepath='linux/libfwup.c' line='635' column='1'/>
       </data-member>
     </class-decl>
-    <class-decl name='esre_s' size-in-bits='320' is-struct='yes' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='431' column='1' id='type-id-20'>
+    <class-decl name='esre_s' size-in-bits='320' is-struct='yes' visibility='default' filepath='linux/libfwup.c' line='431' column='1' id='type-id-20'>
       <data-member access='public' layout-offset-in-bits='0'>
-        <var-decl name='guid' type-id='type-id-21' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='432' column='1'/>
+        <var-decl name='guid' type-id='type-id-21' visibility='default' filepath='linux/libfwup.c' line='432' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='128'>
-        <var-decl name='fw_type' type-id='type-id-10' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='433' column='1'/>
+        <var-decl name='fw_type' type-id='type-id-10' visibility='default' filepath='linux/libfwup.c' line='433' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='160'>
-        <var-decl name='fw_version' type-id='type-id-10' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='434' column='1'/>
+        <var-decl name='fw_version' type-id='type-id-10' visibility='default' filepath='linux/libfwup.c' line='434' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='192'>
-        <var-decl name='lowest_supported_fw_version' type-id='type-id-10' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='435' column='1'/>
+        <var-decl name='lowest_supported_fw_version' type-id='type-id-10' visibility='default' filepath='linux/libfwup.c' line='435' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='224'>
-        <var-decl name='capsule_flags' type-id='type-id-10' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='436' column='1'/>
+        <var-decl name='capsule_flags' type-id='type-id-10' visibility='default' filepath='linux/libfwup.c' line='436' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='256'>
-        <var-decl name='last_attempt_version' type-id='type-id-10' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='437' column='1'/>
+        <var-decl name='last_attempt_version' type-id='type-id-10' visibility='default' filepath='linux/libfwup.c' line='437' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='288'>
-        <var-decl name='last_attempt_status' type-id='type-id-10' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='438' column='1'/>
+        <var-decl name='last_attempt_status' type-id='type-id-10' visibility='default' filepath='linux/libfwup.c' line='438' column='1'/>
       </data-member>
     </class-decl>
     <class-decl name='__anonymous_struct__' size-in-bits='128' is-struct='yes' is-anonymous='yes' naming-typedef-id='type-id-21' visibility='default' filepath='/usr/include/efivar/efivar.h' line='33' column='1' id='type-id-22'>
@@ -123,83 +123,85 @@
     <type-decl name='unsigned char' size-in-bits='8' id='type-id-27'/>
     <typedef-decl name='__uint8_t' type-id='type-id-27' filepath='/usr/include/bits/types.h' line='37' column='1' id='type-id-28'/>
     <typedef-decl name='uint8_t' type-id='type-id-28' filepath='/usr/include/bits/stdint-uintn.h' line='24' column='1' id='type-id-29'/>
+
     <array-type-def dimensions='1' type-id='type-id-29' size-in-bits='48' id='type-id-24'>
-      <subrange length='6'/>
+      <subrange length='6' type-id='type-id-5' id='type-id-30'/>
+
     </array-type-def>
     <typedef-decl name='efi_guid_t' type-id='type-id-22' filepath='/usr/include/efivar/efivar.h' line='39' column='1' id='type-id-21'/>
-    <typedef-decl name='esre' type-id='type-id-20' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='439' column='1' id='type-id-17'/>
+    <typedef-decl name='esre' type-id='type-id-20' filepath='linux/libfwup.c' line='439' column='1' id='type-id-17'/>
     <type-decl name='bool' size-in-bits='8' id='type-id-18'/>
-    <class-decl name='update_info_s' size-in-bits='480' is-struct='yes' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='28' column='1' id='type-id-30'>
+    <class-decl name='update_info_s' size-in-bits='480' is-struct='yes' visibility='default' filepath='include/fwup-efi.h' line='28' column='1' id='type-id-31'>
       <data-member access='public' layout-offset-in-bits='0'>
-        <var-decl name='update_info_version' type-id='type-id-10' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='29' column='1'/>
+        <var-decl name='update_info_version' type-id='type-id-10' visibility='default' filepath='include/fwup-efi.h' line='29' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='32'>
-        <var-decl name='guid' type-id='type-id-21' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='32' column='1'/>
+        <var-decl name='guid' type-id='type-id-21' visibility='default' filepath='include/fwup-efi.h' line='32' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='160'>
-        <var-decl name='capsule_flags' type-id='type-id-10' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='33' column='1'/>
+        <var-decl name='capsule_flags' type-id='type-id-10' visibility='default' filepath='include/fwup-efi.h' line='33' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='192'>
-        <var-decl name='hw_inst' type-id='type-id-15' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='34' column='1'/>
+        <var-decl name='hw_inst' type-id='type-id-15' visibility='default' filepath='include/fwup-efi.h' line='34' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='256'>
-        <var-decl name='time_attempted' type-id='type-id-31' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='36' column='1'/>
+        <var-decl name='time_attempted' type-id='type-id-32' visibility='default' filepath='include/fwup-efi.h' line='36' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='384'>
-        <var-decl name='status' type-id='type-id-10' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='39' column='1'/>
+        <var-decl name='status' type-id='type-id-10' visibility='default' filepath='include/fwup-efi.h' line='39' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='416'>
-        <var-decl name='' type-id='type-id-32' visibility='default'/>
+        <var-decl name='' type-id='type-id-33' visibility='default'/>
       </data-member>
     </class-decl>
-    <class-decl name='__anonymous_struct__' size-in-bits='128' is-struct='yes' is-anonymous='yes' naming-typedef-id='type-id-31' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='335' column='1' id='type-id-33'>
+    <class-decl name='__anonymous_struct__' size-in-bits='128' is-struct='yes' is-anonymous='yes' naming-typedef-id='type-id-32' visibility='default' filepath='linux/util.h' line='335' column='1' id='type-id-34'>
       <data-member access='public' layout-offset-in-bits='0'>
-        <var-decl name='year' type-id='type-id-23' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='336' column='1'/>
+        <var-decl name='year' type-id='type-id-23' visibility='default' filepath='linux/util.h' line='336' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='16'>
-        <var-decl name='month' type-id='type-id-29' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='337' column='1'/>
+        <var-decl name='month' type-id='type-id-29' visibility='default' filepath='linux/util.h' line='337' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='24'>
-        <var-decl name='day' type-id='type-id-29' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='338' column='1'/>
+        <var-decl name='day' type-id='type-id-29' visibility='default' filepath='linux/util.h' line='338' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='32'>
-        <var-decl name='hour' type-id='type-id-29' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='339' column='1'/>
+        <var-decl name='hour' type-id='type-id-29' visibility='default' filepath='linux/util.h' line='339' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='40'>
-        <var-decl name='minute' type-id='type-id-29' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='340' column='1'/>
+        <var-decl name='minute' type-id='type-id-29' visibility='default' filepath='linux/util.h' line='340' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='48'>
-        <var-decl name='second' type-id='type-id-29' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='341' column='1'/>
+        <var-decl name='second' type-id='type-id-29' visibility='default' filepath='linux/util.h' line='341' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='56'>
-        <var-decl name='pad1' type-id='type-id-29' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='342' column='1'/>
+        <var-decl name='pad1' type-id='type-id-29' visibility='default' filepath='linux/util.h' line='342' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='64'>
-        <var-decl name='nanosecond' type-id='type-id-10' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='343' column='1'/>
+        <var-decl name='nanosecond' type-id='type-id-10' visibility='default' filepath='linux/util.h' line='343' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='96'>
-        <var-decl name='timezone' type-id='type-id-23' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='344' column='1'/>
+        <var-decl name='timezone' type-id='type-id-23' visibility='default' filepath='linux/util.h' line='344' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='112'>
-        <var-decl name='daylight' type-id='type-id-29' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='345' column='1'/>
+        <var-decl name='daylight' type-id='type-id-29' visibility='default' filepath='linux/util.h' line='345' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='120'>
-        <var-decl name='pad2' type-id='type-id-29' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='346' column='1'/>
+        <var-decl name='pad2' type-id='type-id-29' visibility='default' filepath='linux/util.h' line='346' column='1'/>
       </data-member>
     </class-decl>
-    <typedef-decl name='efi_time_t' type-id='type-id-33' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/util.h' line='347' column='1' id='type-id-31'/>
-    <union-decl name='__anonymous_union__' size-in-bits='64' is-anonymous='yes' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='42' column='1' id='type-id-32'>
+    <typedef-decl name='efi_time_t' type-id='type-id-34' filepath='linux/util.h' line='347' column='1' id='type-id-32'/>
+    <union-decl name='__anonymous_union__' size-in-bits='64' is-anonymous='yes' visibility='default' filepath='include/fwup-efi.h' line='42' column='1' id='type-id-33'>
       <data-member access='private'>
-        <var-decl name='dp_ptr' type-id='type-id-34' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='43' column='1'/>
+        <var-decl name='dp_ptr' type-id='type-id-35' visibility='default' filepath='include/fwup-efi.h' line='43' column='1'/>
       </data-member>
       <data-member access='private'>
-        <var-decl name='dp' type-id='type-id-35' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='44' column='1'/>
+        <var-decl name='dp' type-id='type-id-36' visibility='default' filepath='include/fwup-efi.h' line='44' column='1'/>
       </data-member>
       <data-member access='private'>
-        <var-decl name='dp_buf' type-id='type-id-36' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='45' column='1'/>
+        <var-decl name='dp_buf' type-id='type-id-37' visibility='default' filepath='include/fwup-efi.h' line='45' column='1'/>
       </data-member>
     </union-decl>
-    <class-decl name='__anonymous_struct__' size-in-bits='32' is-struct='yes' is-anonymous='yes' naming-typedef-id='type-id-35' visibility='default' filepath='/usr/include/efivar/efivar-dp.h' line='36' column='1' id='type-id-37'>
+    <class-decl name='__anonymous_struct__' size-in-bits='32' is-struct='yes' is-anonymous='yes' naming-typedef-id='type-id-36' visibility='default' filepath='/usr/include/efivar/efivar-dp.h' line='36' column='1' id='type-id-38'>
       <data-member access='public' layout-offset-in-bits='0'>
         <var-decl name='type' type-id='type-id-29' visibility='default' filepath='/usr/include/efivar/efivar-dp.h' line='37' column='1'/>
       </data-member>
@@ -210,364 +212,368 @@
         <var-decl name='length' type-id='type-id-23' visibility='default' filepath='/usr/include/efivar/efivar-dp.h' line='39' column='1'/>
       </data-member>
     </class-decl>
-    <typedef-decl name='efidp_header' type-id='type-id-37' filepath='/usr/include/efivar/efivar-dp.h' line='40' column='1' id='type-id-35'/>
-    <pointer-type-def type-id='type-id-35' size-in-bits='64' id='type-id-34'/>
-    <array-type-def dimensions='0' type-id='type-id-29' size-in-bits='infinite' id='type-id-36'/>
-    <typedef-decl name='update_info' type-id='type-id-30' filepath='/home/pjones/devel/github.com/fwupdate/master/include/fwup-efi.h' line='47' column='1' id='type-id-38'/>
-    <pointer-type-def type-id='type-id-38' size-in-bits='64' id='type-id-19'/>
-    <typedef-decl name='fwup_resource' type-id='type-id-16' filepath='include/fwup.h' line='49' column='1' id='type-id-39'/>
-    <pointer-type-def type-id='type-id-39' size-in-bits='64' id='type-id-40'/>
-    <type-decl name='void' id='type-id-41'/>
+    <typedef-decl name='efidp_header' type-id='type-id-38' filepath='/usr/include/efivar/efivar-dp.h' line='40' column='1' id='type-id-36'/>
+    <pointer-type-def type-id='type-id-36' size-in-bits='64' id='type-id-35'/>
+
+    <array-type-def dimensions='1' type-id='type-id-29' size-in-bits='8' id='type-id-37'>
+      <subrange length='1' type-id='type-id-5' id='type-id-39'/>
+
+    </array-type-def>
+    <typedef-decl name='update_info' type-id='type-id-31' filepath='include/fwup-efi.h' line='47' column='1' id='type-id-40'/>
+    <pointer-type-def type-id='type-id-40' size-in-bits='64' id='type-id-19'/>
+    <typedef-decl name='fwup_resource' type-id='type-id-16' filepath='include/fwup.h' line='49' column='1' id='type-id-41'/>
     <pointer-type-def type-id='type-id-41' size-in-bits='64' id='type-id-42'/>
-    <function-decl name='fwup_set_up_update_with_buf' mangled-name='fwup_set_up_update_with_buf' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1925' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_set_up_update_with_buf@@libfwup.so.1'>
-      <parameter type-id='type-id-40' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1925' column='1'/>
-      <parameter type-id='type-id-15' name='hw_inst' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1926' column='1'/>
-      <parameter type-id='type-id-42' name='buf' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1927' column='1'/>
-      <parameter type-id='type-id-6' name='sz' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1927' column='1'/>
+    <type-decl name='void' id='type-id-43'/>
+    <pointer-type-def type-id='type-id-43' size-in-bits='64' id='type-id-44'/>
+    <function-decl name='fwup_set_up_update_with_buf' mangled-name='fwup_set_up_update_with_buf' filepath='linux/libfwup.c' line='1925' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_set_up_update_with_buf@@libfwup.so.1'>
+      <parameter type-id='type-id-42' name='re' filepath='linux/libfwup.c' line='1925' column='1'/>
+      <parameter type-id='type-id-15' name='hw_inst' filepath='linux/libfwup.c' line='1926' column='1'/>
+      <parameter type-id='type-id-44' name='buf' filepath='linux/libfwup.c' line='1927' column='1'/>
+      <parameter type-id='type-id-6' name='sz' filepath='linux/libfwup.c' line='1927' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_set_up_update' mangled-name='fwup_set_up_update' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1809' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_set_up_update@@libfwup.so.1'>
-      <parameter type-id='type-id-40' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1809' column='1'/>
-      <parameter type-id='type-id-15' name='hw_inst' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1810' column='1'/>
-      <parameter type-id='type-id-1' name='infd' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1811' column='1'/>
+    <function-decl name='fwup_set_up_update' mangled-name='fwup_set_up_update' filepath='linux/libfwup.c' line='1809' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_set_up_update@@libfwup.so.1'>
+      <parameter type-id='type-id-42' name='re' filepath='linux/libfwup.c' line='1809' column='1'/>
+      <parameter type-id='type-id-15' name='hw_inst' filepath='linux/libfwup.c' line='1810' column='1'/>
+      <parameter type-id='type-id-1' name='infd' filepath='linux/libfwup.c' line='1811' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_use_existing_media_path' mangled-name='fwup_use_existing_media_path' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1503' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_use_existing_media_path@@libfwup.so.1'>
-      <parameter type-id='type-id-1' name='use_existing_media_path_' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='1503' column='1'/>
-      <return type-id='type-id-41'/>
+    <function-decl name='fwup_use_existing_media_path' mangled-name='fwup_use_existing_media_path' filepath='linux/libfwup.c' line='1503' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_use_existing_media_path@@libfwup.so.1'>
+      <parameter type-id='type-id-1' name='use_existing_media_path_' filepath='linux/libfwup.c' line='1503' column='1'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <type-decl name='long int' size-in-bits='64' id='type-id-43'/>
-    <typedef-decl name='__time_t' type-id='type-id-43' filepath='/usr/include/bits/types.h' line='148' column='1' id='type-id-44'/>
-    <typedef-decl name='time_t' type-id='type-id-44' filepath='/usr/include/bits/types/time_t.h' line='7' column='1' id='type-id-45'/>
-    <pointer-type-def type-id='type-id-45' size-in-bits='64' id='type-id-46'/>
-    <function-decl name='fwup_get_last_attempt_info' mangled-name='fwup_get_last_attempt_info' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='975' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_last_attempt_info@@libfwup.so.1'>
-      <parameter type-id='type-id-40' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='975' column='1'/>
-      <parameter type-id='type-id-11' name='version' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='975' column='1'/>
-      <parameter type-id='type-id-11' name='status' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='976' column='1'/>
-      <parameter type-id='type-id-46' name='when' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='976' column='1'/>
-      <return type-id='type-id-1'/>
-    </function-decl>
-    <function-decl name='fwup_get_attempt_status' mangled-name='fwup_get_attempt_status' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='961' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_attempt_status@@libfwup.so.1'>
-      <parameter type-id='type-id-40' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='961' column='1'/>
-      <parameter type-id='type-id-11' name='status' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='961' column='1'/>
-      <return type-id='type-id-1'/>
-    </function-decl>
-    <function-decl name='fwup_get_lowest_supported_fw_version' mangled-name='fwup_get_lowest_supported_fw_version' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='948' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_lowest_supported_fw_version@@libfwup.so.1'>
-      <parameter type-id='type-id-40' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='961' column='1'/>
-      <parameter type-id='type-id-11' name='status' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='961' column='1'/>
-      <return type-id='type-id-1'/>
-    </function-decl>
-    <function-decl name='fwup_get_fw_type' mangled-name='fwup_get_fw_type' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='935' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_fw_type@@libfwup.so.1'>
-      <parameter type-id='type-id-40' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='961' column='1'/>
-      <parameter type-id='type-id-11' name='status' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='961' column='1'/>
-      <return type-id='type-id-1'/>
-    </function-decl>
-    <function-decl name='fwup_get_fw_version' mangled-name='fwup_get_fw_version' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='922' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_fw_version@@libfwup.so.1'>
-      <parameter type-id='type-id-40' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='961' column='1'/>
-      <parameter type-id='type-id-11' name='status' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='961' column='1'/>
-      <return type-id='type-id-1'/>
-    </function-decl>
-    <pointer-type-def type-id='type-id-21' size-in-bits='64' id='type-id-47'/>
+    <type-decl name='long int' size-in-bits='64' id='type-id-45'/>
+    <typedef-decl name='__time_t' type-id='type-id-45' filepath='/usr/include/bits/types.h' line='148' column='1' id='type-id-46'/>
+    <typedef-decl name='time_t' type-id='type-id-46' filepath='/usr/include/bits/types/time_t.h' line='7' column='1' id='type-id-47'/>
     <pointer-type-def type-id='type-id-47' size-in-bits='64' id='type-id-48'/>
-    <function-decl name='fwup_get_guid' mangled-name='fwup_get_guid' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='909' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_guid@@libfwup.so.1'>
-      <parameter type-id='type-id-40' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='909' column='1'/>
-      <parameter type-id='type-id-48' name='guid' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='909' column='1'/>
+    <function-decl name='fwup_get_last_attempt_info' mangled-name='fwup_get_last_attempt_info' filepath='linux/libfwup.c' line='975' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_last_attempt_info@@libfwup.so.1'>
+      <parameter type-id='type-id-42' name='re' filepath='linux/libfwup.c' line='975' column='1'/>
+      <parameter type-id='type-id-11' name='version' filepath='linux/libfwup.c' line='975' column='1'/>
+      <parameter type-id='type-id-11' name='status' filepath='linux/libfwup.c' line='976' column='1'/>
+      <parameter type-id='type-id-48' name='when' filepath='linux/libfwup.c' line='976' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_clear_status' mangled-name='fwup_clear_status' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='890' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_clear_status@@libfwup.so.1'>
-      <parameter type-id='type-id-40' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='890' column='1'/>
+    <function-decl name='fwup_get_attempt_status' mangled-name='fwup_get_attempt_status' filepath='linux/libfwup.c' line='961' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_attempt_status@@libfwup.so.1'>
+      <parameter type-id='type-id-42' name='re' filepath='linux/libfwup.c' line='961' column='1'/>
+      <parameter type-id='type-id-11' name='status' filepath='linux/libfwup.c' line='961' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
-    <class-decl name='fwup_resource_iter_s' size-in-bits='576' is-struct='yes' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='638' column='1' id='type-id-49'>
+    <function-decl name='fwup_get_lowest_supported_fw_version' mangled-name='fwup_get_lowest_supported_fw_version' filepath='linux/libfwup.c' line='948' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_lowest_supported_fw_version@@libfwup.so.1'>
+      <parameter type-id='type-id-42' name='re' filepath='linux/libfwup.c' line='961' column='1'/>
+      <parameter type-id='type-id-11' name='status' filepath='linux/libfwup.c' line='961' column='1'/>
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <function-decl name='fwup_get_fw_type' mangled-name='fwup_get_fw_type' filepath='linux/libfwup.c' line='935' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_fw_type@@libfwup.so.1'>
+      <parameter type-id='type-id-42' name='re' filepath='linux/libfwup.c' line='961' column='1'/>
+      <parameter type-id='type-id-11' name='status' filepath='linux/libfwup.c' line='961' column='1'/>
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <function-decl name='fwup_get_fw_version' mangled-name='fwup_get_fw_version' filepath='linux/libfwup.c' line='922' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_fw_version@@libfwup.so.1'>
+      <parameter type-id='type-id-42' name='re' filepath='linux/libfwup.c' line='961' column='1'/>
+      <parameter type-id='type-id-11' name='status' filepath='linux/libfwup.c' line='961' column='1'/>
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <pointer-type-def type-id='type-id-21' size-in-bits='64' id='type-id-49'/>
+    <pointer-type-def type-id='type-id-49' size-in-bits='64' id='type-id-50'/>
+    <function-decl name='fwup_get_guid' mangled-name='fwup_get_guid' filepath='linux/libfwup.c' line='909' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_guid@@libfwup.so.1'>
+      <parameter type-id='type-id-42' name='re' filepath='linux/libfwup.c' line='909' column='1'/>
+      <parameter type-id='type-id-50' name='guid' filepath='linux/libfwup.c' line='909' column='1'/>
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <function-decl name='fwup_clear_status' mangled-name='fwup_clear_status' filepath='linux/libfwup.c' line='890' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_clear_status@@libfwup.so.1'>
+      <parameter type-id='type-id-42' name='re' filepath='linux/libfwup.c' line='890' column='1'/>
+      <return type-id='type-id-1'/>
+    </function-decl>
+    <class-decl name='fwup_resource_iter_s' size-in-bits='576' is-struct='yes' visibility='default' filepath='linux/libfwup.c' line='638' column='1' id='type-id-51'>
       <data-member access='public' layout-offset-in-bits='0'>
-        <var-decl name='dir' type-id='type-id-50' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='639' column='1'/>
+        <var-decl name='dir' type-id='type-id-52' visibility='default' filepath='linux/libfwup.c' line='639' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='64'>
-        <var-decl name='dirfd' type-id='type-id-1' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='640' column='1'/>
+        <var-decl name='dirfd' type-id='type-id-1' visibility='default' filepath='linux/libfwup.c' line='640' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='96'>
-        <var-decl name='add_ux_capsule' type-id='type-id-1' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='641' column='1'/>
+        <var-decl name='add_ux_capsule' type-id='type-id-1' visibility='default' filepath='linux/libfwup.c' line='641' column='1'/>
       </data-member>
       <data-member access='public' layout-offset-in-bits='128'>
-        <var-decl name='re' type-id='type-id-39' visibility='default' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='642' column='1'/>
+        <var-decl name='re' type-id='type-id-41' visibility='default' filepath='linux/libfwup.c' line='642' column='1'/>
       </data-member>
     </class-decl>
-    <class-decl name='__dirstream' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-51'/>
-    <typedef-decl name='DIR' type-id='type-id-51' filepath='/usr/include/dirent.h' line='127' column='1' id='type-id-52'/>
-    <pointer-type-def type-id='type-id-52' size-in-bits='64' id='type-id-50'/>
-    <typedef-decl name='fwup_resource_iter' type-id='type-id-49' filepath='include/fwup.h' line='50' column='1' id='type-id-53'/>
-    <pointer-type-def type-id='type-id-53' size-in-bits='64' id='type-id-54'/>
-    <pointer-type-def type-id='type-id-40' size-in-bits='64' id='type-id-55'/>
-    <qualified-type-def type-id='type-id-21' const='yes' id='type-id-56'/>
-    <pointer-type-def type-id='type-id-56' size-in-bits='64' id='type-id-57'/>
-    <function-decl name='fwup_set_guid' mangled-name='fwup_set_guid' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='883' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_set_guid@@libfwup.so.1'>
-      <parameter type-id='type-id-54' name='iter' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='883' column='1'/>
-      <parameter type-id='type-id-55' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='883' column='1'/>
-      <parameter type-id='type-id-57' name='guid' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='884' column='1'/>
+    <class-decl name='__dirstream' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-53'/>
+    <typedef-decl name='DIR' type-id='type-id-53' filepath='/usr/include/dirent.h' line='127' column='1' id='type-id-54'/>
+    <pointer-type-def type-id='type-id-54' size-in-bits='64' id='type-id-52'/>
+    <typedef-decl name='fwup_resource_iter' type-id='type-id-51' filepath='include/fwup.h' line='50' column='1' id='type-id-55'/>
+    <pointer-type-def type-id='type-id-55' size-in-bits='64' id='type-id-56'/>
+    <pointer-type-def type-id='type-id-42' size-in-bits='64' id='type-id-57'/>
+    <qualified-type-def type-id='type-id-21' const='yes' id='type-id-58'/>
+    <pointer-type-def type-id='type-id-58' size-in-bits='64' id='type-id-59'/>
+    <function-decl name='fwup_set_guid' mangled-name='fwup_set_guid' filepath='linux/libfwup.c' line='883' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_set_guid@@libfwup.so.1'>
+      <parameter type-id='type-id-56' name='iter' filepath='linux/libfwup.c' line='883' column='1'/>
+      <parameter type-id='type-id-57' name='re' filepath='linux/libfwup.c' line='883' column='1'/>
+      <parameter type-id='type-id-59' name='guid' filepath='linux/libfwup.c' line='884' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_set_guid_forced' mangled-name='fwup_set_guid_forced' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='849' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_set_guid_forced@@LIBFWUP_1.11'>
-      <parameter type-id='type-id-54' name='iter' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='849' column='1'/>
-      <parameter type-id='type-id-55' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='849' column='1'/>
-      <parameter type-id='type-id-57' name='guid' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='850' column='1'/>
-      <parameter type-id='type-id-18' name='force' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='850' column='1'/>
+    <function-decl name='fwup_set_guid_forced' mangled-name='fwup_set_guid_forced' filepath='linux/libfwup.c' line='849' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_set_guid_forced@@LIBFWUP_1.11'>
+      <parameter type-id='type-id-56' name='iter' filepath='linux/libfwup.c' line='849' column='1'/>
+      <parameter type-id='type-id-57' name='re' filepath='linux/libfwup.c' line='849' column='1'/>
+      <parameter type-id='type-id-59' name='guid' filepath='linux/libfwup.c' line='850' column='1'/>
+      <parameter type-id='type-id-18' name='force' filepath='linux/libfwup.c' line='850' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_resource_iter_next' mangled-name='fwup_resource_iter_next' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='777' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_resource_iter_next@@libfwup.so.1'>
-      <parameter type-id='type-id-54' name='iter' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='777' column='1'/>
-      <parameter type-id='type-id-55' name='re' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='777' column='1'/>
+    <function-decl name='fwup_resource_iter_next' mangled-name='fwup_resource_iter_next' filepath='linux/libfwup.c' line='777' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_resource_iter_next@@libfwup.so.1'>
+      <parameter type-id='type-id-56' name='iter' filepath='linux/libfwup.c' line='777' column='1'/>
+      <parameter type-id='type-id-57' name='re' filepath='linux/libfwup.c' line='777' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
-    <pointer-type-def type-id='type-id-54' size-in-bits='64' id='type-id-58'/>
-    <function-decl name='fwup_resource_iter_destroy' mangled-name='fwup_resource_iter_destroy' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='730' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_resource_iter_destroy@@libfwup.so.1'>
-      <parameter type-id='type-id-58' name='iterp' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='730' column='1'/>
+    <pointer-type-def type-id='type-id-56' size-in-bits='64' id='type-id-60'/>
+    <function-decl name='fwup_resource_iter_destroy' mangled-name='fwup_resource_iter_destroy' filepath='linux/libfwup.c' line='730' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_resource_iter_destroy@@libfwup.so.1'>
+      <parameter type-id='type-id-60' name='iterp' filepath='linux/libfwup.c' line='730' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_resource_free' mangled-name='fwup_resource_free' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='717' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_resource_free@@LIBFWUP_1.11'>
-      <parameter type-id='type-id-40' name='res' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='717' column='1'/>
-      <return type-id='type-id-41'/>
+    <function-decl name='fwup_resource_free' mangled-name='fwup_resource_free' filepath='linux/libfwup.c' line='717' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_resource_free@@LIBFWUP_1.11'>
+      <parameter type-id='type-id-42' name='res' filepath='linux/libfwup.c' line='717' column='1'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='fwup_resource_iter_create' mangled-name='fwup_resource_iter_create' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='646' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_resource_iter_create@@libfwup.so.1'>
-      <parameter type-id='type-id-58' name='iter' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='646' column='1'/>
+    <function-decl name='fwup_resource_iter_create' mangled-name='fwup_resource_iter_create' filepath='linux/libfwup.c' line='646' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_resource_iter_create@@libfwup.so.1'>
+      <parameter type-id='type-id-60' name='iter' filepath='linux/libfwup.c' line='646' column='1'/>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_supported' mangled-name='fwup_supported' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='409' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_supported@@libfwup.so.1'>
+    <function-decl name='fwup_supported' mangled-name='fwup_supported' filepath='linux/libfwup.c' line='409' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_supported@@libfwup.so.1'>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_enable_esrt' mangled-name='fwup_enable_esrt' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='375' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_enable_esrt@@libfwup.so.1'>
+    <function-decl name='fwup_enable_esrt' mangled-name='fwup_enable_esrt' filepath='linux/libfwup.c' line='375' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_enable_esrt@@libfwup.so.1'>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_esrt_disabled' mangled-name='fwup_esrt_disabled' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='350' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_esrt_disabled@@libfwup.so.1'>
+    <function-decl name='fwup_esrt_disabled' mangled-name='fwup_esrt_disabled' filepath='linux/libfwup.c' line='350' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_esrt_disabled@@libfwup.so.1'>
       <return type-id='type-id-1'/>
     </function-decl>
-    <function-decl name='fwup_get_esp_mountpoint' mangled-name='fwup_get_esp_mountpoint' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='102' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_esp_mountpoint@@libfwup.so.1'>
+    <function-decl name='fwup_get_esp_mountpoint' mangled-name='fwup_get_esp_mountpoint' filepath='linux/libfwup.c' line='102' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_get_esp_mountpoint@@libfwup.so.1'>
       <return type-id='type-id-13'/>
     </function-decl>
-    <function-decl name='fwup_set_esp_mountpoint' mangled-name='fwup_set_esp_mountpoint' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='89' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_set_esp_mountpoint@@libfwup.so.1'>
-      <parameter type-id='type-id-3' name='path' filepath='/home/pjones/devel/github.com/fwupdate/master/linux/libfwup.c' line='89' column='1'/>
-      <return type-id='type-id-41'/>
+    <function-decl name='fwup_set_esp_mountpoint' mangled-name='fwup_set_esp_mountpoint' filepath='linux/libfwup.c' line='89' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='fwup_set_esp_mountpoint@@libfwup.so.1'>
+      <parameter type-id='type-id-3' name='path' filepath='linux/libfwup.c' line='89' column='1'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_get_variable' mangled-name='efi_get_variable' filepath='/usr/include/efivar/efivar.h' line='93' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__errno_location' mangled-name='__errno_location' filepath='/usr/include/errno.h' line='37' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='free' mangled-name='free' filepath='/usr/include/stdlib.h' line='448' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='free' mangled-name='free' filepath='/usr/include/stdlib.h' line='563' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__stack_chk_fail' mangled-name='__stack_chk_fail' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='opendir' mangled-name='opendir' filepath='/usr/include/dirent.h' line='134' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='dirfd' mangled-name='dirfd' filepath='/usr/include/dirent.h' line='224' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='closedir' mangled-name='closedir' filepath='/usr/include/dirent.h' line='149' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__printf_chk' mangled-name='__printf_chk' filepath='/usr/include/bits/stdio2.h' line='87' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__builtin_puts' mangled-name='puts' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='mktime' mangled-name='mktime' filepath='/usr/include/time.h' line='82' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='asctime' mangled-name='asctime' filepath='/usr/include/time.h' line='139' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_guid_to_id_guid' mangled-name='efi_guid_to_id_guid' filepath='/usr/include/efivar/efivar.h' line='115' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='efidp_format_device_path' mangled-name='efidp_format_device_path' filepath='/usr/include/efivar/efivar-dp.h' line='1239' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='efidp_format_device_path' mangled-name='efidp_format_device_path' filepath='/usr/include/efivar/efivar-dp.h' line='1240' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='malloc' mangled-name='malloc' filepath='/usr/include/stdlib.h' line='424' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='malloc' mangled-name='malloc' filepath='/usr/include/stdlib.h' line='539' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='dcgettext' mangled-name='dcgettext' filepath='/usr/include/libintl.h' line='51' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_error_set' mangled-name='efi_error_set' filepath='/usr/include/efivar/efivar.h' line='180' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='fclose' mangled-name='fclose' filepath='/usr/include/stdio.h' line='199' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='fmemopen' mangled-name='fmemopen' filepath='/usr/include/stdio.h' line='278' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='fdopen' mangled-name='fdopen' filepath='/usr/include/stdio.h' line='265' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_guid_cmp' mangled-name='efi_guid_cmp' filepath='/usr/include/efivar/efivar.h' line='130' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='close' mangled-name='close' filepath='/usr/include/unistd.h' line='356' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='close' mangled-name='close' filepath='/usr/include/unistd.h' line='353' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='lseek' mangled-name='lseek' filepath='/usr/include/unistd.h' line='337' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='lseek' mangled-name='lseek' filepath='/usr/include/unistd.h' line='334' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='fflush' mangled-name='fflush' filepath='/usr/include/stdio.h' line='204' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='fsync' mangled-name='fsync' filepath='/usr/include/unistd.h' line='957' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='fsync' mangled-name='fsync' filepath='/usr/include/unistd.h' line='954' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__fread_alias' mangled-name='fread' filepath='/usr/include/bits/stdio2.h' line='268' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='ftell' mangled-name='ftell' filepath='/usr/include/stdio.h' line='689' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='fseek' mangled-name='fseek' filepath='/usr/include/stdio.h' line='684' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='fwrite' mangled-name='fwrite' filepath='/usr/include/stdio.h' line='652' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='memcmp' mangled-name='memcmp' filepath='/usr/include/string.h' line='63' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_generate_file_device_path' mangled-name='efi_generate_file_device_path' filepath='/usr/include/efivar/efiboot-creator.h' line='32' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='calloc' mangled-name='calloc' filepath='/usr/include/stdlib.h' line='426' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='calloc' mangled-name='calloc' filepath='/usr/include/stdlib.h' line='541' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__open_alias' mangled-name='open' filepath='/usr/include/bits/fcntl2.h' line='27' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__asprintf_chk' mangled-name='__asprintf_chk' filepath='/usr/include/bits/stdio2.h' line='158' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='mkdir' mangled-name='mkdir' filepath='/usr/include/sys/stat.h' line='317' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='mkostemps' mangled-name='mkostemps' filepath='/usr/include/stdlib.h' line='644' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='mkostemps' mangled-name='mkostemps' filepath='/usr/include/stdlib.h' line='759' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_error_clear' mangled-name='efi_error_clear' filepath='/usr/include/efivar/efivar.h' line='188' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__builtin_memcpy' mangled-name='memcpy' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='sscanf' mangled-name='sscanf' filepath='/usr/include/stdio.h' line='385' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_loadopt_is_valid' mangled-name='efi_loadopt_is_valid' filepath='/usr/include/efivar/efiboot-loadopt.h' line='72' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_loadopt_pathlen' mangled-name='efi_loadopt_pathlen' filepath='/usr/include/efivar/efiboot-loadopt.h' line='48' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_loadopt_path' mangled-name='efi_loadopt_path' filepath='/usr/include/efivar/efiboot-loadopt.h' line='33' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__builtin___sprintf_chk' mangled-name='__sprintf_chk' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_set_variable' mangled-name='efi_set_variable' filepath='/usr/include/efivar/efivar.h' line='98' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_loadopt_create' mangled-name='efi_loadopt_create' filepath='/usr/include/efivar/efiboot-loadopt.h' line='26' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__builtin_memset' mangled-name='memset' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_get_next_variable_name' mangled-name='efi_get_next_variable_name' filepath='/usr/include/efivar/efivar.h' line='106' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_loadopt_attr_set' mangled-name='efi_loadopt_attr_set' filepath='/usr/include/efivar/efiboot-loadopt.h' line='42' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_get_variable_size' mangled-name='efi_get_variable_size' filepath='/usr/include/efivar/efivar.h' line='85' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__xstat' mangled-name='__xstat' filepath='/usr/include/sys/stat.h' line='397' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='strdup' mangled-name='strdup' filepath='/usr/include/string.h' line='166' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='strnlen' mangled-name='strnlen' filepath='/usr/include/string.h' line='390' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__openat_alias' mangled-name='openat' filepath='/usr/include/bits/fcntl2.h' line='100' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__read_alias' mangled-name='read' filepath='/usr/include/bits/unistd.h' line='25' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='realloc' mangled-name='realloc' filepath='/usr/include/stdlib.h' line='434' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='realloc' mangled-name='realloc' filepath='/usr/include/stdlib.h' line='549' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='readdir' mangled-name='readdir' filepath='/usr/include/dirent.h' line='162' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_str_to_guid' mangled-name='efi_str_to_guid' filepath='/usr/include/efivar/efivar.h' line='111' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='__builtin_strcpy' mangled-name='strcpy' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='getenv' mangled-name='getenv' filepath='/usr/include/stdlib.h' line='516' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='getenv' mangled-name='getenv' filepath='/usr/include/stdlib.h' line='631' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_guid_to_str' mangled-name='efi_guid_to_str' filepath='/usr/include/efivar/efivar.h' line='113' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='sysconf' mangled-name='sysconf' filepath='/usr/include/unistd.h' line='622' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='sysconf' mangled-name='sysconf' filepath='/usr/include/unistd.h' line='619' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='efidp_make_generic' mangled-name='efidp_make_generic' filepath='/usr/include/efivar/efivar-dp.h' line='1244' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='efidp_make_generic' mangled-name='efidp_make_generic' filepath='/usr/include/efivar/efivar-dp.h' line='1245' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='efi_del_variable' mangled-name='efi_del_variable' filepath='/usr/include/efivar/efivar.h' line='96' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='dell_simple_ci_smi' mangled-name='dell_simple_ci_smi' filepath='/usr/include/smbios_c/smi.h' line='40' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='token_activate' mangled-name='token_activate' filepath='/usr/include/smbios_c/token.h' line='58' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='token_is_active' mangled-name='token_is_active' filepath='/usr/include/smbios_c/token.h' line='53' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='token_is_bool' mangled-name='token_is_bool' filepath='/usr/include/smbios_c/token.h' line='48' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='fopen' mangled-name='fopen' filepath='/usr/include/stdio.h' line='232' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='ioctl' mangled-name='ioctl' filepath='/usr/include/sys/ioctl.h' line='41' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='access' mangled-name='access' filepath='/usr/include/unistd.h' line='290' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='access' mangled-name='access' filepath='/usr/include/unistd.h' line='287' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
-    <function-decl name='strtoull' mangled-name='strtoull' filepath='/usr/include/stdlib.h' line='168' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+    <function-decl name='strtoull' mangled-name='strtoull' filepath='/usr/include/stdlib.h' line='205' column='1' visibility='default' binding='global' size-in-bits='64'>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='fgetc' mangled-name='fgetc' filepath='/usr/include/stdio.h' line='477' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='fputc' mangled-name='fputc' filepath='/usr/include/stdio.h' line='517' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='feof' mangled-name='feof' filepath='/usr/include/stdio.h' line='759' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
     <function-decl name='ferror' mangled-name='ferror' filepath='/usr/include/stdio.h' line='761' column='1' visibility='default' binding='global' size-in-bits='64'>
-      <return type-id='type-id-41'/>
+      <return type-id='type-id-43'/>
     </function-decl>
   </abi-instr>
 </abi-corpus>
