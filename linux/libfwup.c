@@ -187,7 +187,6 @@ prepare_buffer_real(struct dell_wmi_smbios_buffer **buffer,
 	uint64_t buffer_size = 0;
 	int ret;
 	va_list ap;
-	long pagesize = sysconf(_SC_PAGESIZE);
 	/* the biggest known value provided by any system today */
 	uint64_t limit = 32768;
 
