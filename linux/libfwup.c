@@ -1215,9 +1215,9 @@ set_up_boot_next(void)
 	uint32_t attributes = LOAD_OPTION_ACTIVE;
 
 	rc = get_paths(&shim_fs_path, &fwup_fs_path, &fwup_esp_path);
-	if (rc < 0) {
+	if (rc < 0 || (!shim_fs_path && (!fwup_fs_path || !fwup_esp_path))) {
 		efi_error("could not find paths for shim and fwup");
-		return -1;
+                goto out;
 	}
 
 	if (!shim_fs_path)
@@ -1242,9 +1242,17 @@ set_up_boot_next(void)
 
 	if (!use_fwup_path) {
 		loader_str = utf8_to_ucs2((uint8_t *)fwup_esp_path, -1);
+                if (loader_str == NULL) {
+                        efi_error("utf8_to_ucs2() failed");
+                        goto out;
+                }
 		loader_sz = ucs2len(loader_str, -1) * 2;
-		if (loader_sz)
-			loader_sz += 2;
+                if (loader_sz < 2) {
+                        efi_error("ucs2len(fwup_esp_path) returned %zu",
+                                  loader_sz);
+                        goto out;
+                }
+		loader_sz += 2;
 		loader_str = onstack(loader_str, loader_sz);
 	}
 
