@@ -30,3 +30,7 @@ LIBFWUP_1.11 {
 	global: fwup_set_guid_forced;
 		fwup_resource_free;
 } libfwup.so.1;
+
+LIBFWUP_1.12 {
+	global: fwup_version;
+} LIBFWUP_1.11;
