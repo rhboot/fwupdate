@@ -5,15 +5,22 @@ It also aims to be compatible with some implementation decisions that were made 
 
 The following binaries are produced:
  * `libfwup` library providing APIs to do UEFI updates for other applications
- * `fwupdate` command line tool
+ * `fwupdate` reference command line tool
  * `fwup.efi` EFI application used for flashing the update from EFI.
+
+## fwupd
+[fwupd](https://github.com/hughsie/fwupd) is a project for managing firmware updates of many types of devices.  It has supported UEFI firmware update ever since its first release.
+[fwupd](https://github.com/hughsie/fwupd) versions 1.0.x and earlier use `libfwupd` from this project for performing the flash
+(following most of *Normal Flow* below).
+
+[fwupd](https://github.com/hughsie/fwupd) versions 1.1.x and later have merged the code from this project directly into the
+codebase and will manage boot assets directly at installation time.  This project is not needed when using a newer fwupd.
 
 ## Normal flow
 UEFI capsule updates are _not_ actually flashed within Linux.  They're staged for update to
 be installed on the next boot.
 
-1. A higher level tool such as [fwupd](https://github.com/hughsie/fwupd) will consume a _.CAB_ file.
-2. That tool will use libfwup from this project to stage the updates on the system.
+1. `fwupdate --apply` will be executed with the capsule payload as an argument
 3. `libfwup` will copy the payload to the EFI system partition.
 4. `libfwup` will create EFI NVRAM entries pointing to the correct payload on the EFI system partition.
 5. `libfwup` will create a new EFI Boot entry to launch the firmware updating EFI application.
@@ -26,7 +33,7 @@ be installed on the next boot.
 ## Usage
 UEFI capsule updates are typically distributed by services such as [LVFS](https://fwupd.org) in _.CAB_ format.  The command line tool provided by this project works directly on the
 payload stored in the *.CAB*.
-Most users should apply UEFI capsule updates with a higher level tool such as [fwupd](https://github.com/hughsie/fwupd) that uses the library `libfwup` that is provided by this project.
+Most users should apply UEFI capsule updates with a higher level tool such as [fwupd](https://github.com/hughsie/fwupd).
 
 ## Dependencies
 The following dependencies are needed to compile:
