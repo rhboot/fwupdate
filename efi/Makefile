@@ -10,7 +10,7 @@ include $(TOP)/Make.rules
 VPATH	= $(TOP)/efi
 
 CFLAGS	?= -Og -g3 -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 \
-	   -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 \
+	   -fstack-protector-strong --param=ssp-buffer-size=4 \
 	   -grecord-gcc-switches
 BUILDFLAGS	:= $(CFLAGS) -fpic -Werror -Wall -Wextra -fshort-wchar \
 	-Wno-error=missing-field-initializers -Wno-missing-field-initializers \
@@ -24,9 +24,10 @@ CCLDFLAGS	?= -nostdlib -Wl,--warn-common \
 	-Wl,--build-id=sha1 -Wl,--hash-style=sysv \
 	$(GNUEFIDIR)/crt0-efi-$(ARCH).o
 CLANG_BUGS	= $(if $(findstring gcc,$(CC)),-maccumulate-outgoing-args,)
-LIBGCC=$(shell $(CC) -print-libgcc-file-name)
 ifeq ($(ARCH),arm)
-LIBGCC+=" $(shell $(CC) -print-libgcc-file-name | sed 's/\.a$/_eh.a/')"
+LIBGCC=$(shell $(CC) -print-libgcc-file-name | sed 's/\.a$$/_eh.a/')
+else
+LIBGCC=$(shell $(CC) -print-libgcc-file-name)
 endif
 
 define objcopy_version =
