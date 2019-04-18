@@ -27,7 +27,7 @@ be installed on the next boot.
 6. `libfwup` will set the `BootNext` variable to run that application on next boot.
 7. The user will reboot the system.
 8. The `fwup.efi` application will examine EFI NVRAM entries to find capsules previously staged.
-9. The `fwup.efi` applciation will call the BIOS `UpdateCapsule()` method to flash the capsules.
+9. The `fwup.efi` application will call the BIOS `UpdateCapsule()` method to flash the capsules.
 10. The BIOS will flash the capsules and then reboot back into the OS.
 
 ## Usage
