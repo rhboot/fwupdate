@@ -579,13 +579,14 @@ static int
 put_info(update_info *info)
 {
 	efi_guid_t varguid = FWUPDATE_GUID;
+	efi_guid_t marshal = info->guid;
 	ssize_t dps, is;
 	char *guidstr = NULL;
 	char *varname;
 	int error;
 	int rc;
 
-	rc = efi_guid_to_str(&info->guid, &guidstr);
+	rc = efi_guid_to_str(&marshal, &guidstr);
 	if (rc < 0) {
 		efi_error("efi_guid_to_str() failed");
 err:
@@ -2099,12 +2100,12 @@ fwup_print_update_info(void)
 	id = 0;
 	while ((rc = fwup_resource_iter_next(iter, &re)) > 0) {
 		update_info *info = re->info;
-		efi_guid_t *guid = &info->guid;
+		efi_guid_t guid = info->guid;
 		char *id_guid = NULL;
 		ssize_t dp_sz;
 		char *path;
 
-		rc = efi_guid_to_id_guid(guid, &id_guid);
+		rc = efi_guid_to_id_guid(&guid, &id_guid);
 		if (rc < 0)
 			break;
 
@@ -2146,17 +2147,18 @@ fwup_print_update_info(void)
 		       : info->status == FWUPDATE_ATTEMPTED ? "Attempted"
 		       : "Unknown");
 		if (info->status == FWUPDATE_ATTEMPTED) {
-			efi_time_t *time_attempted;
+			efi_time_t time_attempted;
 			struct tm tm;
 
-			time_attempted = (efi_time_t *)&info->time_attempted;
-			tm.tm_year = time_attempted->year - 1900;
-			tm.tm_mon = time_attempted->month - 1;
-			tm.tm_mday = time_attempted->day;
-			tm.tm_hour = time_attempted->hour;
-			tm.tm_min = time_attempted->minute;
-			tm.tm_sec = time_attempted->second;
-			tm.tm_isdst = time_attempted->daylight;
+			memcpy(&time_attempted, &info->time_attempted,
+			       sizeof(time_attempted));
+			tm.tm_year = time_attempted.year - 1900;
+			tm.tm_mon = time_attempted.month - 1;
+			tm.tm_mday = time_attempted.day;
+			tm.tm_hour = time_attempted.hour;
+			tm.tm_min = time_attempted.minute;
+			tm.tm_sec = time_attempted.second;
+			tm.tm_isdst = time_attempted.daylight;
 
 			printf("  Attempted Time: ");
 			if (mktime(&tm) != (time_t)-1)
