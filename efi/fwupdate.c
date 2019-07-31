@@ -173,9 +173,17 @@ free(void *addr, UINTN size)
 }
 
 static inline int
-guid_cmp(efi_guid_t *a, efi_guid_t *b)
+guid_cmp(const efi_guid_t *a, const efi_guid_t *b)
 {
 	return CompareMem(a, b, sizeof (*a));
+}
+
+// Throws away type-safety in the interest of safely handling
+// improperly-aligned pointers to efi_guid_t. Prefer guid_cmp().
+static inline int
+guid_cmp_unaligned(const void *a, const void *b)
+{
+  return guid_cmp(a, b);
 }
 
 EFI_STATUS
@@ -524,10 +532,10 @@ mult_err:
 		}
 		if (update->info->status & FWUPDATE_ATTEMPT_UPDATE) {
 			EFI_TIME_CAPABILITIES timecaps = { 0, };
+			EFI_TIME marshal;
 
-			uefi_call_wrapper(RT->GetTime, 2,
-					  &update->info->time_attempted,
-					  &timecaps);
+			uefi_call_wrapper(RT->GetTime, 2, &marshal, &timecaps);
+			CopyMem(&update->info->time_attempted, &marshal, sizeof(marshal));
 			update->info->status = FWUPDATE_ATTEMPTED;
 			updates[n_updates++] = update;
 		} else {
@@ -1020,7 +1028,7 @@ do_ux_csum(EFI_HANDLE loaded_image, UINT8 *buf, UINTN size)
 	return EFI_SUCCESS;
 }
 
-#define is_ux_capsule(guid) (guid_cmp(guid, &ux_capsule_guid) == 0)
+#define is_ux_capsule(guid) (guid_cmp_unaligned(guid, &ux_capsule_guid) == 0)
 #define is_fmp_capsule(guid) (guid_cmp(guid, &fmp_capsule_guid) == 0)
 
 static EFI_STATUS
@@ -1057,7 +1065,7 @@ add_capsule(update_table *update, EFI_CAPSULE_HEADER **capsule_out,
 	 * Unfortunately there's not a good way to do this, so we're just
 	 * checking if the capsule has the fw_class guid at the right place.
 	 */
-	if ((guid_cmp(&update->info->guid, (efi_guid_t *)fbuf) == 0 ||
+	if ((guid_cmp_unaligned(&update->info->guid, (efi_guid_t *)fbuf) == 0 ||
 	     is_fmp_capsule((efi_guid_t *)fbuf)) &&
 	    /*
 	     * We're ignoring things that are 40 bytes here, because that's
