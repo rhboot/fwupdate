@@ -4,7 +4,7 @@ ENTRY(_start)
 SECTIONS
 {
   .text 0x0 : {
-   _text = .;
+    _text = .;
     *(.text.head)
     *(.text)
     *(.text.*)
@@ -12,10 +12,11 @@ SECTIONS
     *(.srodata)
     *(.rodata*)
     . = ALIGN(16);
-    _etext = .;
   }
+  _etext = .;
+  _text_size = . - _text;
   .dynamic  : { *(.dynamic) }
-  .data :
+  .data : ALIGN(4096)
   {
    _data = .;
    *(.sdata)
@@ -37,20 +38,21 @@ SECTIONS
    . = ALIGN(16);
    _bss_end = .;
   }
-  .note.gnu.build-id : { *(.note.gnu.build-id) }
 
   .rela.dyn : { *(.rela.dyn) }
   .rela.plt : { *(.rela.plt) }
   .rela.got : { *(.rela.got) }
   .rela.data : { *(.rela.data) *(.rela.data*) }
+  . = ALIGN(512);
   _edata = .;
-  _data_size = . - _etext;
+  _data_size = . - _data;
 
   . = ALIGN(4096);
   .dynsym   : { *(.dynsym) }
   . = ALIGN(4096);
   .dynstr   : { *(.dynstr) }
   . = ALIGN(4096);
+  .note.gnu.build-id : { *(.note.gnu.build-id) }
   /DISCARD/ :
   {
     *(.rel.reloc)
