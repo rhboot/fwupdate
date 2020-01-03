@@ -2102,7 +2102,7 @@ fwup_print_update_info(void)
 		efi_guid_t *guid = &info->guid;
 		char *id_guid = NULL;
 		ssize_t dp_sz;
-		char *path;
+		unsigned char *path;
 
 		rc = efi_guid_to_id_guid(guid, &id_guid);
 		if (rc < 0)
