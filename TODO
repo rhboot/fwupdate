@@ -1,4 +1,0 @@
-Things that need to be done before 1.0:
-
-1) security audit for efi/fwupdate.c with secure boot violation in mind
-2) debug Canoe Pass
