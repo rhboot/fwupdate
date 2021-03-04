@@ -39,6 +39,22 @@ define objcopy_version =
 endef
 OBJCOPY_GTE224 := $(shell expr `$(objcopy_version)` \>= 2.24)
 
+SBATPATH = data/sbat.csv
+$(SBATPATH): $(SBATPATH).in
+	@sed -e "s,@@VERSION@@,$(VERSION),g" $< > $@
+
+sbat.%.csv : data/sbat.%.csv
+	$(DOS2UNIX) $(D2UFLAGS) $< $@
+	tail -c1 $@ | read -r _ || echo >> $@ # ensure a trailing newline
+
+VENDOR_SBATS := $(foreach x,$(wildcard data/sbat.*.csv),$(notdir $(x)))
+
+sbat_data.o : | $(SBATPATH) $(VENDOR_SBATS)
+sbat_data.o : /dev/null
+	$(CC) $(CFLAGS) -x c -c -o $@ $<
+	$(OBJCOPY) --add-section .sbat=$(SBATPATH) $@
+	$(foreach vs,$(VENDOR_SBATS),$(call add-vendor-sbat,$(vs),$@))
+
 FWUP = fwupdate
 
 ifeq ($(ARCH),x86_64)
@@ -94,7 +110,7 @@ ifneq ($(OBJCOPY_GTE224),1)
 	$(error objcopy >= 2.24 is required)
 endif
 	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
-		-j .rel* -j .rela* -j .reloc -j .eh_frame \
+		-j .rel* -j .rela* -j .reloc -j .eh_frame -j .sbat \
 		$(FORMAT) $^ $@
 
 %.efi.debug : %.so
@@ -102,7 +118,7 @@ ifneq ($(OBJCOPY_GTE224),1)
 	$(error objcopy >= 2.24 is required)
 endif
 	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
-		-j .rel* -j .rela* -j .reloc -j .eh_frame \
+		-j .rel* -j .rela* -j .reloc -j .eh_frame -j .sbat \
 		-j .debug* -j .note.gnu.build-id \
 		$^ $@
 
@@ -110,7 +126,7 @@ endif
 	$(READELF) -n $^ | grep "Build ID:" | \
 		sed -e 's/^.*Build ID: //' -e 's,^\(..\),\1/,' > $@
 
-%.so : %.o
+%.so : %.o sbat_data.o
 	$(CC) $(CCLDFLAGS) -o $@ $^ -lefi -lgnuefi \
 		$(LIBGCC) \
 		-T elf_$(ARCH)_efi.lds
@@ -120,7 +136,7 @@ endif
 
 clean :
 	@rm -vf $(TARGETS) *.o *.so *.efi.signed *.efi *.efi.debug \
-		*.efi.build-id
+		*.efi.build-id $(SBATPATH)
 
 buildiddir = $(dir $(shell cat $(1).build-id))
 buildidname = $(notdir $(shell cat $(1).build-id))

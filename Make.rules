@@ -3,6 +3,10 @@ define get-config
 $(shell git config --local --get "fwupdate.$(1)")
 endef
 
+define add-vendor-sbat
+$(OBJCOPY) --add-section ".$(patsubst %.csv,%,$(1))=$(1)" $(2)
+endef
+
 %.abixml : %.so
 	$(ABIDW) --headers-dir $(TOP)/linux/include/ --out-file $@ $^
 	@sed -i -s 's,$(TOPDIR)/,,g' $@

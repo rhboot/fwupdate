@@ -40,6 +40,15 @@ SECTIONS
   }
   .note.gnu.build-id : { *(.note.gnu.build-id) }
 
+  . = ALIGN(4096);
+  .sbat :
+  {
+    _sbat = .;
+    *(.sbat)
+    *(.sbat.*)
+    _esbat = .;
+  }
+
   .rel.dyn : { *(.rel.dyn) }
   .rel.plt : { *(.rel.plt) }
   .rel.got : { *(.rel.got) }

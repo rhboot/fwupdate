@@ -39,6 +39,15 @@ SECTIONS
    _bss_end = .;
   }
 
+  . = ALIGN(4096);
+  .sbat :
+  {
+    _sbat = .;
+    *(.sbat)
+    *(.sbat.*)
+    _esbat = .;
+  }
+
   .rela.dyn : { *(.rela.dyn) }
   .rela.plt : { *(.rela.plt) }
   .rela.got : { *(.rela.got) }
